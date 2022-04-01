@@ -19,13 +19,12 @@ but in a friendly manner, which hides most of the complexity of the Wasm format.
 
 # Usage
 
-To compile a `tests/euler1.wase` to `tests/euler1.wasm`, clone this repository
+To compile a `tests/euler1.wase` program to `tests/euler1.wasm`, clone this repository
 and then use
 
 	bin\wase tests/euler1.wase
 
-This requires a Java Runtime. If you do not want to use Java to run it, you can
-also run directly with the flow9 language.
+This requires a suitable Java Runtime in your path.
 
 You can also consider to add `wase/bin` to your path.
 
@@ -40,6 +39,7 @@ written in Wase:
 	// For Wasi, we have to export the memory
 	export memory 1;
 
+	// Iterative version using a loop
 	euler1Loop(limit : i32) -> i32 {
 		start = 1;
 		acc = 0;
@@ -83,11 +83,11 @@ written in Wase:
 
 Compile with
 
-	wase> flowcpp wase/wase.flow -- tests/euler1.wase
+	bin\wase tests/euler1.wase
 
 and run with
 
-	wase> wasmer tests/euler1.wasm
+	wasmer tests/euler1.wasm
 	233168
 	233168
 
@@ -103,16 +103,14 @@ directly to WASM binaries that validate and run correctly.
 The most important missing instruction is `call_indirect`, the second most important
 is arguably `br_table`, plus all vector instructions.
 
-The biggest problem in daily use is that error messages are currently without 
-positions.
+One problem in daily use is that error messages are currently without positions.
 
 This compiler is not validating. For example, you can use dynamic code in constant
-contexts.
+contexts, which will be rejected by the Wasm runtime.
 
 TODO:
-- Better parse errors
+- Better parse errors with positions
 - Add support for Dead Code Elimination, or invoking wasm-opt?
-
 
 # Development
 
@@ -144,6 +142,10 @@ You can compile a new wase.jar binary release using:
 	flowc1 wase/wase.flow jar=bin/wase.jar
 
 This requires OpenJDK.
+
+Join the flow9 discord, which also hosts discussions on Wase:
+
+	https://discord.gg/9gGJu6KU
 
 # Type system
 
@@ -205,9 +207,7 @@ come first in the original order, and then after that, globals and functions
 in their original order.
 
 TODO:
-- Start a standard library to be used by `include`
-
-- Try to support mutual recursion by recording the types and indexes of all globals
+- Support mutual recursion by recording the types and indexes of all globals
   and functions before type checking and code gen
 
 ## Global syntax
@@ -240,7 +240,9 @@ Some examples:
 TODO:
 - Extend the type checker to check mutability of globals
 
-- Encode 64-bit constants as S64, rather than U64
+- Encode 64-bit constants as S64, rather than U64. 
+
+- Check all I32 whether they are S32 or U32
 
 ## Function syntax
 
@@ -334,7 +336,7 @@ TODO:
 
 	data id : 1, 23, ... ?
 
-- Capture the address or size of data segments?
+- Capture the address or size of data segments to make use easier?
 
 ## Tables
 
@@ -356,9 +358,9 @@ TODO:
 Wase code can be split into multiple files, and included using this syntax at the
 top-level:
 
-	include lib/debug;
+	include lib/runtime;
 
-The compiler will read the file "wase/lib/debug.wase", parse it, and splice the 
+The compiler will read the file "wase/lib/runtime.wase", parse it, and splice the 
 result into that place in the code. If a file is included more than once (also 
 transitively), it is only included the first occurrence.
 
@@ -432,6 +434,14 @@ statements, but only expressions. The syntax is pretty standard:
 		code
 	}
 
+## Blocks
+
+Wasm uses blocks for control flow. Each function introduces a block.
+The `block` and `loop` constructs also do that, as well as the `then`
+and `else` branches of `if`. The `break` and `break_if` instructions
+refer to this stack of blocks. A break with level 0 breaks out of the
+inner most block, while `break<1>()` breaks out of the next level.
+
 	block {
 		code;
 		// This breaks to the end of the block
@@ -439,10 +449,17 @@ statements, but only expressions. The syntax is pretty standard:
 		code;
 	}
 
+	loop {
+		code;
+		// In loops, the break goes to the top of the loop,
+		// so this is an infinite loop
+		break<>();
+	}
+
 	foo() -> () {
 		loop {
 			code;
-			// This breaks to block above without a return value
+			// This breaks out of the function
 			break_if<1>(stopCondition);
 			// This is really continue
 			break<>();
@@ -479,6 +496,12 @@ statements, but only expressions. The syntax is pretty standard:
 	printByte(70);
 
 TODO:
+- More natural call-indirect syntax
+	calls : table< (i32) -> i32 > = [fn1, fn2, fn3];
+	call_indirect<calls>(index)(args)
+
+	fnidx<calls, fn1>  = how to get a function pointer
+
 - More natural switch syntax?
 	switch (index) {
 		0: {}
@@ -486,12 +509,6 @@ TODO:
 		2: {}
 		default: whatever;
 	}
-
-- More natural call-indirect syntax
-	calls : table< (i32) -> i32 > = [fn1, fn2, fn3];
-	call_indirect<calls>(index)(args)
-
-	fnidx<calls, fn1>  = how to get a function pointer
 
 ## Low level instructions
 
@@ -579,7 +596,11 @@ Loads and stores also exist in versions that work with smaller bit-widths:
 
 # Correspondance between Wasm and Wase syntax
 
-5 instructions plus all v128 SIMD instructions are not implemented yet.
+6 instructions plus all v128 SIMD instructions are not implemented yet:
+
+	call_indirect and br_table
+	table.init and elem.drop
+	memory.init and data.drop
 
 ## Control instructions
 
@@ -734,5 +755,4 @@ For each instruction, we need to define three basic different things:
 - Syntax. Done in `grammar.flow` using Gringo.
 - Typing. Done in `type.flow` using DSL typing
 - Compilation. Done in `compile.flow` using the Wase intermediate AST
-- Low-level compilation to bytecode is done in `tools/wasm/wasm_encode.flow`
-- 
+- Low-level compilation to bytecode is done in the flow9 repository in `flow9/lib/formats/wasm/wasm_encode.flow`
