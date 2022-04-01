@@ -5,21 +5,37 @@ import fs/filesystem;
 import wase/parse;
 
 export {
+	// Find this file, using the include path
+	resolveWaseFile(includes : [string], file : string) -> string;
+
 	// Process all wase includes
-	processWaseIncludes(included : ref Set<string>, d : DslAst) -> DslAst;
+	processWaseIncludes(includes : [string], included : ref Set<string>, d : DslAst) -> DslAst;
 }
 
-processWaseIncludes(included : ref Set<string>, d : DslAst) -> DslAst {
+
+resolveWaseFile(includes : [string], file : string) -> string {
+	if (fileExists(file)) resolveRelativePath(file)
+	else if (includes == []) ""
+	else {
+		path = pathCombine(includes[0], file);
+		if (fileExists(path)) resolveRelativePath(path)
+		else {
+			resolveWaseFile(tail(includes), file);
+		}
+	}
+}
+
+processWaseIncludes(includes : [string], included : ref Set<string>, d : DslAst) -> DslAst {
 	switch (d) {
 		DslBool(value): d;
 		DslInt(value): d;
 		DslDouble(value): d;
 		DslString(value): d;
-		DslList(value): DslList(mapList(value, \vv -> processWaseIncludes(included, vv)));
+		DslList(value): DslList(mapList(value, \vv -> processWaseIncludes(includes, included, vv)));
 		DslNode(name, args, pos): {
 			if (name == "wase_include") {
 				file = getDslString(args[0]);
-				filename = changeFileExt(file, ".wase");
+				filename = resolveWaseFile(includes, changeFileExt(file, ".wase"));
 				if (containsSet(^included, filename)) {
 					// Already included. No need to do it again
 					args[1];
@@ -28,15 +44,15 @@ processWaseIncludes(included : ref Set<string>, d : DslAst) -> DslAst {
 					code = getFileContent(filename);
 					program = parseWase(file, code);
 					if (isUrlParameterTrue("verbose")) {
-						println("  Included '" + filename + "' as " + resolveRelativePath(filename));
+						println("  Included '" + file + "' as " + resolveRelativePath(filename));
 					}
-					processWaseIncludes(included, replaceWaseEmpty(program, args[1]));
+					processWaseIncludes(includes, included, replaceWaseEmpty(program, args[1]));
 				} else {
 					println("ERROR: Could not include " + file);
 					args[1];
 				}
 			} else {
-				DslNode(name, map(args, \a -> processWaseIncludes(included, a)), pos);
+				DslNode(name, map(args, \a -> processWaseIncludes(includes, included, a)), pos);
 			}
 		}
 	}

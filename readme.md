@@ -19,17 +19,15 @@ but in a friendly manner, which hides most of the complexity of the Wasm format.
 
 # Usage
 
-Example compiles `myfile.wase` and produces `myfile.wasm`:
+To compile a `tests/euler1.wase` to `tests/euler1.wasm`, clone this repository
+and then use
 
-	wase> flowcpp wase/wase.flow -- myfile.wase
+	bin\wase tests/euler1.wase
 
-Run all test cases and produce `.wat` output as well using `wasm2wat`:
+This requires a Java Runtime. If you do not want to use Java to run it, you can
+also run directly with the flow9 language.
 
-	wase> flowcpp wase/wase.flow -- test=1 wat=1
-
-TODO:
-- Support include path for initial file, as well as `include`
-- Better parse errors
+You can also consider to add `wase/bin` to your path.
 
 # Example
 
@@ -112,7 +110,40 @@ This compiler is not validating. For example, you can use dynamic code in consta
 contexts.
 
 TODO:
-- Add support for Dead Code Elimination?
+- Better parse errors
+- Add support for Dead Code Elimination, or invoking wasm-opt?
+
+
+# Development
+
+To develop on Wase itself, first install flow9:
+
+	https://github.com/area9innovation/flow9
+
+We recommend to use VS Code with the flow9 extension.
+
+To run the compiler from the command line, use
+
+	bin\wased tests/euler1.wase
+
+This will compile the compiler, and use this to compile the `euler1.wase` file
+to a `euler1.wasm` file.
+
+When you make changes to the compiler, it is recommended to make sure there are
+no regressions by running all test cases and produce `.wat` output as well 
+using `wasm2wat`:
+
+	bin\wased -- test=1 wat=1
+
+This requires that you install WABT first 
+
+	https://github.com/WebAssembly/wabt
+
+You can compile a new wase.jar binary release using:
+
+	flowc1 wase/wase.flow jar=bin/wase.jar
+
+This requires OpenJDK.
 
 # Type system
 

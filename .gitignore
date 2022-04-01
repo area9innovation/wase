@@ -3,3 +3,5 @@ objc/
 *.bytecode
 *.class
 *.debug
+*.java
+/javagen/wase/wase
