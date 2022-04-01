@@ -1,0 +1,55 @@
+include lib/runtime;
+
+export memory 1;
+
+simple() -> () {
+	// This jumps out of the function (level 0)
+	br_table<0>(1);
+}
+
+earlyExit() -> i32 {
+	// Breaks out of the function (level 0), with the resulting value 42
+	br_table<0>(42, 1);
+}
+
+switchLike(index : i32) -> i32 {
+	// To set up a switch, use nested blocks
+	block {
+		block {
+			block {
+				block {
+					// The first three are break levels for
+					// indexes 0, 1, 2. The last is the default
+					// for indexes > 2.
+					br_table<2, 1, 0, 3>(index);
+				};
+				// Target for break<0> ~ index == 2
+				return 100;
+			};
+			// Target for break<1> ~ index == 1
+			return 101;
+		};
+		// Target for break<2> ~ index == 0
+		return 102;
+	};
+	// Target for break<3> ~ index > 3
+	103;
+}
+
+export _start() -> () {
+	simple();
+	printi32(earlyExit()); // 42
+	printByte(10);
+	printi32(switchLike(0)); // 102
+	printByte(10);
+	printi32(switchLike(1)); // 101
+	printByte(10);
+	printi32(switchLike(2)); // 100
+	printByte(10);
+	printi32(switchLike(3)); // Default case: 103
+	printByte(10);
+	printi32(switchLike(4)); // Default case: 103
+	printByte(10);
+	printi32(switchLike(5)); // Default case: 103
+	printByte(10);
+}

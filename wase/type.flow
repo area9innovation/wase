@@ -468,6 +468,41 @@ typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs 
 
 		// The instruction itself does not have any type info
 		makeDslTypeVar(acc);
+
+	} else if (op == "br_table") {
+		aarg = list2array(getDslList(opargs));
+		levels = map(pars, getDslInt);
+
+		blocks = ^(acc.blocks);
+		// println("Break_if " + i2s(levels) + " at " + i2s(length(blocks)));
+		if (levels != [] && forall(levels, \level -> level < length(blocks))) {
+			if (length(aarg) == 1) {
+				// No return value, but a condition
+				acc.unifyTypes(acc, opargs, list1(i32));
+				// Make sure all types of those blocks are checked
+				iter(levels, \level -> {
+					btype = ^(acc.blocks)[length(blocks) - (level + 1)];
+					acc.unifyTypes(acc, btype, list0);
+				})
+			} else {
+				// Some return value
+				defLevel = lastElement(levels, 0);
+				defType = ^(acc.blocks)[length(blocks) - (defLevel + 1)];
+
+				// Make sure all types of those blocks are checked
+				iter(levels, \level -> {
+					btype = ^(acc.blocks)[length(blocks) - (level + 1)];
+					acc.unifyTypes(acc, btype, defType);
+				});
+				acc.unifyTypes(acc, opargs, list2(defType, i32));
+			}
+		} else {
+			println("br_table out of blocks");
+		}
+
+		// The instruction itself does not have any type info
+		makeDslTypeVar(acc);
+
 	} else if (op == "clz" || op == "ctz" || op == "popcnt") {
 		val = infer();
 		acc.unifyTypes(acc, opargs, list1(val));

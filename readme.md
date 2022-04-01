@@ -55,10 +55,10 @@ The language is designed to expose the low-level flexibility of Wasm directly
 but in a friendly manner, which hides most of the complexity of the Wasm format.
 
 It is intended to be used as for low-level Wasm programs, such as language
-runtimes (memory allocations) for higher-level languages, or as a target 
-for languages that want to compile directly to Wasm. It also helps explain 
-how Wasm works by hiding some of the low-level details so the structure and
-semantics are clarified.
+runtimes (incl. memory allocators and gcs) for higher-level languages, or as 
+a target for languages that want to compile directly to Wasm. It also helps 
+explain how Wasm works by hiding some of the low-level details so the structure
+and semantics are clarified.
 
 ## Usage
 
@@ -150,8 +150,7 @@ files have been compiled to `.wasm` and then decompiled to `.wat`.
 Early beta. The compiler works, and the compiler can parse, type and compile 
 most instructions directly to WASM binaries that validate and run correctly.
 
-The most important missing instruction is `call_indirect`, the second most important
-is arguably `br_table`, plus all vector instructions.
+The most important missing instruction is `call_indirect`, plus all vector instructions.
 
 One problem in daily use is that error messages are currently without positions.
 
@@ -498,13 +497,13 @@ The alignment is expressed as what power of 2 to use:
 
 6 instructions plus all v128 SIMD instructions are not implemented yet:
 
-	call_indirect and br_table
+	call_indirect
 	table.init and elem.drop
 	memory.init and data.drop
 
 ## Control instructions
 
-call_indirect and br_table not implemented yet.
+call_indirect not implemented yet.
 
 | Wasm | Wase | Comments |
 |-|-|-|
@@ -516,7 +515,7 @@ call_indirect and br_table not implemented yet.
 | `nop` | `nop<>()` | No operation
 | `br` | `break<>()` or `break<int>()` or `break<>(val)`or `break<int>(val)` |  Default break level is 0. If there is a val, that is what we return with this break
 | `br_if` | `break_if<int>(cond)` or `break_if<>(cond)` or `break_if<int>(val, cond)` or `break_if<>(val, cond)` | Default break level is 0. If there is a val, that is what the break returns
-| `br_table` | TODO |
+| `br_table` | `br_table<l0, l1, l2, ..., ln, default>(index)` or `br_table<l0, l1, l2, ..., ln, default>(val, index)` | Breaks the number of levels as indexed by the index. If a val is given, that is what the break returns. See `tests/break_table.wase` for details.
 | `return` | `return` or `return exp` |
 | `call` | `fn(args)` |
 | `call_indirect` | `call_indirect<>(fnidx<id>(), args)` | - | TODO

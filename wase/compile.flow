@@ -430,10 +430,6 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 			} else if (name == "return") {
 				rettype = waseType(args[0]);
 				argtype = dsl2WasmBlockType(onError, rettype);
-
-				// TODO: Check that our top-level function return type matches argtype
-				println("TODO: Check that the hosting function has " + summarizeDsl(rettype) + " as the return type");
-
 				nacc = dsl2WaseInstruction(onError, acc, args[0]);
 				arrayPush(nacc, WasmReturn());
 
@@ -759,6 +755,10 @@ dslWasmOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id 
 	} else if (id == "break_if") {
 		levels = if (pars == []) 0 else getDslInt(pars[0]);
 		WasmBrIf(levels);
+	} else if (id == "br_table") {
+		levels = map(pars, getDslInt);
+		def = lastElement(levels, 0);
+		WasmBrTable(subrange(levels, 0, length(levels) - 1), def);
 	} else if (id == "select") {
 		if (isNumericWaseType(retType)) {
 			WasmSelect();
