@@ -1,0 +1,5 @@
+.vscode
+objc/
+*.bytecode
+*.class
+*.debug

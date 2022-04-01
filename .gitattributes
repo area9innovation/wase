@@ -1,0 +1,10 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+# Explicitly declare text files you want to always be normalized and converted
+# to unix line endings on checkout.
+*.flow text eol=lf
+*.lingo text eol=lf
+*.wase text eol=lf
+# Note that 'binary' means '-text -diff', and we still want diffs.
+*.bat -text
+*.cmd -text
