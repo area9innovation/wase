@@ -142,6 +142,9 @@ You can also run with wasm3, but it does not have as deep a stack, so the
 recursion above causes a stack overflow unless you provide a bigger stack to
 wasm3.
 
+To compare Wase against Wat, check out the `tests/` folder where the `.wase` 
+files have been compiled to `.wasm` and then decompiled to `.wat`.
+
 ## Status
 
 Early beta. The compiler works, and the compiler can parse, type and compile 
