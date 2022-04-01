@@ -105,11 +105,11 @@ export "_start" start() -> () {
 	co1 : f32 = convert_s<>(1);
 	co2 : f32 = convert_u<>(1);
 	co3 : f32 = convert_s<>(e1);
-	co3 : f32 = convert_s<>(e2);
-	co4 : f64 = convert_s<>(1);
-	co5 : f64 = convert_u<>(1);
-	co6 : f64 = convert_s<>(e1);
-	co7 : f64 = convert_s<>(e2);
+	co4 : f32 = convert_s<>(e2);
+	co5 : f64 = convert_s<>(1);
+	co6 : f64 = convert_u<>(1);
+	co7 : f64 = convert_s<>(e1);
+	co8 : f64 = convert_s<>(e2);
 
 	// Reinterpretation
 	ri1 : i32 = reinterpret<>(h1);

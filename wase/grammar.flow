@@ -9,7 +9,7 @@ defineWase() -> DslGrammar {
 	TODO:
 	switch at some point down the line
 
-	import table, memory
+	import table
 
 	*/
 	grammar = defineGrammar("wase", <<

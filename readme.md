@@ -1,6 +1,5 @@
 # Wase - a friendly, low-level language for Wasm
 
-(#wase---a-friendly-low-level-language-for-wasm)
 - [Wase - a friendly, low-level language for Wasm](#wase---a-friendly-low-level-language-for-wasm)
 	- [Introduction](#introduction)
 	- [Usage](#usage)
@@ -147,7 +146,6 @@ contexts, which will be rejected by the Wasm runtime.
 
 TODO:
 - Better parse errors with positions
-- Add support for Dead Code Elimination, or invoking wasm-opt?
 
 ## Development
 
@@ -196,13 +194,15 @@ At compile time, however, the compiler uses the real types for functions to ensu
 checking is complete. The syntax for functions is like this:
 
 	// A function that takes an i32 and a f64, and returns a i32
-	foo(i32, f64) -> i32 { ... }
+	foo(i32, f64) -> i32 { 42 }
 	
 	// Does not take any arguments, does not return anything
-	foo() -> () { ... }
+	foo() -> () { }
 
-	// Multi-values is supported with this syntax: This function returns both an i32 and a i64
-	foo(i32) -> (i32, i64) { ... }
+	// Multi-values is supported with this syntax: This function returns both an i32 and a f64
+	foo(i32) -> (i32, f64) { 
+		[ 42, 3.141 ]
+	}
 
 As a special type, there is also `auto`, where the type will be inferred by
 the compiler: 
@@ -227,14 +227,6 @@ You can use type annotations to verify types:
 	foo() -> auto {
 		bar : i32
 	}
-
-TODO:
-- Variable shadowing should give an error
-
-- Check that we do not have let-binding of () type
-
-- Better error messages when we have a type problem, like 
-   `i = load<>(0);` where there might not be enough info to infer the type
 
 ## Top-level Syntax
 
@@ -598,7 +590,7 @@ call_indirect and br_table not implemented yet.
 |-|-|-|
 | `local.get` | `id`
 | `local.set` | `id := exp`
-| `local.tee` | `id ::= exp` | Sets the value like set, but returns the result as well, like in C
+| `local.tee` | `id ::= exp` | Sets the value like `local.set`, but returns the result as well, like in C
 | `global.get` | `id`
 | `global.set` | `id := exp`
 

@@ -276,7 +276,7 @@
     local.set 81
     local.get 21
     f32.convert_i64_s
-    local.set 83
+    local.set 82
     local.get 22
     f32.convert_i64_s
     local.set 83
