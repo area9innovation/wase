@@ -501,86 +501,79 @@ dslBrace2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruct
 dslWasmOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id : string, pars : [DslAst], types : [DslAst], retType : DslAst) -> WaseInstruction {
 	wtypes = map(types, \t -> dsl2WasmBlockType(onError, t));
 	rtype = dsl2WasmBlockType(onError, retType);
+
+	memargs = \defalign -> {
+		if (pars != []) {
+			offset = getDslInt(pars[0]);
+			align = getDslInt(elementAt(pars, 1, DslInt(defalign)));
+			WasmMemArg(align, offset)
+		} else WasmMemArg(defalign, 0);
+	}
 	error = \ -> {
 		onError(node, "Unknown instruction " + id + "(" + superglue(types, summarizeDsl, ", ") + ") -> " + summarizeDsl(retType) + ". Check the types");
 		WasmUnreachable();
 	}
 	if (id == "store") {
-		if (pars != []) {
-			println("TODO: Compile parameters to store ignored");
-		}
 		valType = wtypes[1];
 		if (valType == WasmI32Type()) {
-			WasmI32Store(WasmMemArg(2, 0));
+			WasmI32Store(memargs(2));
 		} else if (valType == WasmI64Type()) {
-			WasmI64Store(WasmMemArg(3, 0));
+			WasmI64Store(memargs(3));
 		} else if (valType == WasmF32Type()) {
-			WasmF32Store(WasmMemArg(2, 0));
+			WasmF32Store(memargs(2));
 		} else if (valType == WasmF64Type()) {
-			WasmF64Store(WasmMemArg(3, 0));
+			WasmF64Store(memargs(3));
 		} else {
 			error();
 		}
 	} else if (id == "load") {
-		if (pars != []) {
-			println("TODO: Compile parameters to load ignored");
-		}
 		if (rtype == WasmI32Type()) {
-			WasmI32Load(WasmMemArg(2, 0));
+			WasmI32Load(memargs(2));
 		} else if (rtype == WasmI64Type()) {
-			WasmI64Load(WasmMemArg(3, 0));
+			WasmI64Load(memargs(3));
 		} else if (rtype == WasmF32Type()) {
-			WasmF32Load(WasmMemArg(2, 0));
+			WasmF32Load(memargs(2));
 		} else if (rtype == WasmF64Type()) {
-			WasmF64Load(WasmMemArg(3, 0));
+			WasmF64Load(memargs(3));
 		} else {
 			error();
 		}
 	} else if (id == "load8_s") {
-		if (pars != []) println("TODO: Compile parameters to load8_s ignored");
-		if (rtype == WasmI32Type()) WasmI32Load8_s(WasmMemArg(0, 0))
-		else if (rtype == WasmI64Type()) WasmI64Load8_s(WasmMemArg(0, 0))
+		if (rtype == WasmI32Type()) WasmI32Load8_s(memargs(0))
+		else if (rtype == WasmI64Type()) WasmI64Load8_s(memargs(0))
 		else error();
 	} else if (id == "load8_u") {
-		if (pars != []) println("TODO: Compile parameters to load8_u ignored");
-		if (rtype == WasmI32Type()) WasmI32Load8_u(WasmMemArg(0, 0))
-		else if (rtype == WasmI64Type()) WasmI64Load8_u(WasmMemArg(0, 0))
+		if (rtype == WasmI32Type()) WasmI32Load8_u(memargs(0))
+		else if (rtype == WasmI64Type()) WasmI64Load8_u(memargs(0))
 		else error();
 	} else if (id == "load16_s") {
-		if (pars != []) println("TODO: Compile parameters to load16_s ignored");
-		if (rtype == WasmI32Type()) WasmI32Load16_s(WasmMemArg(1, 0))
-		else if (rtype == WasmI64Type()) WasmI64Load16_s(WasmMemArg(1, 0))
+		if (rtype == WasmI32Type()) WasmI32Load16_s(memargs(1))
+		else if (rtype == WasmI64Type()) WasmI64Load16_s(memargs(1))
 		else error();
 	} else if (id == "load16_u") {
-		if (pars != []) println("TODO: Compile parameters to load16_u ignored");
-		if (rtype == WasmI32Type()) WasmI32Load16_u(WasmMemArg(1, 0))
-		else if (rtype == WasmI64Type()) WasmI64Load16_u(WasmMemArg(1, 0))
+		if (rtype == WasmI32Type()) WasmI32Load16_u(memargs(1))
+		else if (rtype == WasmI64Type()) WasmI64Load16_u(memargs(1))
 		else error();
 	} else if (id == "load32_s") {
-		if (pars != []) println("TODO: Compile parameters to load32_s ignored");
-		if (rtype == WasmI64Type()) WasmI64Load32_s(WasmMemArg(2, 0))
+		if (rtype == WasmI64Type()) WasmI64Load32_s(memargs(2))
 		else error();
 	} else if (id == "load32_u") {
-		if (pars != []) println("TODO: Compile parameters to load32_u ignored");
-		if (rtype == WasmI64Type()) WasmI64Load32_u(WasmMemArg(2, 0))
+		if (rtype == WasmI64Type()) WasmI64Load32_u(memargs(2))
 		else error();
 		
 	} else if (id == "store8") {
 		valType = wtypes[1];
-		if (pars != []) println("TODO: Compile parameters to store8 ignored");
-		if (valType == WasmI32Type()) WasmI32Store8(WasmMemArg(0, 0))
-		else if (valType == WasmI64Type()) WasmI64Store8(WasmMemArg(0, 0))
+		if (valType == WasmI32Type()) WasmI32Store8(memargs(0))
+		else if (valType == WasmI64Type()) WasmI64Store8(memargs(0))
 		else error();
 	} else if (id == "store16") {
 		valType = wtypes[1];
-		if (pars != []) println("TODO: Compile parameters to store16 ignored");
-		if (valType == WasmI32Type()) WasmI32Store16(WasmMemArg(1, 0))
-		else if (valType == WasmI64Type()) WasmI64Store16(WasmMemArg(1, 0))
+		if (valType == WasmI32Type()) WasmI32Store16(memargs(1))
+		else if (valType == WasmI64Type()) WasmI64Store16(memargs(1))
 		else error();
 	} else if (id == "store32") {
 		valType = wtypes[1];
-		if (pars != []) println("TODO: Compile parameters to store32 ignored");
-		if (valType == WasmI64Type()) WasmI64Store32(WasmMemArg(2, 0))
+		if (valType == WasmI64Type()) WasmI64Store32(memargs(2))
 		else error();
 
 	} else if (id == "clz") { 

@@ -5,7 +5,6 @@
 	- [Usage](#usage)
 	- [Example](#example)
 	- [Status](#status)
-	- [Development](#development)
 - [The Wase Programming Language](#the-wase-programming-language)
 	- [Type system](#type-system)
 	- [Top-level Syntax](#top-level-syntax)
@@ -32,7 +31,9 @@
 	- [Data](#data)
 	- [Tables](#tables)
 - [Standard library](#standard-library)
-- [Implementation notes](#implementation-notes)
+- [Development](#development)
+	- [Implementation notes](#implementation-notes)
+	- [TODOS](#todos)
 
 ## Introduction
 
@@ -144,40 +145,6 @@ One problem in daily use is that error messages are currently without positions.
 This compiler is not validating. For example, you can use dynamic code in constant
 contexts, which will be rejected by the Wasm runtime.
 
-TODO:
-- Better parse errors with positions
-
-## Development
-
-To develop on Wase itself, first install flow9:
-
-	https://github.com/area9innovation/flow9
-
-We recommend to use VS Code with the flow9 extension.
-
-To run the compiler from the command line, use
-
-	bin\wased tests/euler1.wase
-
-This will compile the compiler, and use this to compile the `euler1.wase` file
-to a `euler1.wasm` file.
-
-When you make changes to the compiler, it is recommended to make sure there are
-no regressions by running all test cases and produce `.wat` output as well 
-using `wasm2wat`:
-
-	bin\wased -- test=1 wat=1
-
-This requires that you install WABT first 
-
-	https://github.com/WebAssembly/wabt
-
-You can compile a new `wase.jar` binary release used by `bin\wase` using:
-
-	flowc1 wase/wase.flow jar=bin/wase.jar
-
-This requires a Java JDK like OpenJDK.
-
 Join the flow9 discord, which also hosts discussions on Wase:
 
 	https://discord.gg/9gGJu6KU
@@ -237,10 +204,6 @@ The compiler will reorder the top-level, so imports, tables, memory and data
 come first in the original order, and then after that, globals and functions
 in their original order.
 
-TODO:
-- Support mutual recursion by recording the types and indexes of all globals
-  and functions before type checking and code gen
-
 ## Global syntax
 
 The grammar for globals is like this:
@@ -267,13 +230,6 @@ Some examples:
 	export changes : mutable f64 = 1.023;
 	// Exports this global to the host with the name "external"
 	export "external" internal : i32 = 1;
-
-TODO:
-- Extend the type checker to check mutability of globals
-
-- Encode 64-bit constants as S64, rather than U64. 
-
-- Check all I32 whether they are S32 or U32
 
 ## Function syntax
 
@@ -443,21 +399,6 @@ inner most block, while `break<1>()` breaks out of the next level.
 	// This is "F"
 	printByte(70);
 
-TODO:
-- More natural call-indirect syntax
-	calls : table< (i32) -> i32 > = [fn1, fn2, fn3];
-	call_indirect<calls>(index)(args)
-
-	fnidx<calls, fn1>  = how to get a function pointer
-
-- More natural switch syntax?
-	switch (index) {
-		0: {}
-		1: {}
-		2: {}
-		default: whatever;
-	}
-
 ## Low level instructions
 
 The low-level instructions in Wase have the form
@@ -468,16 +409,6 @@ where pars are parameters for the operation decided at compile time,
 while args are arguments to the instruction put on the stack.
 
 The instruction has the same name as the corresponding Wasm WAT format.
-
-TODO:
-We support a special "hole<>()" instruction, which does nothing.
-The hole construct could in principle allow stack-like code:
-
-	[1, hole<>() + 2 ]
-
-Right now, typing infer that type to (i32, i32), while it really is
-i32. So the code above compiles correctly, and works at runtime, but
-our type inference is not smart enough to know this.
 
 ## Load/store
 
@@ -493,10 +424,17 @@ The width of the load is inferred from the use of the value.
 	// This is f32 load, since f is f32
 	f : f32 = load<>(32):
 
-TODO: Support offset and alignment:
+You can also define the offset and alignment explicitly:
 
 	load<offset>(index)
 	load<offset, align>(index)
+
+The alignment is expressed as what power of 2 to use:
+
+	v : i32 = load8_u<0, 0>(i) // aligment at 1 byte
+	v : i32 = load16_u<0, 1>(i) // aligment at 2 bytes
+	v : i32 = load32_u<0, 2>(i) // aligment at 4 bytes
+	v : i64 = load_u<0, 3>(i) // aligment at 8 bytes
 
 Stores are written like this:
 
@@ -507,7 +445,8 @@ The width of the store is inferred from the type of the value.
 	// This is f64.store, because 2.0 is f64
 	store<>(32, 2.0);
 
-TODO: Support offset and alignment:
+You can also define the offset and alignment explicitly:
+
 	store<offset>(index, value)
 	store<offset, alignment>(index, value)
 
@@ -562,12 +501,12 @@ call_indirect and br_table not implemented yet.
 | `ifelse` | `if (cond) exp else exp` | Type is inferred
 | `unreachable` | `unreachable<>()` |
 | `nop` | `nop<>()` | No operation
-| `br` | `break<>()` or `break<int>()` or `break<>(val)`or `break<int>(val)` |  Default break is 0. If there is a val, that is what we return with this break
+| `br` | `break<>()` or `break<int>()` or `break<>(val)`or `break<int>(val)` |  Default break level is 0. If there is a val, that is what we return with this break
 | `br_if` | `break_if<int>(cond)` or `break_if<>(cond)` or `break_if<int>(val, cond)` or `break_if<>(val, cond)` | Default break level is 0. If there is a val, that is what the break returns
 | `br_table` | TODO |
 | `return` | `return` or `return exp` |
 | `call` | `fn(args)` |
-| `call_indirect` | `call_indirect<>(fnidx<id>(), args)` | - | 
+| `call_indirect` | `call_indirect<>(fnidx<id>(), args)` | - | TODO
 
 ## Reference Instructions
 
@@ -615,9 +554,9 @@ memory.init and data.drop not implemented yet. Requires data indexing.
 
 | Wasm | Wase | Comments |
 -|-|-|
-| `*.load` | `load<>(address)` | The type is inferred from the use. TODO: Support offset and alignment
+| `*.load` | `load<>(address)` or `load<offset>(address)` or `load<offset, align>(address)`| The type is inferred from the use.
 | `*.load(8,16,32)_(s,u)` | `load(8,16,32)_(s,u)<>(address)` | Load the lower N bits from a memory address. _s implies sign-extension. The type is inferred from the use
-| `*.store` | `store<>(address, value)` | The width is inferred from the value.  TODO: Support offset and alignment
+| `*.store` | `store<>(address, value)` | The width is inferred from the value.
 | `*.store(8,16,32)` | `store(8,16,32)<>(address, value)` | Store the lower N bits of a value. The width is inferred from the value
 | `memory.size` | `memory.size<>()` | Returns the unsigned size of memory in terms of pages (64k)
 | `memory.grow` | `memory.grow<>(size)` | Increases the memory by `size` pages. Returns the previous size of memory, or -1 if memory can not increase
@@ -756,16 +695,6 @@ You can place constant data in the output file using syntax like this:
 
 The result is that this data is copied into memory on startup.
 
-TODO:
-- Add syntax for passive data, which is not automatically copied into memory
-  until memory.init is called.
-
-- Add support for naming the data index for memory.init and data.drop
-
-	data id : 1, 23, ... ?
-
-- Capture the address or size of data segments to make use easier?
-
 ## Tables
 
 Importing of tables is done like this:
@@ -775,11 +704,6 @@ Importing of tables is done like this:
 
 	// Table of externs of min size 5, max size 10, named module.myexterns in the host
 	import myexterns : table<extern>(5 10) = module.myexterns;
-
-TODO:
-- Document the implicit tables for ref.func 
-- Automatically construct table for indirect calls
-- Add syntax for elements, which are pieces to initialize tables
 
 # Standard library
 
@@ -806,7 +730,42 @@ a double-linked list of blocks, and a separate area for small allocations
 (<16 bytes>). It will be probably be refactored to expose the different 
 management disciplines more directly.
 
-# Implementation notes
+# Development
+
+Wase is written in flow9. To develop on Wase itself, first install flow9:
+
+	https://github.com/area9innovation/flow9
+
+We recommend to use VS Code with the flow9 extension.
+
+To run the compiler from the command line, use
+
+	bin\wased tests/euler1.wase
+
+This will compile the compiler, and use this to compile the `euler1.wase` file
+to a `euler1.wasm` file. It is thus exactly the same as `bin\wase` except that
+it uses the latest source of the compiler.
+
+When you make changes to the compiler, it is recommended to make sure there are
+no regressions by running all test cases and produce `.wat` output as well 
+using `wasm2wat`:
+
+	bin\wased -- test=1 wat=1
+
+This requires that you install WABT first 
+
+	https://github.com/WebAssembly/wabt
+
+If there are regressions, the `.wat` and/or `.wasm` files in the `tests`
+folder will have changes when you do `git status`.
+
+You can compile a new `wase.jar` binary release used by `bin\wase` using:
+
+	flowc1 wase/wase.flow jar=bin/wase.jar
+
+This requires a Java JDK like OpenJDK.
+
+## Implementation notes
 
 For each instruction, we need to define three basic different things:
 
@@ -814,3 +773,57 @@ For each instruction, we need to define three basic different things:
 - Typing. Done in `type.flow` using DSL typing.
 - Compilation. Done in `compile.flow` using the Wase intermediate AST
 - Low-level compilation to bytecode is done in the flow9 repository in `flow9/lib/formats/wasm/wasm_encode.flow`
+
+## TODOS
+
+There are a number of things, that would make Wase better:
+
+- Better parse errors with positions
+- Support mutual recursion by recording the types and indexes of all globals
+  and functions before type checking and code gen
+
+- Extend the type checker to check mutability of globals
+
+- Add the last instructions
+- Add SIMD instructions
+- Complete the Wasi interface
+- Encode 64-bit constants as S64, rather than U64. 
+- Check all I32 encodings whether they are S32 or U32
+
+- More natural call-indirect syntax
+	calls : table< (i32) -> i32 > = [fn1, fn2, fn3];
+	call_indirect<calls>(index)(args)
+
+	fnidx<calls, fn1>  = how to get a function pointer
+
+- More natural switch syntax?
+	switch (index) {
+		0: {}
+		1: {}
+		2: {}
+		default: whatever;
+	}
+
+- We support a special "hole<>()" instruction, which does nothing.
+  The hole construct could in principle allow stack-like code:
+
+	[1, hole<>() + 2 ]
+
+  Right now, typing infer that type to (i32, i32), while it really is
+  i32. So the code above compiles correctly, and works at runtime, but
+  our type inference is not smart enough to know this.
+
+- Refactor the malloc to be separate allocation policies
+
+- Add syntax for passive data, which is not automatically copied into memory
+  until memory.init is called.
+
+- Add support for naming the data index for memory.init and data.drop
+
+	data id : 1, 23, ... ?
+
+- Capture the address or size of data segments to make use easier?
+
+- Document the implicit tables for ref.func 
+- Automatically construct table for indirect calls
+- Add syntax for elements, which are pieces to initialize tables
