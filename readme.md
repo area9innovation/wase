@@ -1,8 +1,45 @@
 # Wase - a friendly, low-level language for Wasm
 
+(#wase---a-friendly-low-level-language-for-wasm)
+- [Wase - a friendly, low-level language for Wasm](#wase---a-friendly-low-level-language-for-wasm)
+	- [Introduction](#introduction)
+	- [Usage](#usage)
+	- [Example](#example)
+	- [Status](#status)
+	- [Development](#development)
+- [The Wase Programming Language](#the-wase-programming-language)
+	- [Type system](#type-system)
+	- [Top-level Syntax](#top-level-syntax)
+	- [Global syntax](#global-syntax)
+	- [Function syntax](#function-syntax)
+	- [Include](#include)
+- [Expressions](#expressions)
+	- [Control flow](#control-flow)
+	- [Blocks](#blocks)
+	- [Low level instructions](#low-level-instructions)
+	- [Load/store](#loadstore)
+- [Instructions](#instructions)
+	- [Control instructions](#control-instructions)
+	- [Reference Instructions](#reference-instructions)
+	- [Parametric Instructions](#parametric-instructions)
+	- [Variable Instructions](#variable-instructions)
+	- [Table Instructions](#table-instructions)
+	- [Memory Instructions](#memory-instructions)
+	- [Numeric Instructions](#numeric-instructions)
+	- [**Vector Instructions**](#vector-instructions)
+- [Wasm Sections](#wasm-sections)
+	- [Imports of globals and functions](#imports-of-globals-and-functions)
+	- [Memory](#memory)
+	- [Data](#data)
+	- [Tables](#tables)
+- [Standard library](#standard-library)
+- [Implementation notes](#implementation-notes)
+
+## Introduction
+
 Make WebAssembly Easy. WASE is a language, which tries to make WASM easy to write
-directly. The language maps one-to-one with WebAssembly, and compiles directly
-to Wasm bytecode. As such, it can be seen as an alternative to the WAT text format,
+directly. The language maps closely to WebAssembly, and compiles directly to Wasm 
+bytecode. As such, it can be seen as an alternative to the WAT text format,
 but it is easier to use because of these things:
 
 - It uses more conventional syntax rather than S-expr
@@ -14,10 +51,10 @@ to memory through load/stores. This is a low-level language without real data
 structures, lambdas/closures, nor memory management, but those can be written
 in this language.
 
-The language is designed to expose the full low-level flexibility of Wasm directly
+The language is designed to expose the low-level flexibility of Wasm directly
 but in a friendly manner, which hides most of the complexity of the Wasm format.
 
-# Usage
+## Usage
 
 To compile a `tests/euler1.wase` program to `tests/euler1.wasm`, clone this repository
 and then use
@@ -28,7 +65,7 @@ This requires a suitable Java Runtime in your path.
 
 You can also consider to add `wase/bin` to your path.
 
-# Example
+## Example
 
 Here is a solution to the Project Euler challenge 1 (https://projecteuler.net/problem=1)
 written in Wase:
@@ -95,10 +132,10 @@ You can also run with wasm3, but it does not have as deep a stack, so the
 recursion above causes a stack overflow unless you provide a bigger stack to
 wasm3.
 
-# Status
+## Status
 
-The basics work, and the compiler can parse, type and compile most instructions
-directly to WASM binaries that validate and run correctly.
+Early beta. The compiler works, and the compiler can parse, type and compile 
+most instructions directly to WASM binaries that validate and run correctly.
 
 The most important missing instruction is `call_indirect`, the second most important
 is arguably `br_table`, plus all vector instructions.
@@ -112,7 +149,7 @@ TODO:
 - Better parse errors with positions
 - Add support for Dead Code Elimination, or invoking wasm-opt?
 
-# Development
+## Development
 
 To develop on Wase itself, first install flow9:
 
@@ -137,17 +174,19 @@ This requires that you install WABT first
 
 	https://github.com/WebAssembly/wabt
 
-You can compile a new wase.jar binary release using:
+You can compile a new `wase.jar` binary release used by `bin\wase` using:
 
 	flowc1 wase/wase.flow jar=bin/wase.jar
 
-This requires OpenJDK.
+This requires a Java JDK like OpenJDK.
 
 Join the flow9 discord, which also hosts discussions on Wase:
 
 	https://discord.gg/9gGJu6KU
 
-# Type system
+# The Wase Programming Language
+
+## Type system
 
 Wase supports the types of Wasm:
 
@@ -270,97 +309,14 @@ TODO:
 If the program contains a function called `main`, it is marked as the
 function that starts the program.
 
-## Imports of globals and functions
-
-Use this syntax to import a function from the host:
-
-	// Function import from host
-	import println : (i32) -> void = console.log;
-
-Notice imports have to be the first thing in the program.
-
-The same works for globals:
-
-	// Global import
-	import id : i32 = module.name;
-	import id : mutable i32 = module.name;
-
-## Memory
-
-You have to explicitly define how much memory is available for the runtime.
-To reserve memory, use syntax like this:
-
-	export? memory <min> <max>?;
-
-or in case it is imported from the host:
-
-	import memory <min> <max>? = module.name;
-
-Examples:
-
-	// Reserves one page of 64k
-	memory 1;
-
-	// Reserves 64k at first, but maximum 1mb
-	memory 1 4;
-
-	// Reserves 128k and exports this memory under the name "memory" to the host
-	export memory 2;
-
-	// Reserves and exports memory under the name "mymem"
-	export "mymem" memory 1 4;
-
-	// 64k Memory import from the host
-	import memory 1 = module.name;
-
-## Data
-
-You can place constant data in the output file using syntax like this:
-
-	// Strings are placed as UTF8 but with the length first
-	data "utf8 string is very comfortable";
-
-	// We can have a sequence of data. Each int is a byte.
-	data 1, 2, 3, "text", 3.0;
-
-	// Moving the data into offset 32 of the memory
-	data "Hello, world!" offset 32;
-
-The result is that this data is copied into memory on startup.
-
-TODO:
-- Add syntax for passive data, which is not automatically copied into memory
-  until memory.init is called.
-
-- Add support for naming the data index for memory.init and data.drop
-
-	data id : 1, 23, ... ?
-
-- Capture the address or size of data segments to make use easier?
-
-## Tables
-
-Importing of tables is done like this:
-
-	// Table of functions of min size 1, named module.mytable in the host
-	import mytable : table<func>(1) = module.mytable;
-
-	// Table of externs of min size 5, max size 10, named module.myexterns in the host
-	import myexterns : table<extern>(5 10) = module.myexterns;
-
-TODO:
-- Document the implicit tables for ref.func 
-- Automatically construct table for indirect calls
-- Add syntax for elements, which are pieces to initialize tables
-
-# Include
+## Include
 
 Wase code can be split into multiple files, and included using this syntax at the
 top-level:
 
 	include lib/runtime;
 
-The compiler will read the file "wase/lib/runtime.wase", parse it, and splice the 
+The compiler will read the file `wase/lib/runtime.wase`, parse it, and splice the 
 result into that place in the code. If a file is included more than once (also 
 transitively), it is only included the first occurrence.
 
@@ -523,14 +479,14 @@ The instruction has the same name as the corresponding Wasm WAT format.
 
 TODO:
 We support a special "hole<>()" instruction, which does nothing.
-- The hole construct could in principle allows stack-like code:
+The hole construct could in principle allow stack-like code:
 
 	[1, hole<>() + 2 ]
 
 Right now, typing infer that type to (i32, i32), while it really is
 i32. So the code above compiles correctly, and works at runtime, but
 our type inference is not smart enough to know this.
- 
+
 ## Load/store
 
 Loads from memory are written like this:
@@ -594,7 +550,7 @@ Loads and stores also exist in versions that work with smaller bit-widths:
 	// Stores the lower 32 bits of the value at the given address
 	store32<>(address, value);
 
-# Correspondance between Wasm and Wase syntax
+# Instructions
 
 6 instructions plus all v128 SIMD instructions are not implemented yet:
 
@@ -748,11 +704,121 @@ None of these are implemented yet.
 | Wasm | Wase | Comments |
 |-|-|-|
 
+# Wasm Sections
+
+## Imports of globals and functions
+
+Use this syntax to import a function from the host:
+
+	// Function import from host
+	import println : (i32) -> void = console.log;
+
+Notice imports have to be the first thing in the program.
+
+The same works for globals:
+
+	// Global import
+	import id : i32 = module.name;
+	import id : mutable i32 = module.name;
+
+## Memory
+
+You have to explicitly define how much memory is available for the runtime.
+To reserve memory, use syntax like this:
+
+	export? memory <min> <max>?;
+
+or in case it is imported from the host:
+
+	import memory <min> <max>? = module.name;
+
+Examples:
+
+	// Reserves one page of 64k
+	memory 1;
+
+	// Reserves 64k at first, but maximum 1mb
+	memory 1 4;
+
+	// Reserves 128k and exports this memory under the name "memory" to the host
+	export memory 2;
+
+	// Reserves and exports memory under the name "mymem"
+	export "mymem" memory 1 4;
+
+	// 64k Memory import from the host
+	import memory 1 = module.name;
+
+## Data
+
+You can place constant data in the output file using syntax like this:
+
+	// Strings are placed as UTF8 but with the length first
+	data "utf8 string is very comfortable";
+
+	// We can have a sequence of data. Each int is a byte.
+	data 1, 2, 3, "text", 3.0;
+
+	// Moving the data into offset 32 of the memory
+	data "Hello, world!" offset 32;
+
+The result is that this data is copied into memory on startup.
+
+TODO:
+- Add syntax for passive data, which is not automatically copied into memory
+  until memory.init is called.
+
+- Add support for naming the data index for memory.init and data.drop
+
+	data id : 1, 23, ... ?
+
+- Capture the address or size of data segments to make use easier?
+
+## Tables
+
+Importing of tables is done like this:
+
+	// Table of functions of min size 1, named module.mytable in the host
+	import mytable : table<func>(1) = module.mytable;
+
+	// Table of externs of min size 5, max size 10, named module.myexterns in the host
+	import myexterns : table<extern>(5 10) = module.myexterns;
+
+TODO:
+- Document the implicit tables for ref.func 
+- Automatically construct table for indirect calls
+- Add syntax for elements, which are pieces to initialize tables
+
+# Standard library
+
+There is a minimal standard library you get with `include lib/runtime`.
+It contains these helpers:
+
+	// Prints a byte to stdout
+	printByte(i : i32) -> ()
+
+	// Print unsigned i32 as decimal
+	printu32(i : i32) -> ()
+
+	// Print signed i32 as decimal
+	printi32(i : i32) -> ()
+
+	// Prints unsigned as hexadecimal
+	printHex32(i : i32) -> ()
+
+These require Wasi. There is a stub for the wasi interface in `lib/wasi.wase`
+but that is very incomplete at the moment.
+
+There is a start of a memory allocator in `lib/malloc.wase`. It has
+a double-linked list of blocks, and a separate area for small allocations
+(<16 bytes>). It will be probably be refactored to expose the different 
+management disciplines more directly.
+
 # Implementation notes
 
 For each instruction, we need to define three basic different things:
 
 - Syntax. Done in `grammar.flow` using Gringo.
-- Typing. Done in `type.flow` using DSL typing
+- Typing. Done in `type.flow` using DSL typing.
 - Compilation. Done in `compile.flow` using the Wase intermediate AST
 - Low-level compilation to bytecode is done in the flow9 repository in `flow9/lib/formats/wasm/wasm_encode.flow`
