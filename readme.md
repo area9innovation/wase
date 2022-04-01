@@ -54,6 +54,12 @@ in this language.
 The language is designed to expose the low-level flexibility of Wasm directly
 but in a friendly manner, which hides most of the complexity of the Wasm format.
 
+It is intended to be used as for low-level Wasm programs, such as language
+runtimes (memory allocations) for higher-level languages, or as a target 
+for languages that want to compile directly to Wasm. It also helps explain 
+how Wasm works by hiding some of the low-level details so the structure and
+semantics are clarified.
+
 ## Usage
 
 To compile a `tests/euler1.wase` program to `tests/euler1.wasm`, clone this repository
@@ -64,6 +70,10 @@ and then use
 This requires a suitable Java Runtime in your path.
 
 You can also consider to add `wase/bin` to your path.
+
+You can also run it directly using java:
+
+	java -jar bin\wase.jar tests/euler1.-wase
 
 ## Example
 
@@ -189,11 +199,13 @@ This also works for locals:
 
 The type inference is based on Hindley-Milner style unification, so it should be robust.
 
-You can use type annotations to verify types:
+You can use explicit type annotations to verify types:
 
 	foo() -> auto {
 		bar : i32
 	}
+
+There are no implicit type conversions.
 
 ## Top-level Syntax
 
@@ -202,7 +214,7 @@ Wasm. This includes globals, functions, imports, tables and data.
 
 The compiler will reorder the top-level, so imports, tables, memory and data
 come first in the original order, and then after that, globals and functions
-in their original order.
+in their original order, in accordance with Wasm requirements.
 
 ## Global syntax
 
@@ -273,7 +285,8 @@ The program is only type checked after includes are resolved.
 # Expressions
 
 The body of globals and functions are expressions. There are no
-statements, but only expressions. The syntax is pretty standard:
+statements, but only expressions. The syntax is close to the
+typescript family:
 
 	h32 : i32 = 1;	// Int constants are i32
 	h32 : i32 = 0xDEADBEEF; // Hex notation
@@ -424,18 +437,6 @@ The width of the load is inferred from the use of the value.
 	// This is f32 load, since f is f32
 	f : f32 = load<>(32):
 
-You can also define the offset and alignment explicitly:
-
-	load<offset>(index)
-	load<offset, align>(index)
-
-The alignment is expressed as what power of 2 to use:
-
-	v : i32 = load8_u<0, 0>(i) // aligment at 1 byte
-	v : i32 = load16_u<0, 1>(i) // aligment at 2 bytes
-	v : i32 = load32_u<0, 2>(i) // aligment at 4 bytes
-	v : i64 = load_u<0, 3>(i) // aligment at 8 bytes
-
 Stores are written like this:
 
 	store<>(index, value);
@@ -444,11 +445,6 @@ The width of the store is inferred from the type of the value.
 
 	// This is f64.store, because 2.0 is f64
 	store<>(32, 2.0);
-
-You can also define the offset and alignment explicitly:
-
-	store<offset>(index, value)
-	store<offset, alignment>(index, value)
 
 Loads and stores also exist in versions that work with smaller bit-widths:
 
@@ -480,6 +476,20 @@ Loads and stores also exist in versions that work with smaller bit-widths:
 
 	// Stores the lower 32 bits of the value at the given address
 	store32<>(address, value);
+
+You can also define the offset and alignment explicitly:
+
+	load<offset>(index)
+	load<offset, align>(index)
+	store<offset>(index, value)
+	store<offset, alignment>(index, value)
+
+The alignment is expressed as what power of 2 to use:
+
+	v : i32 = load8_u<0, 0>(i) // aligment at 1 byte
+	v : i32 = load16_u<0, 1>(i) // aligment at 2 bytes
+	v : i32 = load32_u<0, 2>(i) // aligment at 4 bytes
+	v : i64 = load_u<0, 3>(i) // aligment at 8 bytes
 
 # Instructions
 
@@ -781,8 +791,6 @@ There are a number of things, that would make Wase better:
 - Better parse errors with positions
 - Support mutual recursion by recording the types and indexes of all globals
   and functions before type checking and code gen
-
-- Extend the type checker to check mutability of globals
 
 - Add the last instructions
 - Add SIMD instructions

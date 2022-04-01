@@ -43,8 +43,12 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 				gname = getDslString(args[0]);
 				acc.errorPrefix := gname + ": ";
 				type = getChildType(2);
-				isMutable = getDslBool(args[3]);
-				// TODO: Record if it is mutable
+				isMutable = getDslInt(args[3]);
+
+				if (isMutable == 0) {
+					// Record that this is NOT mutable
+					acc.constantGlobals := insertSet(^(acc.constantGlobals), gname);
+				}
 
 				if (containsKeyTree(^(acc.env), gname)) {
 					acc.onError(node, "Global '" + gname + "' is duplicate");
@@ -168,7 +172,12 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 				gname = getDslString(args[0]);
 				type = getChildType(1);
 
-				// TODO: Record that this id is mutable
+				isMutable = getDslInt(args[2]);
+				if (isMutable == 0) {
+					// Record that this is NOT mutable
+					acc.constantGlobals := insertSet(^(acc.constantGlobals), gname);
+				}
+
 				if (containsKeyTree(^(acc.env), gname)) {
 					acc.onError(node, "import global '" + gname + "' is duplicate");
 				}
@@ -240,6 +249,10 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 				mtype = lookupTree(^(acc.env), vname);
 				valtype = getChildType(1);
 				mtype ?? {
+					if (containsSet(^(acc.constantGlobals), vname)) {
+						acc.onError(node, "global '" + vname + "' is not mutable");
+					}
+
 					acc.unifyTypes(acc, mtype, valtype);
 					DslList(makeList());
 				} : {
