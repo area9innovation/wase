@@ -1,13 +1,7 @@
 include lib/runtime;
 
 export memory 1;
-/*
-foo () -> f64 {
-	loop {
-		break_if<1>(3.141, 0)
-	}
-}
-*/
+
 export _start() -> () {
 	block {
 		i = 1;
