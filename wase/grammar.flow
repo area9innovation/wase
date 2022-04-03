@@ -13,7 +13,7 @@ defineWase() -> DslGrammar {
 
 	*/
 	grammar = defineGrammar("wase", <<
-		decl = memory | import | data | element | include | global | function | $"wase_empty_0";
+		decl = memory | import | data | include | global | function | $"wase_empty_0";
 
 		global = optexport id $"swap" 
 				":" ws optmutable type $"swap"
@@ -38,11 +38,6 @@ defineWase() -> DslGrammar {
 			("offset" ws exp | $$"0" $"s2i" $"int_1")
 			";" ws decl $"data_3";
 			datavalue = int | string | double;
-
-		element = "element" ws
-			$"nil" id $"cons" ("," ws id $"cons")*
-			("offset" ws exp | $$"0" $"s2i" $"int_1")
-			";" ws decl $"element_3";
 
 		include = "include" !letterOrDigit ws $(letterOrDigit+ ("/" letterOrDigit+)+) ws ";" ws decl $"wase_include_2";
 

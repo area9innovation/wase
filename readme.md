@@ -14,6 +14,7 @@
 - [Expressions](#expressions)
 	- [Control flow](#control-flow)
 	- [Blocks](#blocks)
+	- [Indirect calls](#indirect-calls)
 	- [Low level instructions](#low-level-instructions)
 	- [Load/store](#loadstore)
 - [Instructions](#instructions)
@@ -414,6 +415,33 @@ inner most block, while `break<1>()` breaks out of the next level.
 	// This is "F"
 	printByte(70);
 
+## Indirect calls
+
+Wase helps make indirect calls easier to work with. Consider a set of functions like this:
+
+	foo() -> i32 { 42 }
+	bar() -> i32 { 666	}
+	add1(v : i32) -> i32 { v + 1 }
+	sub1(v : i32) -> i32 { v - 1 }
+
+Now it is possible to treat these functions as pointers, and call them indirectly using
+`call_indirect` using the `fn<id>` construct:
+
+	call_indirect<>(fn<bar>());  // 666
+	call_indirect<>(fn<foo>());  // 42
+
+	call_indirect<>(41, fn<add1>()); // 42
+	call_indirect<>(43, fn<sub1>()); // 43
+
+Behind the scenes, Wase will collect all `fn<id>` in the program, construct a element table for
+them, and resolve them into i32 as required by `call_indirect`. If you treat these functions
+as first order, the type of `fn<bar>` is i32. Also notice that the type of the indirect function is
+inferred, so you might have to add a type annotation to resolve what the resulting type is:
+
+	myfn : i32 = if (cond) fn<bar>() else fn<foo>();
+	// We add a type annotation to "explain" that this call is for functions of type () -> i32 
+	call_indirect(myfn) : i32;
+
 ## Low level instructions
 
 The low-level instructions in Wase have the form
@@ -515,7 +543,7 @@ The alignment is expressed as what power of 2 to use:
 | `br_table` | `br_table<l0, l1, l2, ..., ln, default>(index)` or `br_table<l0, l1, l2, ..., ln, default>(val, index)` | Breaks the number of levels as indexed by the index. If a val is given, that is what the break returns. See `tests/break_table.wase` for details.
 | `return` | `return` or `return exp` |
 | `call` | `fn(args)` |
-| `call_indirect` | `call_indirect<>(args, fnindex)` or `call_indirect<>(fnindex)` or `call_indirect<tablei>(args, fnindex)` | Requires an "element foo, bar" section where the indexes are resolved to function ids
+| `call_indirect` | `call_indirect<>(args, fn<id>())` or `call_indirect<>(fn<id>())` | The `fn<id>()` construct will convert the function `id` to an index into an automatically constructed element table of function index pointers.
 
 ## Reference Instructions
 
@@ -796,10 +824,6 @@ There are a number of things, that would make Wase better:
 - Complete the Wasi interface
 - Encode 64-bit constants as S64, rather than U64. 
 - Check all I32 encodings whether they are S32 or U32
-
-- More natural call-indirect syntax
-	call_indirect<>(args, fnidx<foo>())
-	fnidx<fn1>()  = how to get a function pointer and construct the element table indirectly
 
 - More natural switch syntax?
 	switch (index) {

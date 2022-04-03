@@ -149,12 +149,6 @@ dsl2wase(onError : (DslAst, string) -> void, d : DslAst) -> Wase {
 				offset = expr(1);
 				WaseData(offset, bytes, rec(2));
 
-			} else if (name == "element") {
-				data = list2array(getDslList(args[0]));
-				fns = map(data, getDslString);
-				offset = expr(1);
-				WaseElements(offset, fns, rec(2));
-
 			} else if (name == "wase_empty") {
 				WaseEmpty()
 
@@ -815,6 +809,12 @@ dslWasmOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id 
 
 		tableId = if (pars == []) "" else getDslString(pars[0]);
 		WaseCallIndirect(fnType, tableId)
+	} else if (id == "fn") {
+		fn = getDslString(pars[0]);
+		if (fn == "") {
+			println("Expected function id for fn");
+		}
+		WaseFunctionIndex(fn);
 		
 	} else {
 		onError(node, "Can not compile wasm op " + id);

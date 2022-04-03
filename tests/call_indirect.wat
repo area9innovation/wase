@@ -97,6 +97,7 @@
     i32.const 1
     i32.sub)
   (func (;9;) (type 4)
+    (local i32)
     i32.const 0
     call_indirect (type 2)
     call 3
@@ -118,9 +119,21 @@
     call_indirect (type 3)
     call 3
     i32.const 10
+    call 1
+    i32.const 1
+    if (result i32)  ;; label = @1
+      i32.const 0
+    else
+      i32.const 1
+    end
+    local.set 0
+    local.get 0
+    call_indirect (type 2)
+    call 3
+    i32.const 10
     call 1)
   (table (;0;) 4 funcref)
   (memory (;0;) 1)
   (export "memory" (memory 0))
   (export "_start" (func 9))
-  (elem (;0;) (i32.const 0) func 5 6 7 8))
+  (elem (;0;) (i32.const 0) func 6 5 7 8))

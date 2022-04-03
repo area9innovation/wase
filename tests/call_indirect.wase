@@ -2,10 +2,6 @@ include lib/runtime;
 
 export memory 1;
 
-// Declare the fns that we can call indirectly
-// in their index order
-element foo, bar, add1, sub1;
-
 foo() -> i32 {
 	42;
 }
@@ -23,18 +19,23 @@ sub1(v : i32) -> i32 {
 }
 
 export _start() -> () {
-	// This is foo
-	printi32(call_indirect<>(0));
-	printByte(10);
 	// This is bar
-	printi32(call_indirect<>(1));
+	printi32(call_indirect<>(fn<bar>()));
+	printByte(10);
+
+	// This is foo
+	printi32(call_indirect<>(fn<foo>()));
 	printByte(10);
 
 	// This is add1
-	printi32(call_indirect<>(41, 2));
+	printi32(call_indirect<>(41, fn<add1>()));
 	printByte(10);
 
 	// This is sub1
-	printi32(call_indirect<>(43, 3));
+	printi32(call_indirect<>(43, fn<sub1>()));
+	printByte(10);
+
+	myfn : i32 = if (true) fn<bar>() else fn<foo>();
+	printi32(call_indirect<>(myfn)); // 666
 	printByte(10);
 }

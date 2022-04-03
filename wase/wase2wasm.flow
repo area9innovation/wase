@@ -30,16 +30,22 @@ wase2wasm(wase : Wase) -> WasmModule {
 		ref 0, ref 0, ref 0, ref 0, ref 0, ref 0,
 		ref true,
 		ref [], ref [], ref [], ref [], ref [], ref [], ref [], ref [],
-		ref -1, ref makeSet(),
+		ref -1,
+		// Lookup from fn to fn indexes for indirect fns
+		ref makeTree(),
+		// The list of indirect fn ids
+		ref [],
+		// ref.funcs
+		ref makeSet(),
 	);
 
 	// Reorder the top-level imports here
 	waseReordered = reorder2Wase(reorderWase(WaseReorder(makeList(), makeList(), makeList()), wase));
 	compileWase(context, waseReordered);
-	elms = ^(context.elements);
-	elements = concat(if (isEmptySet(^(context.refFuncs))) [] else [WasmElementFuncs(WasmExpr([WasmI32Const(0)]), set2array(^(context.refFuncs)))], elms);
-	// TODO: Add offset for elements if we have any
-	nelements = fold(elements, 0, \acc, elm -> acc + wasmElementSize(elm));
+	// Construct the mapping from function index to function name
+	elms = concat(^(context.functions), set2array(^(context.refFuncs)));
+	elements = if (elms == []) [] else [WasmElementFuncs(WasmExpr([WasmI32Const(0)]), elms)];
+	nelements = length(elms);
 	
 	WasmModule(
 		// types
@@ -134,6 +140,11 @@ WaseContext(
 	// Starting functions. -1 means none
 	starts : ref int,
 
+	// Function indexes for call_indirect
+	functionIndexes : ref Tree<string, int>,
+	// The function idx for call_indirect corresponding to the ints in the tree above
+	functions : ref [int],
+
 	// ref funcs
 	refFuncs : ref Set<int>,
 );
@@ -157,7 +168,6 @@ reorderWase(acc : WaseReorder, w : Wase) -> WaseReorder {
 		WaseImportMemory(module, name, minimumPages, maximumPages, scope): im(scope);
 		WaseImportTable(id, module, name, refType, minimumPages, maximumPages, scope): im(scope);
 		WaseMemory(minimumPages, maximumPages, exportid, scope): im(scope);
-		WaseElements(offset, fns, scope): elm(scope);
 		WaseGlobal(id, exportid, type, isMutable, init, scope): re(scope);
 		WaseFunction(id, exportid, start, type, args, code, scope): re(scope);
 		WaseData(offset, bytes, scope): im(scope);
@@ -194,7 +204,6 @@ replaceWaseScope(w : Wase, newScope : Wase) -> Wase {
 		WaseGlobal(id, exportid, type, isMutable, init, scope): WaseGlobal(w with scope = newScope);
 		WaseFunction(id, exportid, start, type, args, code, scope): WaseFunction(w with scope= newScope);
 		WaseData(offset, bytes, scope): WaseData(w with scope = newScope);
-		WaseElements(offset, fns, scope): WaseElements(w with scope = newScope);
 		WaseEmpty(): w;
 	}
 }
@@ -332,16 +341,6 @@ compileWase(context : WaseContext, w : Wase) -> void {
 			context.data := arrayPush(^(context.data), WasmData0(waseExpr2wasm(context, offset), bytes));
 			compileWase(context, scope)
 		}
-		WaseElements(offset, fns, scope): {
-			fnIndexs = map(fns, \fn -> {
-				idx = lookupWaseFnIndex(context, fn);
-				if (idx == -1) {
-					println("Unknown function id '" + fn + "' in elements");
-				}
-				idx;
-			});
-			context.elements := arrayPush(^(context.elements), WasmElementFuncs(waseExpr2wasm(context, offset), fnIndexs));
-		}
 		WaseEmpty(): {}
 	}
 }
@@ -370,6 +369,7 @@ extractWaseLocals(context : WaseContext, acc : [WaseLocal], w : WaseInstruction)
 		WaseTableCopy(id1, id2): acc;
 		WaseTableFill(id): acc;
 		WaseCallIndirect(ft, ti): acc;
+		WaseFunctionIndex(id): acc;
 	}
 }
 
@@ -469,6 +469,27 @@ waseInstruction2wasm(context : WaseContext, i : WaseInstruction) -> WasmInstruct
 				None(): {
 					println("Unknown func " + id + " in ref.func");
 					WasmUnreachable();
+				}
+			}
+		}
+		WaseFunctionIndex(id): {
+			mindex = lookupTree(^(context.functionIndexes), id);
+			mindex ?? {
+				WasmI32Const(mindex);
+			} : {
+				fnIndex = lookupWaseFnIndex(context, id);
+				if (fnIndex == -1) {
+					println("Unknown function '" + id + "' in function.index");
+					WasmUnreachable();
+				} else {
+					// OK, we construct one
+					nid = length(^(context.functions));
+					// And record the index
+					context.functionIndexes := setTree(^(context.functionIndexes), id, nid);
+					context.functions := arrayPush(^(context.functions), fnIndex);
+
+					// println("func " + id + " with index " + i2s(fnIndex) + " in function.index gets " + i2s(nid));
+					WasmI32Const(nid);
 				}
 			}
 		}

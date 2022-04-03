@@ -197,10 +197,6 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 				getChildType(0);
 				getChildType(1);
 				getChildType(2);
-			} else if (name == "element") {
-				getChildType(0);
-				getChildType(1);
-				getChildType(2);
 
 			} else if (name == "wase_empty") {
 				DslList(makeList());
@@ -638,6 +634,12 @@ typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs 
 		}));
 		acc.unifyTypes(acc, opargs, argTypes);
 		infer();
+	} else if (op == "fn") {
+		if (length(pars) != 1) {
+			println("fn requires a function id parameter");
+		}
+		acc.unifyTypes(acc, opargs, list0);
+		i32;
 
 	} else {
 		println("TODO: What is the type of  '" + op  + "' " + toString(pars) + " : " + summarizeDsl(opargs));
