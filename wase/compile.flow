@@ -149,6 +149,12 @@ dsl2wase(onError : (DslAst, string) -> void, d : DslAst) -> Wase {
 				offset = expr(1);
 				WaseData(offset, bytes, rec(2));
 
+			} else if (name == "element") {
+				data = list2array(getDslList(args[0]));
+				fns = map(data, getDslString);
+				offset = expr(1);
+				WaseElements(offset, fns, rec(2));
+
 			} else if (name == "wase_empty") {
 				WaseEmpty()
 
@@ -802,6 +808,13 @@ dslWasmOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id 
 		WaseTableCopy(getDslString(pars[0]), getDslString(pars[1]))
 	} else if (id == "table.fill") {
 		WaseTableFill(getDslString(pars[0]))
+	} else if (id == "call_indirect") {
+		params = map(subrange(types, 0, length(types) - 1), \t -> dsl2WasmValType(onError, t));
+		returnTypes = dsl2WasmValTypes(onError, retType);
+		fnType = WasmFuncType(params, returnTypes);
+
+		tableId = if (pars == []) "" else getDslString(pars[0]);
+		WaseCallIndirect(fnType, tableId)
 		
 	} else {
 		onError(node, "Can not compile wasm op " + id);
@@ -856,6 +869,18 @@ dsl2WasmValType(onError : (DslAst, string) -> void, d : DslAst) -> WasmValType {
 		default: error();
 	}
 }
+
+dsl2WasmValTypes(onError : (DslAst, string) -> void, d : DslAst) -> [WasmValType] {
+	switch (d) {
+		DslList(v): {
+			map(list2array(v), \e -> dsl2WasmValType(onError, e))
+		}
+		default: {
+			[dsl2WasmValType(onError, d)]
+		}
+	}	
+}
+
 
 dsl2WasmFuncType(onError : (DslAst, string) -> void, d : DslAst) -> WasmFuncType {
 	node : DslNode = getDslNode(d);

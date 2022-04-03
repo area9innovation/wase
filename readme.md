@@ -150,7 +150,7 @@ files have been compiled to `.wasm` and then decompiled to `.wat`.
 Early beta. The compiler works, and the compiler can parse, type and compile 
 most instructions directly to WASM binaries that validate and run correctly.
 
-The most important missing instruction is `call_indirect`, plus all vector instructions.
+There is not support for vector SIMD instructions yet.
 
 One problem in daily use is that error messages are currently without positions.
 
@@ -495,15 +495,12 @@ The alignment is expressed as what power of 2 to use:
 
 # Instructions
 
-6 instructions plus all v128 SIMD instructions are not implemented yet:
+4 instructions plus all v128 SIMD instructions are not implemented yet:
 
-	call_indirect
 	table.init and elem.drop
 	memory.init and data.drop
 
 ## Control instructions
-
-call_indirect not implemented yet.
 
 | Wasm | Wase | Comments |
 |-|-|-|
@@ -518,7 +515,7 @@ call_indirect not implemented yet.
 | `br_table` | `br_table<l0, l1, l2, ..., ln, default>(index)` or `br_table<l0, l1, l2, ..., ln, default>(val, index)` | Breaks the number of levels as indexed by the index. If a val is given, that is what the break returns. See `tests/break_table.wase` for details.
 | `return` | `return` or `return exp` |
 | `call` | `fn(args)` |
-| `call_indirect` | `call_indirect<>(fnidx<id>(), args)` | - | TODO
+| `call_indirect` | `call_indirect<>(args, fnindex)` or `call_indirect<>(fnindex)` or `call_indirect<tablei>(args, fnindex)` | Requires an "element foo, bar" section where the indexes are resolved to function ids
 
 ## Reference Instructions
 
@@ -801,10 +798,8 @@ There are a number of things, that would make Wase better:
 - Check all I32 encodings whether they are S32 or U32
 
 - More natural call-indirect syntax
-	calls : table< (i32) -> i32 > = [fn1, fn2, fn3];
-	call_indirect<calls>(index)(args)
-
-	fnidx<calls, fn1>  = how to get a function pointer
+	call_indirect<>(args, fnidx<foo>())
+	fnidx<fn1>()  = how to get a function pointer and construct the element table indirectly
 
 - More natural switch syntax?
 	switch (index) {

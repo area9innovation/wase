@@ -197,6 +197,10 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 				getChildType(0);
 				getChildType(1);
 				getChildType(2);
+			} else if (name == "element") {
+				getChildType(0);
+				getChildType(1);
+				getChildType(2);
 
 			} else if (name == "wase_empty") {
 				DslList(makeList());
@@ -625,6 +629,15 @@ typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs 
 			println("table.fill requires a table id parameter");
 		}
 		list0;
+
+	} else if (op == "call_indirect") {
+		nargs = countList(getDslList(opargs));
+		// All args are inferred, except the last, which has to be an int
+		argTypes = DslList(mapiList(getDslList(opargs), \i, __ -> {
+			if (i == nargs - 1) i32 else infer();
+		}));
+		acc.unifyTypes(acc, opargs, argTypes);
+		infer();
 
 	} else {
 		println("TODO: What is the type of  '" + op  + "' " + toString(pars) + " : " + summarizeDsl(opargs));

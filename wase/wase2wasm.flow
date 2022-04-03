@@ -29,16 +29,18 @@ wase2wasm(wase : Wase) -> WasmModule {
 		ref [], ref makeTree(), 
 		ref 0, ref 0, ref 0, ref 0, ref 0, ref 0,
 		ref true,
-		ref [], ref [], ref [], ref [], ref [], ref [], ref [],
+		ref [], ref [], ref [], ref [], ref [], ref [], ref [], ref [],
 		ref -1, ref makeSet(),
 	);
 
 	// Reorder the top-level imports here
-	waseReordered = reorder2Wase(reorderWase(WaseReorder(makeList(), makeList()), wase));
+	waseReordered = reorder2Wase(reorderWase(WaseReorder(makeList(), makeList(), makeList()), wase));
 	compileWase(context, waseReordered);
-
-	elements = if (isEmptySet(^(context.refFuncs))) [] else [WasmElementFuncs(WasmExpr([WasmI32Const(0)]), set2array(^(context.refFuncs)))];
-
+	elms = ^(context.elements);
+	elements = concat(if (isEmptySet(^(context.refFuncs))) [] else [WasmElementFuncs(WasmExpr([WasmI32Const(0)]), set2array(^(context.refFuncs)))], elms);
+	// TODO: Add offset for elements if we have any
+	nelements = fold(elements, 0, \acc, elm -> acc + wasmElementSize(elm));
+	
 	WasmModule(
 		// types
 		[], WasmTypeSection(^(context.funcTypes)),
@@ -48,7 +50,7 @@ wase2wasm(wase : Wase) -> WasmModule {
 		[], WasmFunctionSection(^(context.functionTypes)),
 		// tables
 		[], WasmTableSection(if (elements == []) [] else [
-			WasmTableType(WasmFuncRef(), WasmLimits(length(elements), 0))
+			WasmTableType(WasmFuncRef(), WasmLimits(nelements, 0))
 		]),
 		// memories
 		[], WasmMemorySection(^(context.memory)),
@@ -70,61 +72,18 @@ wase2wasm(wase : Wase) -> WasmModule {
 	);
 }
 
-reorderWase(acc : WaseReorder, w : Wase) -> WaseReorder {
-	im = \s -> {
-		nacc = WaseReorder(
-			Cons(w, acc.imports),
-			acc.rest
-		);
-		reorderWase(nacc, s);
-	};
-	re = \s -> {
-		nacc = WaseReorder(
-			acc.imports,
-			Cons(w, acc.rest),
-		);
-		reorderWase(nacc, s);
-	};
-	switch (w) {
-		WaseImportFunction(id, module, name, type, scope): im(scope);
-		WaseImportGlobal(id, module, name, type, isMutable, scope): im(scope);
-		WaseImportMemory(module, name, minimumPages, maximumPages, scope): im(scope);
-		WaseImportTable(id, module, name, refType, minimumPages, maximumPages, scope): im(scope);
-		WaseMemory(minimumPages, maximumPages, exportid, scope): im(scope);
-		WaseGlobal(id, exportid, type, isMutable, init, scope): re(scope);
-		WaseFunction(id, exportid, start, type, args, code, scope): re(scope);
-		WaseData(offset, bytes, scope): im(scope);
-		WaseEmpty(): acc;
+wasmElementSize(e : WasmElement) -> int {
+	switch (e) {
+		WasmElementFuncs(offset, funindexes): length(funindexes);
+		WasmElementPassive(funindexes): length(funindexes);
+		WasmElementFuncs2(tableIndex, offset, funindexes): length(funindexes);
+		WasmElementDeclarative(funindexes): length(funindexes);
+		WasmElement4(offset, init): length(init);
+		WasmElement5(et, init): length(init);
+		WasmElement6(tableIndex, offset, et, init): length(init);
+		WasmElement7(et, init): length(init);
 	}
 }
-
-reorder2Wase(acc : WaseReorder) -> Wase {
-	rest = foldList(acc.rest, WaseEmpty(), \acc2, w -> {
-		replaceWaseScope(w, acc2)
-	});
-	foldList(acc.imports, rest, \acc2, w -> {
-		replaceWaseScope(w, acc2)
-	})
-}
-
-replaceWaseScope(w : Wase, newScope : Wase) -> Wase {
-	switch (w) {
-		WaseImportFunction(id, module, name, type, scope): WaseImportFunction(w with scope = newScope);
-		WaseImportGlobal(id, module, name, type, isMutable, scope): WaseImportGlobal(w with scope = newScope);
-		WaseImportMemory(module, name, minimumPages, maximumPages, scope): WaseImportMemory(w with scope = newScope);
-		WaseImportTable(id, module, name, refType, minimumPages, maximumPages, scope): WaseImportTable(w with scope = newScope);
-		WaseMemory(minimumPages, maximumPages, exportid, scope): WaseMemory(w with scope = newScope);
-		WaseGlobal(id, exportid, type, isMutable, init, scope): WaseGlobal(w with scope = newScope);
-		WaseFunction(id, exportid, start, type, args, code, scope): WaseFunction(w with scope= newScope);
-		WaseData(offset, bytes, scope): WaseData(w with scope = newScope);
-		WaseEmpty(): w;
-	}
-}
-
-WaseReorder(
-	imports : List<Wase>,
-	rest : List<Wase>
-);
 
 WaseContext(
 	// As we construct functions, imports, etc, we record their indexes here
@@ -168,6 +127,9 @@ WaseContext(
 
 	// Data
 	data : ref [WasmData],
+
+	// Elements
+	elements : ref [WasmElement],
 	
 	// Starting functions. -1 means none
 	starts : ref int,
@@ -175,6 +137,67 @@ WaseContext(
 	// ref funcs
 	refFuncs : ref Set<int>,
 );
+
+reorderWase(acc : WaseReorder, w : Wase) -> WaseReorder {
+	im = \s -> {
+		nacc = WaseReorder(acc with imports = Cons(w, acc.imports));
+		reorderWase(nacc, s);
+	};
+	re = \s -> {
+		nacc = WaseReorder(acc with defs = Cons(w, acc.defs));
+		reorderWase(nacc, s);
+	};
+	elm = \s -> {
+		nacc = WaseReorder(acc with elements = Cons(w, acc.elements));
+		reorderWase(nacc, s);
+	};
+	switch (w) {
+		WaseImportFunction(id, module, name, type, scope): im(scope);
+		WaseImportGlobal(id, module, name, type, isMutable, scope): im(scope);
+		WaseImportMemory(module, name, minimumPages, maximumPages, scope): im(scope);
+		WaseImportTable(id, module, name, refType, minimumPages, maximumPages, scope): im(scope);
+		WaseMemory(minimumPages, maximumPages, exportid, scope): im(scope);
+		WaseElements(offset, fns, scope): elm(scope);
+		WaseGlobal(id, exportid, type, isMutable, init, scope): re(scope);
+		WaseFunction(id, exportid, start, type, args, code, scope): re(scope);
+		WaseData(offset, bytes, scope): im(scope);
+		WaseEmpty(): acc;
+	}
+}
+
+WaseReorder(
+	imports : List<Wase>,
+	defs : List<Wase>,
+	// These need to go last, since their refer to functions
+	elements : List<Wase>,
+);
+
+reorder2Wase(acc : WaseReorder) -> Wase {
+	elm = foldList(acc.elements, WaseEmpty(), \acc2, w -> {
+		replaceWaseScope(w, acc2)
+	});
+	defs = foldList(acc.defs, elm, \acc2, w -> {
+		replaceWaseScope(w, acc2)
+	});
+	foldList(acc.imports, defs, \acc2, w -> {
+		replaceWaseScope(w, acc2)
+	})
+}
+
+replaceWaseScope(w : Wase, newScope : Wase) -> Wase {
+	switch (w) {
+		WaseImportFunction(id, module, name, type, scope): WaseImportFunction(w with scope = newScope);
+		WaseImportGlobal(id, module, name, type, isMutable, scope): WaseImportGlobal(w with scope = newScope);
+		WaseImportMemory(module, name, minimumPages, maximumPages, scope): WaseImportMemory(w with scope = newScope);
+		WaseImportTable(id, module, name, refType, minimumPages, maximumPages, scope): WaseImportTable(w with scope = newScope);
+		WaseMemory(minimumPages, maximumPages, exportid, scope): WaseMemory(w with scope = newScope);
+		WaseGlobal(id, exportid, type, isMutable, init, scope): WaseGlobal(w with scope = newScope);
+		WaseFunction(id, exportid, start, type, args, code, scope): WaseFunction(w with scope= newScope);
+		WaseData(offset, bytes, scope): WaseData(w with scope = newScope);
+		WaseElements(offset, fns, scope): WaseElements(w with scope = newScope);
+		WaseEmpty(): w;
+	}
+}
 
 compileWase(context : WaseContext, w : Wase) -> void {
 	switch (w) {
@@ -273,6 +296,7 @@ compileWase(context : WaseContext, w : Wase) -> void {
 			// OK, what index does this global get?
 			funcIndex = ^(context.funcidx);
 			context.funcidx := funcIndex + 1;
+			// println("Setting " + id);
 			context.get := setTree(^(context.get), id, WasmRefFunc(funcIndex));
 	
 			locals = extractWasesLocals(context, [], code.instructions);
@@ -308,6 +332,16 @@ compileWase(context : WaseContext, w : Wase) -> void {
 			context.data := arrayPush(^(context.data), WasmData0(waseExpr2wasm(context, offset), bytes));
 			compileWase(context, scope)
 		}
+		WaseElements(offset, fns, scope): {
+			fnIndexs = map(fns, \fn -> {
+				idx = lookupWaseFnIndex(context, fn);
+				if (idx == -1) {
+					println("Unknown function id '" + fn + "' in elements");
+				}
+				idx;
+			});
+			context.elements := arrayPush(^(context.elements), WasmElementFuncs(waseExpr2wasm(context, offset), fnIndexs));
+		}
 		WaseEmpty(): {}
 	}
 }
@@ -335,6 +369,7 @@ extractWaseLocals(context : WaseContext, acc : [WaseLocal], w : WaseInstruction)
 		WaseTableSize(id): acc;
 		WaseTableCopy(id1, id2): acc;
 		WaseTableFill(id): acc;
+		WaseCallIndirect(ft, ti): acc;
 	}
 }
 
@@ -441,6 +476,7 @@ waseInstruction2wasm(context : WaseContext, i : WaseInstruction) -> WasmInstruct
 		WaseTableSize(id): WasmTableSize(getWaseTableId(context, id));
 		WaseTableCopy(id1, id2): WasmTableCopy(getWaseTableId(context, id1), getWaseTableId(context, id2));
 		WaseTableFill(id): WasmTableFill(getWaseTableId(context, id));
+		WaseCallIndirect(funcType, tableId): WasmCallIndirect(lookupWasmFuncTypeIndex(context, funcType), if (tableId == "") 0 else getWaseTableId(context, tableId));
 	}
 }
 
@@ -456,7 +492,7 @@ getWaseTableId(context : WaseContext, id : string) -> int {
 		}
 	} : {
 		println("Unknown table id " + id);
-		-1
+		0
 	}
 }
 
@@ -468,4 +504,14 @@ lookupWasmFuncTypeIndex(context : WaseContext, fn : WasmFuncType) -> int {
 		context.funcTypeMap := setTree(^(context.funcTypeMap), fn, n);
 		n;
 	}
+}
+
+lookupWaseFnIndex(context : WaseContext, fn : string) -> int {
+	mindex = lookupTree(^(context.get), fn);
+	mindex ?? {
+		switch (mindex : WaseInstruction) {
+			WasmRefFunc(id): id;
+			default: -1;
+		}
+	} : -1;
 }

@@ -37,6 +37,10 @@ prettyWase(w : Wase) -> string {
 			"data " + toString(bytes) + ";" + " " + toString(offset)
 			+ "\n\n" + prettyWase(scope);
 		}
+		WaseElements(offset, fns, scope): {
+			"element " + strGlue(fns, ",") + ";" + " " + toString(offset)
+			+ "\n\n" + prettyWase(scope);
+		}
 		WaseEmpty(): "end";
 	}
 }

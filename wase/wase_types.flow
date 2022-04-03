@@ -4,7 +4,7 @@ import formats/wasm/wasm_types;
 export {
 	// This is an wrapper for Wasm to make it easier to produce a valid WASM module
 	Wase ::=  WaseImportFunction, WaseImportGlobal, WaseImportMemory, WaseImportTable,
-		WaseMemory, WaseGlobal, WaseFunction, WaseData,
+		WaseMemory, WaseGlobal, WaseFunction, WaseData, WaseElements,
 
 		WaseEmpty
 		;
@@ -49,10 +49,15 @@ export {
 	// Store binary data in a module, which can be initialized into memory
 	WaseData(offset : WaseExpr, bytes : [int], scope : Wase);
 
+	// A table of function pointers
+	WaseElements(offset : WaseExpr, functions : [string], scope : Wase);
+
 	WaseExpr(instructions : [WaseInstruction]);
 		WaseInstruction ::= WasmInstruction, WaseGet, WaseSet, WaseTee, WaseLet, WaseCall, 
 			WaseBlock, WaseLoop, WaseIfElse, WaseIf, WaseRefFunc,
-			WaseTableGrow, WaseTableSize, WaseTableCopy, WaseTableFill;
+			WaseTableGrow, WaseTableSize, WaseTableCopy, WaseTableFill,
+			WaseCallIndirect;
+
 			// Lookup in our compilation environment 
 			// Resolves locals, globals, ref func, tables ids into the corresponding "get" instruction
 			WaseGet(id : string);
@@ -81,10 +86,11 @@ export {
 			WaseTableCopy(id1 : string, id2 : string);
 			WaseTableFill(id : string);
 
+			// Call indirect
+			WaseCallIndirect(funcType : WasmFuncType, tableId : string);
+
 			// Data:
 			// memory.init, data.drop
 
 	WaseEmpty();
 }
-
-
