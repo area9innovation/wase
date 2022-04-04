@@ -516,10 +516,10 @@ You can also define the offset and alignment explicitly:
 
 The alignment is expressed as what power of 2 to use:
 
-	v : i32 = load8_u<0, 0>(i) // aligment at 1 byte
-	v : i32 = load16_u<0, 1>(i) // aligment at 2 bytes
-	v : i32 = load32_u<0, 2>(i) // aligment at 4 bytes
-	v : i64 = load_u<0, 3>(i) // aligment at 8 bytes
+	v : i32 = load8_u<0, 0>(i) // alignment at 1 byte
+	v : i32 = load16_u<0, 1>(i) // alignment at 2 bytes
+	v : i32 = load32_u<0, 2>(i) // alignment at 4 bytes
+	v : i64 = load_u<0, 3>(i) // alignment at 8 bytes
 
 # Instructions
 
@@ -623,7 +623,7 @@ memory.init and data.drop not implemented yet. Requires data indexing.
 | `*.rem_u` | `rem_u<>(<exp>,  <exp>)` | Unsigned remainder. The width is inferred
 | `*.and` | `<exp> & <exp>` | Bitwise and. The width is inferred
 | `*.or` | `<exp> \| <exp>` | Bitwise or. The width is inferred
-| `*.xor` | `<exp> ^ <exp>` | Bitwise xord. The width is inferred
+| `*.xor` | `<exp> ^ <exp>` | Bitwise xor. The width is inferred
 | `*.shl` | `shl<>(val, bits)` | Shift left, i.e. multiplication of power of two. The width is inferred
 | `*.shr_s` | `shr_s<>(val, bits)` | Signed right shift. Division by power of two, rounding down. The width is inferred
 | `*.shr_u` | `shr_u<>(val, bits)` | Unsigned right shift. Division by power of two. The width is inferred
@@ -637,7 +637,7 @@ memory.init and data.drop not implemented yet. Requires data indexing.
 | `*.nearest` | `nearest<>(val)` | Round to the nearest integer, with ties rounded toward the value with an even least-significant digit. The width is inferred
 | `*.sqrt` | `sqrt<>(val)` | Square root. The width is inferred
 | `*.min` | `min<>(val, val)` | Minimum of two values. NaN wins. The width is inferred
-| `*.max` | `max<>(val, val)` | Maximum of two values. Nan wins. The width is inferred
+| `*.max` | `max<>(val, val)` | Maximum of two values. NaN wins. The width is inferred
 | `*.copysign` | `copysign<>(val, sign)` | Copies the sign from `sign` into the value of `val`. The width is inferred
 | `*.eqz` | `eqz<>(val)` | Is the value equal to 0? The width is inferred
 | `*.eq` | `val == val` | The width is inferred
@@ -709,6 +709,7 @@ Examples:
 	memory 1 4;
 
 	// Reserves 128k and exports this memory under the name "memory" to the host
+	// This is the form that Wasi likes
 	export memory 2;
 
 	// Reserves and exports memory under the name "mymem"
@@ -787,7 +788,7 @@ When you make changes to the compiler, it is recommended to make sure there are
 no regressions by running all test cases and produce `.wat` output as well 
 using `wasm2wat`:
 
-	bin\wased -- test=1 wat=1
+	bin\wased test=1 wat=1
 
 This requires that you install WABT first 
 
@@ -825,14 +826,6 @@ There are a number of things, that would make Wase better:
 - Encode 64-bit constants as S64, rather than U64. 
 - Check all I32 encodings whether they are S32 or U32
 
-- More natural switch syntax?
-	switch (index) {
-		0: {}
-		1: {}
-		2: {}
-		default: whatever;
-	}
-
 - We support a special "hole<>()" instruction, which does nothing.
   The hole construct could in principle allow stack-like code:
 
@@ -851,8 +844,7 @@ There are a number of things, that would make Wase better:
 
 	data id : 1, 23, ... ?
 
-- Capture the address or size of data segments to make use easier?
+- Capture the address and/or size of data segments to make use easier?
 
 - Document the implicit tables for ref.func 
-- Automatically construct table for indirect calls
 - Add syntax for elements, which are pieces to initialize tables
