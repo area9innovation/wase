@@ -33,8 +33,8 @@ prettyWase(w : Wase) -> string {
 			+ "\n}" 
 			+ "\n\n" + prettyWase(scope);
 		}
-		WaseData(offset, bytes, scope): {
-			"data " + toString(bytes) + ";" + " " + toString(offset)
+		WaseData(id, offset, bytes, scope): {
+			"data " + id + " = " + toString(bytes) + ";" + " " + toString(offset)
 			+ "\n\n" + prettyWase(scope);
 		}
 		WaseEmpty(): "end";

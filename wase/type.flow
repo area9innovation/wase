@@ -196,7 +196,11 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 			} else if (name == "data") {
 				getChildType(0);
 				getChildType(1);
+				fname = getDslString(args[0]);
+				acc.env := setTree(^(acc.env), fname, DslString("i32"));
+
 				getChildType(2);
+				getChildType(3);
 
 			} else if (name == "wase_empty") {
 				DslList(makeList());
@@ -425,7 +429,7 @@ typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs 
 	} else if (op == "hole") {
 		// This can be anything
 		makeDslTypeVar(acc);
-	} else if (op == "break") {
+	} else if (op == "break" || op == "br") {
 		aarg = list2array(getDslList(opargs));
 		levels = if (pars == []) 0 else getDslInt(pars[0]);
 
@@ -446,7 +450,7 @@ typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs 
 
 		// The instruction itself does not have any type info
 		makeDslTypeVar(acc);
-	} else if (op == "break_if") {
+	} else if (op == "break_if" || op == "br_if") {
 		aarg = list2array(getDslList(opargs));
 		levels = if (pars == []) 0 else getDslInt(pars[0]);
 

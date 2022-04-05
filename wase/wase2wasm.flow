@@ -170,7 +170,7 @@ reorderWase(acc : WaseReorder, w : Wase) -> WaseReorder {
 		WaseMemory(minimumPages, maximumPages, exportid, scope): im(scope);
 		WaseGlobal(id, exportid, type, isMutable, init, scope): re(scope);
 		WaseFunction(id, exportid, start, type, args, code, scope): re(scope);
-		WaseData(offset, bytes, scope): im(scope);
+		WaseData(id, offset, bytes, scope): im(scope);
 		WaseEmpty(): acc;
 	}
 }
@@ -203,7 +203,7 @@ replaceWaseScope(w : Wase, newScope : Wase) -> Wase {
 		WaseMemory(minimumPages, maximumPages, exportid, scope): WaseMemory(w with scope = newScope);
 		WaseGlobal(id, exportid, type, isMutable, init, scope): WaseGlobal(w with scope = newScope);
 		WaseFunction(id, exportid, start, type, args, code, scope): WaseFunction(w with scope= newScope);
-		WaseData(offset, bytes, scope): WaseData(w with scope = newScope);
+		WaseData(id, offset, bytes, scope): WaseData(w with scope = newScope);
 		WaseEmpty(): w;
 	}
 }
@@ -337,8 +337,10 @@ compileWase(context : WaseContext, w : Wase) -> void {
 			}
 			compileWase(context, scope)
 		}
-		WaseData(offset, bytes, scope): {
-			context.data := arrayPush(^(context.data), WasmData0(waseExpr2wasm(context, offset), bytes));
+		WaseData(id, offset, bytes, scope): {
+			off = waseExpr2wasm(context, offset);
+			// TODO: Bind the name to the address
+			context.data := arrayPush(^(context.data), WasmData0(off, bytes));
 			compileWase(context, scope)
 		}
 		WaseEmpty(): {}

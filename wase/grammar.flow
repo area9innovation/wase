@@ -34,9 +34,10 @@ defineWase() -> DslGrammar {
 
 		// TODO: Define syntax for whether the memory is passive (i.e. not copied into memory automatically)
 		data = "data" ws 
+			id "=" ws
 			$"nil" datavalue $"cons" ("," ws datavalue $"cons")* 
 			("offset" ws exp | $$"0" $"s2i" $"int_1")
-			";" ws decl $"data_3";
+			";" ws decl $"data_4";
 			datavalue = int | string | double;
 
 		include = "include" !letterOrDigit ws $(letterOrDigit+ ("/" letterOrDigit+)+) ws ";" ws decl $"wase_include_2";

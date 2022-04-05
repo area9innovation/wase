@@ -107,7 +107,8 @@ dsl2wase(onError : (DslAst, string) -> void, d : DslAst) -> Wase {
 				WaseMemory(minimum, maximum, exportid(0, "memory"), rec(3));
 
 			} else if (name == "data") {
-				data = list2array(getDslList(args[0]));
+				id = getDslString(args[0]);
+				data = list2array(getDslList(args[1]));
 				bytes = fold(data, [], \acc, value -> {
 					switch (value) {
 						DslInt(v): {
@@ -146,8 +147,8 @@ dsl2wase(onError : (DslAst, string) -> void, d : DslAst) -> Wase {
 					}
 				});
 
-				offset = expr(1);
-				WaseData(offset, bytes, rec(2));
+				offset = expr(2);
+				WaseData(id, offset, bytes, rec(3));
 
 			} else if (name == "wase_empty") {
 				WaseEmpty()
@@ -749,10 +750,10 @@ dslWasmOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id 
 	} else if (id == "unreachable") { WasmUnreachable()
 	} else if (id == "nop") { WasmNop()
 	} else if (id == "drop") { WasmDrop()
-	} else if (id == "break") {
+	} else if (id == "break" || id == "br") {
 		levels = if (pars == []) 0 else getDslInt(pars[0]);
 		WasmBr(levels);
-	} else if (id == "break_if") {
+	} else if (id == "break_if" || id == "br_if") {
 		levels = if (pars == []) 0 else getDslInt(pars[0]);
 		WasmBrIf(levels);
 	} else if (id == "br_table") {

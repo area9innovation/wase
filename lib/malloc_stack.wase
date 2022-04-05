@@ -1,0 +1,42 @@
+// Initialize a region of memory for a stack of i32s
+initStacki32Region(start : i32, bytes : i32) -> () {
+	// Remember the size, and point to the end
+	store<>(start, bytes);
+	store<>(start + 4, start + bytes);
+}
+
+// Push this value to the stack. Returns 0 if full
+pushStacki32Region(region : i32, value : i32) -> i32 {
+	top = region + 4;
+	end = load<>(top);
+	if (end == top) {
+		0
+	} else {
+		address = end - 4;
+		store<>(address, value);
+		store<>(region, address);
+		address;
+	}
+}
+
+// No bounds checks
+popStacki32Region(region : i32) -> i32 {
+	top = region + 4;
+	end = load<>(top);
+	store<>(top, end + 4);
+	load<>(end + 4);
+}
+
+// How many items on the stack?
+sizeStacki32Region(region : i32) -> i32 {
+	end = region + load<>(region);
+	top = load<>(region + 4);
+	(end - top) / 4;
+}
+
+// Get a specific element from the top stack. 0 is top of the stack
+// No bounds checks
+getStacki32RegionItem(region : i32, fromTop : i32) -> i32 {
+	top = load<>(region + 4);
+	load<>(top + 4 + fromTop * 4);
+}

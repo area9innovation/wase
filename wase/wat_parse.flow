@@ -1,0 +1,39 @@
+import tools/dsl/dsl_parse;
+
+export {
+	parseWat(filename : string, code : string) -> DslAst;
+}
+
+watGrammar = defineWat();
+
+parseWat(filename : string, code : string) -> DslAst {
+	parseProgram(filename, watGrammar, code);
+}
+
+defineWat() -> DslGrammar {
+	grammar = defineGrammar("wat", <<
+
+		wat = "(" ws $watid ws $"nil" (wat $"cons")* ")" ws $"node_2"
+			| "$" ws id $"name_1"
+			| id $"id_1"
+			| "-" ws wat $"negate_1"
+			| string $"string_1"
+			| double $"double_1"
+			| int $"int_1"
+			;
+
+		watid = wid "." wid | wid;
+		wid = ('a' - 'z' | 'A' - 'Z') letterOrDigit*;
+
+		ws wat
+	>>, ["ws", "id", "int", "double", "string"]);
+
+	grammar;
+}
+
+main() {
+	file = getFileContent("tests/linked_list.wat");
+	ast = parseWat("list", file);
+	println(prettyDsl(ast));
+	quit(0);
+}

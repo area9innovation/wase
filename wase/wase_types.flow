@@ -43,8 +43,9 @@ export {
 		// Should we extract these instead?
 		WaseLocal(name : string, type : WasmValType);
 
-	// Store binary data in a module, which can be initialized into memory
-	WaseData(offset : WaseExpr, bytes : [int], scope : Wase);
+	// Store binary data in a module, which can be initialized into memory.
+	// The id will be bound to the address of the data
+	WaseData(id : string, offset : WaseExpr, bytes : [int], scope : Wase);
 
 	WaseExpr(instructions : [WaseInstruction]);
 		WaseInstruction ::= WasmInstruction, WaseGet, WaseSet, WaseTee, WaseLet, WaseCall, 

@@ -1,5 +1,7 @@
 export memory 1;
-data "Hello, world!" offset 32;
+
+data hello = "Hello, world!" offset 32;
+
 // wasi_snapshot_preview1!fd_write(file_descriptor, *iovs, iovs_len, nwritten) -> status_code
 import fd_write : (i32, i32, i32, i32) -> i32 = wasi_snapshot_preview1.fd_write;
 
