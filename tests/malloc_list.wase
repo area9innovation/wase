@@ -1,0 +1,50 @@
+include lib/runtime;
+include lib/malloc_list;
+
+// This understands the memory layout of the list region allocator
+debugListRegion(region : i32) -> () {
+	prev = load<>(region);
+	next = load<>(region + 4);
+	size = load<>(region + 8);
+	printHex32(region);	// The node address
+	printByte(58); // colon
+	printHex32(prev); // Pointer to the previous node
+	printByte(58); // colon
+	printHex32(next);
+	printByte(58); // colon
+	printHex32(size);
+	printByte(10);
+	if (next != 0) {
+		debugListRegion(next)
+	}
+}
+
+debugListMemory(address : i32) -> () {
+	printHex32(address); // The address
+	printByte(58); // colon
+	printHex32(load<>(address - 4)); // The size
+}
+
+export memory 1;
+
+export _start() -> () {
+	region = 32;
+	initListRegion(region, 128);
+	debugListRegion(region);
+
+	mem1 = allocateListRegion(region, 4);
+	mem2 = allocateListRegion(region, 4);
+	mem3 = allocateListRegion(region, 4);
+	debugListMemory(mem1);
+	printByte(10);
+	debugListMemory(mem2);
+	printByte(10);
+	debugListMemory(mem3);
+	printByte(10);
+
+	debugListRegion(region);
+
+	freeListRegion(region, mem3);
+
+	debugListRegion(region);
+}

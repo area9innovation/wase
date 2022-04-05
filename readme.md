@@ -558,7 +558,7 @@ The alignment is expressed as what power of 2 to use:
 | Wasm | Wase | Comments |
 |-|-|-|
 | `drop` | `drop<>` or implicit in sequence `{1;2}` | The explicit `drop<>()` variant causes stack errors, since Wase is designed to be stack-safe.
-| `select` | `select<>(cond, then, else)` | This is an eager `if`, where both `then` and `else` are always evaluated, but only one chosen based on the condition. This is branch-less so can be more efficient than normal `if`. (Automatically chooses the ref instruction version based on the type.)
+| `select` | `select<>(then, else, cond)` | This is an eager `if`, where both `then` and `else` are always evaluated, but only one chosen based on the condition. This is branch-less so can be more efficient than normal `if`. (Automatically chooses the ref instruction version based on the type.)
 
 ## Variable Instructions
 
@@ -723,13 +723,14 @@ Examples:
 You can place constant data in the output file using syntax like this:
 
 	// Strings are placed as UTF8 but with the length first
-	data "utf8 string is very comfortable";
+	// Hello will be bound to the address this data gets
+	data hello = "utf8 string is very comfortable";
 
 	// We can have a sequence of data. Each int is a byte.
-	data 1, 2, 3, "text", 3.0;
+	data bytes = 1, 2, 3, "text", 3.0;
 
 	// Moving the data into offset 32 of the memory
-	data "Hello, world!" offset 32;
+	data moved = "Hello, world!" offset 32;
 
 The result is that this data is copied into memory on startup.
 
@@ -848,3 +849,11 @@ There are a number of things, that would make Wase better:
 
 - Document the implicit tables for ref.func 
 - Add syntax for elements, which are pieces to initialize tables
+
+- Small, simple optimizations:
+  - Detect a == 0 and make that eqz
+  - Detect load<>(a + 4) and make that load<4>(a)
+  - Detect const expressions and evaluate them
+  - Detect if (a) const else const, and make that select
+  - local.set x ;local.get x -> local.tee x
+  - *2, *4, /2, /4 can be turned into shifts

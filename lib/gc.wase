@@ -1,0 +1,77 @@
+include lib/malloc_list;
+include lib/malloc_stack;
+
+// This sets up a region of memory for garbage collected objects
+// Give it a starting address, the number of bytes available,
+// and how much of that should be reserved for the shadow stack
+// of root pointers
+initGcRegion(start : i32, bytes : i32, stackSize : i32) -> () {
+	// OK, prepare the stack
+	initStacki32Region(start, stackSize);
+
+	// And prepare a list memory allocator for the memory
+	initListRegion(start + stackSize, bytes);
+}
+
+// Push this address as live data, with the given type signature
+// Returns 0 if there is no room
+pushRootGcRegion(region : i32, address : i32, typeSignature : i32) -> i32 {
+	pushStacki32Region(region, address) | pushStacki32Region(region, typeSignature);
+}
+
+// Release an address, ts signature from the top of the stack
+popRootGcRegion(region : i32) -> () {
+	popStacki32Region(region);
+	popStacki32Region(region);
+}
+
+// Allocates N bytes with a given type signature
+allocateGcRegion(region : i32, bytes : i32, typeSignature : i32) -> i32 {
+	listRegion = region + load<>(region);
+	address = allocateListRegion(listRegion, bytes);
+	store<>(address - 8, typeSignature);
+	address;
+}
+
+// Explicit free
+freeGcRegion(region : i32, address : i32) -> () {
+	listRegion = region + load<>(region);
+	freeListRegion(listRegion, address);
+}
+
+gcRegion(region : i32) -> () {
+	// TODO:
+/*
+	gen = generation;
+	generation := generation + 1;
+	
+	// Mark all roots
+	for ((address, type) in shadowStack) {
+		gcRegionMarkAlive(region, address, type, gen);
+	}
+	for (b in all blocks) {
+		if b.generation != gen
+			free(b)
+	}
+
+*/
+
+}
+
+gcRegionMarkAlive(region : i32, address : i32, type : i32, generation : i32) -> void {
+	// Find internal roots in this object, and recursively mark those alive
+	// based on the type signature
+}
+
+/*
+typeSignature = 
+	// Basic types
+	i32, i64, f32, f64, v128, funcref, extern,
+	bytes(size : i32)
+	// A fixed size struct, with a List of fields with other pointers
+	struct (fields : [Pair<offset : i32, typesignature : i32>])
+	// For an array, the second i32 contains the length
+	array (type : typeSignature)
+	// For a variant, the second i32 contains a type signature for what it contains
+	variant
+*/

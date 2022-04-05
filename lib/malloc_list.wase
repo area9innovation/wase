@@ -1,0 +1,93 @@
+// A double linked list of free memory areas
+// We pass it the memory range we can use.
+
+// Initially, the memory is marked as a free region.
+
+// Each node of free memory contains three elements:
+//   previous: i32. Points to the previous node, or 0 for the first.
+//   next: i32. Points to the next node, or 0 for the last.
+//   size : i32. The size of this free chunk in bytes
+
+// Each allocated memory has a size pointer at the address-4 from
+// the returned area. There are 8 more free bytes before that,
+// which will be used when the region is freed.
+// Until they are freed, they can be used for other purposes.
+
+initListRegion(start : i32, bytes : i32) -> () {
+	// The prev pointer is 0
+	store<>(start, 0);
+	// The next pointer is 0
+	store<>(start + 4, 0);
+	// Record the free memory
+	store<>(start + 8, bytes - 12);
+}
+
+// Allocates N bytes in this region. Returns 0 if there
+// is no room. Takes the first free area which fits.
+// The size is always rounded up to the nearest factor of 4.
+
+allocateListRegion(region : i32, bytes : i32) -> i32 {
+	// We need three pointers more
+	nbytes = bytes + 12;
+	// Round up to nearest factor of 4
+	mbytes = shl<>(shr_u<>(nbytes + 3, 2), 2);
+
+	loop {
+		nextRegion = load<>(region + 4);
+		free : i32 = load<>(region + 8);
+		if (free >= mbytes) {
+			// OK, there is free memory here.
+
+			// Reduce the free size of the original region
+			store<>(region + 8, free - mbytes);
+
+			// Find the start of the area we allocate at the end of this region
+			start = (region + free) - mbytes;
+
+			// Set the size of the memory in the new place
+			store<>(start + 8, mbytes);
+
+			// Return the address
+			return start + 12;
+		} else if (nextRegion == 0) {
+			return 0;
+		};
+		region := nextRegion;
+		break<>();
+	} : ();
+	0;
+}
+
+// Frees the memory at this address.
+freeListRegion(region : i32, address : i32) -> () {
+	free : i32 = load<>(region + 8);
+	// OK, add this to the free list
+	nextRegion : i32 = load<>(region + 4);
+
+	// OK, go back 3 i32s for our pointers
+	base = address - 12;
+
+	// TODO: Search for the region that is just before
+	// this one, instead of always using the first, so 
+	// we can search for the right thingto merge with
+
+	// Can we merge with this region?
+	if (free + region == base) {
+		// OK, this can be merged into the original region
+		freeSize = load<>(base + 8) + 12;
+		store<>(region + 8, free + freeSize);
+	} else {
+		// Point back to the original region as the previous
+		store<>(base, region);
+		// Set up the link to the next
+		store<>(base + 4, nextRegion);
+		// (The size is already stored by the allocation at base+8)
+
+		// And redirect this one as the next in line
+		store<>(region + 4, base);
+	}
+}
+
+// TODO: We could expose an API that determines whether an
+// address is freed or not
+

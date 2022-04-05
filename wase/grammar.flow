@@ -33,9 +33,9 @@ defineWase() -> DslGrammar {
 		memory = optexport "memory" ws int (int | $"nil") ";" ws decl $"memory_4";
 
 		// TODO: Define syntax for whether the memory is passive (i.e. not copied into memory automatically)
-		data = "data" ws
+		data = "data" ws 
 			id "=" ws
-			$"nil" datavalue $"cons" ("," ws datavalue $"cons")*
+			$"nil" datavalue $"cons" ("," ws datavalue $"cons")* 
 			("offset" ws exp | $$"0" $"s2i" $"int_1")
 			";" ws decl $"data_4";
 			datavalue = int | string | double;
