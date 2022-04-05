@@ -1,7 +1,7 @@
 import tools/dsl/dsl_parse;
 
 export {
-	defineWase() -> DslGrammar;	
+	defineWase() -> DslGrammar;
 }
 
 defineWase() -> DslGrammar {
@@ -15,7 +15,7 @@ defineWase() -> DslGrammar {
 	grammar = defineGrammar("wase", <<
 		decl = memory | import | data | include | global | function | $"wase_empty_0";
 
-		global = optexport id $"swap" 
+		global = optexport id $"swap"
 				":" ws optmutable type $"swap"
 				"=" ws exp ";" ws decl $"global_6"; // (id, export : bool, type, mutable : bool, exp, body, scope)
 
@@ -24,24 +24,25 @@ defineWase() -> DslGrammar {
 			lambdaargs = $"nil" id ":" ws type $"idtype_2" $"cons" ("," ws id ":" ws type $"idtype_2" $"cons")*
 				| $"nil";
 
-		import = 
+		import =
 			"import" ws "memory" ws int (int | $"nil") "=" ws id "." id ";" ws decl $"import_memory_5"
 			| "import" ws id ":" ws "table" ws "<" ws reftype ">" ws "(" ws int (int | $"nil") ")" ws "=" ws id "." id ";" ws decl $"import_table_7"
 			| "import" ws id ":" ws optmutable type $"swap" "=" ws id "." id ";" ws decl $"import_global_6" // id, type, mutable, module, name, scope
 			| "import" ws id ":" ws fntype "=" ws id "." id ";" ws decl $"import_fun_5"; // id type module name scope
-			
+
 		memory = optexport "memory" ws int (int | $"nil") ";" ws decl $"memory_4";
 
 		// TODO: Define syntax for whether the memory is passive (i.e. not copied into memory automatically)
-		data = "data" ws 
-			$"nil" datavalue $"cons" ("," ws datavalue $"cons")* 
+		data = "data" ws
+			id "=" ws
+			$"nil" datavalue $"cons" ("," ws datavalue $"cons")*
 			("offset" ws exp | $$"0" $"s2i" $"int_1")
-			";" ws decl $"data_3";
+			";" ws decl $"data_4";
 			datavalue = int | string | double;
 
 		include = "include" !letterOrDigit ws $(letterOrDigit+ ("/" letterOrDigit+)+) ws ";" ws decl $"wase_include_2";
 
-		exp = 
+		exp =
 			id opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_4"
 			|> exp "|" ws exp $"or_2"
 			|> exp "&" ws exp $"and_2"
@@ -91,10 +92,11 @@ defineWase() -> DslGrammar {
 				| $('0'-'9'+) "w" ws $"i64_1"
 				| double $"double_1"
 				| int $"int_1"
+				| vector
 				// | '<<' $(!('>' '>') anychar)* ('>' '>') ws
 				;
 
-		instruction = 
+		instruction =
 			"block" !letterOrDigit ws brace $"block_1"
 			| "loop" !letterOrDigit ws brace $"loop_1"
 			| "return" !letterOrDigit ws (exp | $"nil") $"return_1"
@@ -107,10 +109,73 @@ defineWase() -> DslGrammar {
 			wasmid = 'a'-'z' wasmidpart* ("." wasmidpart+)?;
 			wasmidpart = 'a'-'z' | '0'-'9' | "_";
 
-		exps = $"nil" exp $"cons" ("," ws exp $"cons")* ("," ws)? 
+		// The set of vector instructions
+		ishape = "i8x16" | "i16x8" | "i32x4" | "i64x2";
+		fshape = "f32x4" | "f64x2";
+		shape = ishape | fshape;
+		half = "low" | "high";
+		sign = "s" | "u";
+
+		vector =
+			"v128.const" int int int int
+			| "v128." vect_un_op
+			| "v128." vect_bin_op
+			| "v128." vect_tern_op
+			| "v128." vect_test_op
+			| "i8x16.shuffle" int
+			| "i8x16.swizzle"
+			| shape ".splat"
+			| "i8x16.extract_lane_" sign int
+			| "i16x8.extract_lane_" sign int
+			| "i32x4.extract_lane_" int
+			| "i64x2.extract_lane_" int
+			| fshape ".extract_lane" int
+			| shape ".replace_lane" int
+			| "i8x16." vect_i_rel_op
+			| "i16x8." vect_i_rel_op
+			| "i32x4." vect_i_rel_op
+			| "i64x2.eq" | "i64x2.ne" | "i64x2.lt_s" | "i64x2.gt_s" | "i64x2.le_s" | "i64x2.ge_s"
+			| fshape "." vect_f_rel_op
+			| ishape "." vect_i_un_op
+			| "i8x16.popcnt"
+			| "i16x8.q15mulr_sat_s"
+			| "i32x4.dot_i16x8_s"
+			| fshape "." vect_f_un_op
+			| ishape "." vect_i_test_op
+			| "i8x16.narrow_i16x8_" sign | "i16x8.narrow_i32x4_" sign
+			| "i16x8.extend_" half  "_i8x16_" sign | "i32x4.extend_" half "_i16x8_" sign | "i64x2.extend_" half "_i32x4_" sign
+			| ishape "." vect_i_shift_op
+			| ishape "." vect_i_bin_op
+			| "i8x16." vect_i_minmax_op | "i16x8." vect_i_minmax_op | "i32x4." vect_i_minmax_op
+			| "i8x16." vect_i_satbin_op | "i16x8." vect_i_satbin_op
+			| "i16x8.mul" | "i32x4.mul" | "i64x2.mul"
+			| "i8x16.avgr_u" | "i16x8.avgr_u"
+			| "i16x8.extmul_" half  "_i8x16_" sign | "i32x4.extmul_" half  "_i16x8_" sign | "i64x2.extmul_" half "_i32x4_" sign
+			| "i16x8.extadd_pairwise_i8x16_" sign | "i32x4.extadd_pairwise_i16x8_" sign
+			| fshape "." vect_f_bin_op
+			| "i32x4.trunc_sat_f32x4_" sign | "i32x4.trunc_sat_f64x2_" sign "_zero"
+			| "f32x4.convert_i32x4_" sign | "f32x4.demote_f64x2_zero"
+			| "f64x2.convert_low_i32x4_" sign | "f64x2.promote_low_f32x4";
+
+		vect_un_op = "not";
+		vect_bin_op = "and" | "andnot" | "or" | "xor";
+		vect_tern_op = "bitselect";
+		vect_test_op = "any_true";
+		vect_i_test_op = "all_true";
+		vect_i_rel_op = "eq" | "ne" | "lt_" sign | "gt_" sign | "le_" sign | "ge_ sign";
+		vect_f_rel_op = "eq" | "ne" | "lt" | "gt" | "le" | "ge";
+		vect_i_un_op = "abs" | "neg";
+		vect_i_bin_op = "add" | "sub";
+		vect_i_minmax_op = "min_" sign | "max_" sign;
+		vect_i_satbin_op = "add_sat_" sign | "sub_sat_" sign;
+		vect_i_shift_op = "shl" | "shr_" sign;
+		vect_f_un_op = "abs" | "neg" | "sqrt" | "ceil" | "floor" | "trunc" | "nearest";
+		vect_f_bin_op = "add" | "sub" | "mul" | "div" | "min" | "max" | "pmin" | "pmax";
+
+		exps = $"nil" exp $"cons" ("," ws exp $"cons")* ("," ws)?
 			| $"nil";
 
-		expsemi = $"nil" exp $"cons" (#";" ws exp $"cons")* (";" ws)? 
+		expsemi = $"nil" exp $"cons" (#";" ws exp $"cons")* (";" ws)?
 			| $"nil";
 
 		optexport = "export" ws (string | $$"1" $"s2i") | ($$"0" $"s2i");
@@ -129,7 +194,7 @@ defineWase() -> DslGrammar {
 
 //			| id "<" ws types ">" ws $"partype_2"
 //			| type;
-	
+
 		ws decl
 	>>, ["ws", "id", "int", "double", "string"]); // true adds definitions for whitespace
 
