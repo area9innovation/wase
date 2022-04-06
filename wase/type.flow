@@ -5,7 +5,18 @@ export {
 }
 
 typeWase(ast : DslAst) -> DslAst {
-	dslTypeInfer(ast, mergeWaseTypes, typecheckWase);
+	deep = ref false;
+	acc = makeDslTypeAcc(mergeWaseTypes, \a, n, g -> typecheckWase(a, ^deep, n, g));
+
+	// OK, first time, we do NOT go deep, but just grab the top-level names
+	dslTypeInfer(acc, ast, false) |> ignore;
+
+//	println(getTreeKeys(^(acc.env)));
+//	println(getTreeValues(^(acc.env)));
+
+	// Then go again, but this time deep and we resolve the final type
+	deep := true;
+	dslTypeInfer(acc, ast, true);
 }
 
 mergeWaseTypes(acc : DslTypeAcc, left : DslAst, right : DslAst) -> DslAst {
@@ -16,16 +27,13 @@ mergeWaseTypes(acc : DslTypeAcc, left : DslAst, right : DslAst) -> DslAst {
 	}
 }
 
-typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -> DslAst {
+typecheckWase(acc : DslTypeAcc, deep : bool, node : DslAst, getChildType : (int) -> DslAst) -> DslAst {
 	// println(summarizeDsl(node));
 	switch (node) {
 		DslBool(__): DslString("i32");
 		DslInt(__): DslString("i32");
 		DslDouble(__): DslString("f64");
-		DslString(__): {
-			acc.onError(node, "strings are not supported");
-			DslString("i32");
-		}
+		DslString(__): DslString("string");
 		DslList(value): {
 			DslList(mapiList(value, \i, __ -> getChildType(i)));
 		}
@@ -53,22 +61,24 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 					acc.constants := insertSet(^(acc.constants), gname);
 				}
 
-				if (containsKeyTree(^(acc.env), gname)) {
+				if (!deep && containsKeyTree(^(acc.env), gname)) {
 					acc.onError(node, "Global '" + gname + "' is duplicate");
 				}
 
 				acc.env := setTree(^(acc.env), gname, type);
 
-				// OK, safe the environment so we do not pollute it
-				safeEnv = ^(acc.env);
+				if (deep) {
+					// OK, safe the environment so we do not pollute it
+					safeEnv = ^(acc.env);
 
-				acc.blocks := [type];
+					acc.blocks := [type];
 
-				etype = getChildType(4);
-				acc.unifyTypes(acc, type, etype);
+					etype = getChildType(4);
+					acc.unifyTypes(acc, type, etype);
 
-				// Restore the global environment without locals
-				acc.env := safeEnv;
+					// Restore the global environment without locals
+					acc.env := safeEnv;
+				}
 
 				getChildType(5);
 			} else if (name == "function") {
@@ -79,58 +89,61 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 				fargtypes = getChildType(2);
 				rettypes = getChildType(3);
 
-				if (containsKeyTree(^(acc.env), fname)) {
+				if (!deep && containsKeyTree(^(acc.env), fname)) {
 					acc.onError(node, "function '" + fname + "' is duplicate");
 				}
 
 				fntype = DslNode("func", [fargtypes, rettypes], 0);
 				acc.env := setTree(^(acc.env), fname, fntype);
 
-				// OK, safe the environment so we do not pollute it
-				safeEnv = ^(acc.env);
+				if (deep) {
+					// OK, safe the environment so we do not pollute it
+					safeEnv = ^(acc.env);
 
-				// OK, special handling if the rettype is a single one
-				rets = getDslList(rettypes);
-				if (countList(rets) == 1) {
-					acc.blocks := [list2array(rets)[0]];
-				} else {
-					acc.blocks := [rettypes];
+					// OK, special handling if the rettype is a single one
+					rets = getDslList(rettypes);
+					if (countList(rets) == 1) {
+						acc.blocks := [list2array(rets)[0]];
+					} else {
+						acc.blocks := [rettypes];
+					}
+
+					// OK, define the types of the arguments in the scope
+					fargs = list2array(getDslList(args[2]));
+					fargnames = map(fargs, \fa -> {
+						idtype = getDslNode(fa);
+
+						argname = getDslString(idtype.args[0]);
+						if (containsKeyTree(^(acc.env), argname)) {
+							acc.onError(node, "arg '" + argname + "' is shadowing in function `" + fname + "`");
+						}
+
+						argname;
+					});
+					// Remember and set the types of arguments
+					prevTypes : [Maybe<DslAst>] = mapi(list2array(getDslList(fargtypes)), \i, fargtype : DslAst -> {
+						id = fargnames[i];
+						etype = lookupTree(^(acc.env), id);
+						acc.env := setTree(^(acc.env), id, fargtype);
+						etype;
+					});
+
+					// Check the type of the body
+					bodyType = getChildType(4);
+					acc.unifyTypes(acc, rettypes, bodyType);
+
+					// And unroll the existing types for args
+					iteri(prevTypes, \i, mpt -> {
+						mpt ?? {
+							acc.env := setTree(^(acc.env), fargnames[i], mpt)
+						} : {
+							acc.env := removeFromTree(^(acc.env), fargnames[i]);
+						}
+					});
+
+					// Restore the global environment without locals
+					acc.env := safeEnv;
 				}
-
-				// OK, define the types of the arguments in the scope
-				fargs = list2array(getDslList(args[2]));
-				fargnames = map(fargs, \fa -> {
-					idtype = getDslNode(fa);
-
-					argname = getDslString(idtype.args[0]);
-					if (containsKeyTree(^(acc.env), argname)) {
-						acc.onError(node, "arg '" + argname + "' is shadowing in function `" + fname + "`");
-					}
-
-					argname;
-				});
-				prevTypes : [Maybe<DslAst>] = mapi(list2array(getDslList(fargtypes)), \i, fargtype : DslAst -> {
-					id = fargnames[i];
-					etype = lookupTree(^(acc.env), id);
-					acc.env := setTree(^(acc.env), id, fargtype);
-					etype;
-				});
-
-				// Check the type of the body
-				bodyType = getChildType(4);
-				acc.unifyTypes(acc, rettypes, bodyType);
-
-				// And unroll the existing types
-				iteri(prevTypes, \i, mpt -> {
-					mpt ?? {
-						acc.env := setTree(^(acc.env), fargnames[i], mpt)
-					} : {
-						acc.env := removeFromTree(^(acc.env), fargnames[i]);
-					}
-				});
-
-				// Restore the global environment without locals
-				acc.env := safeEnv;
 
 				getChildType(5);
 			} else if (name == "idtype") {
@@ -149,7 +162,7 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 
 				getChildType(3);
 
-				if (containsKeyTree(^(acc.env), fname)) {
+				if (!deep && containsKeyTree(^(acc.env), fname)) {
 					acc.onError(node, "table '" + fname + "' is duplicate");
 				}
 
@@ -162,7 +175,7 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 				fname = getDslString(args[0]);
 				fntype = getChildType(1);
 
-				if (containsKeyTree(^(acc.env), fname)) {
+				if (!deep && containsKeyTree(^(acc.env), fname)) {
 					acc.onError(node, "import function '" + fname + "' is duplicate");
 				}
 
@@ -181,7 +194,7 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 					acc.constants := insertSet(^(acc.constants), gname);
 				}
 
-				if (containsKeyTree(^(acc.env), gname)) {
+				if (!deep && containsKeyTree(^(acc.env), gname)) {
 					acc.onError(node, "import global '" + gname + "' is duplicate");
 				}
 

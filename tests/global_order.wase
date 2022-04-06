@@ -1,0 +1,16 @@
+foo(i : i32) -> i32 {
+    if (i == 1) bar(i)
+    else 0;
+}
+
+bar(i : i32) -> i32 {
+    if (i <= 1) 0
+    else foo(i - 1);
+}
+
+export memory 1;
+
+export _start() -> () {
+    foo(1);
+    {}
+}

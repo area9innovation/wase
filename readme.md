@@ -234,6 +234,9 @@ The compiler will reorder the top-level, so imports, tables, memory and data
 come first in the original order, and then after that, globals and functions
 in their original order, in accordance with Wasm requirements.
 
+Functions can call each other in mutual recursion, but globals can only refer
+to globals that occur before themselves.
+
 ## Global syntax
 
 The grammar for globals is like this:
@@ -833,18 +836,16 @@ For each instruction, we need to define three basic different things:
 
 There are a number of things, that would make Wase better:
 
-- Better parse errors with positions
-- Support mutual recursion by recording the types and indexes of all globals
-  and functions before type checking and code gen
-
-- Add syntax for function arguments to define whether it is mutable or not.
-  Right now, all function arguments are considered mutable.
-
 - Add the last instructions
 - Add SIMD instructions
 - Complete the Wasi interface
 - Encode 64-bit constants as S64, rather than U64. 
 - Check all I32 encodings whether they are S32 or U32
+
+- Add syntax for function arguments to define whether it is mutable or not.
+  Right now, all function arguments are considered mutable.
+
+- Better parse errors with positions
 
 - We support a special "hole<>()" instruction, which does nothing.
   The hole construct could in principle allow stack-like code:

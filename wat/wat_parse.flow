@@ -20,7 +20,7 @@ defineWat() -> DslGrammar {
 			| string $"string_1"
 			| double $"double_1"
 			| int $"int_1"
-			| ';;' $(!'\n' anychar)* ws$"comment_1"
+			| ';;' $(!'\n' anychar)* ws$"linecomment_1"
 			| ";" $(!';' anychar)+ ";" ws $"comment_1"
 			;
 
