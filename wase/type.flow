@@ -22,7 +22,10 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 		DslBool(__): DslString("i32");
 		DslInt(__): DslString("i32");
 		DslDouble(__): DslString("f64");
-		DslString(__): DslNode("array", [DslString("i16")], 0);
+		DslString(__): {
+			acc.onError(node, "strings are not supported");
+			DslString("i32");
+		}
 		DslList(value): {
 			DslList(mapiList(value, \i, __ -> getChildType(i)));
 		}

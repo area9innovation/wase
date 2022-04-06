@@ -94,7 +94,7 @@ defineWise() -> DslGrammar {
 
 		optmutable = ("mutable" ws $$"1" | $$"0" ) $"s2i";
 
-		type = $("i32" | "i64" | "f32" | "f64" | "v128" | "auto") ws $"type_1"
+		type = $("i32" | "i64" | "f32" | "f64" | "v128" | "bool" | "auto") ws $"type_1"
 			| "(" ws types ")" ws "->" ws type $"fntype_2"
 			| "(" ws types ")" ws $"tupletype_1";
 		
