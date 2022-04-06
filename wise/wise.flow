@@ -1,31 +1,33 @@
-import wase/parse;
+import wise/parse;
 import wase/include;
-import wase/type;
-import wase/compile;
-import wase/pretty_wase;
-import formats/wasm/wasm_encode;
+//import wise/type;
+//import wise/compile;
+//import wise/pretty_wase;
 
-compileWase2File(includes, filename : string, code : string) -> Promise<int, string> {
+compileWise2File(includes, filename : string, code : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
 		println("\nCompiling '" + filename + "'");
-		program = parseWase(filename, code);
-		extended = processWaseIncludes(includes, ref makeSet(), ".wase", program);
-		typed = typeWase(extended);
+		program = parseWise(filename, code);
+		extended = processWaseIncludes(includes, ref makeSet(), ".wise", program);
+		println(prettyDsl(program));
+		onError("Not implemented yet");
+/*
+		typed = typeWise(extended);
 
 		if (isUrlParameterTrue("debug-type")) {
 			println("Typed '" + filename + "'':");
 			println(prettyDsl(typed));
 		}
 
-		wase = dsl2wase(\node, error -> {
+		wise = dsl2wase(\node, error -> {
 			println(filename + ": " + error)
 		}, typed);
-		if (isUrlParameterTrue("debug-wase")) {
-			println("\nAs wase:");
-			println(prettyWase(wase));
+		if (isUrlParameterTrue("debug-wise")) {
+			println("\nAs wise:");
+			println(prettyWise(wise));
 		}
 
-		wasm = wase2wasm(wase);
+		wasm = wase2wasm(wise);
 		bytes = wasmModule2bytes(wasm);
 
 		filebase = changeFileExt(filename, "");
@@ -54,28 +56,29 @@ compileWase2File(includes, filename : string, code : string) -> Promise<int, str
 		} else {
 			onError("Could not save " + filebase + ".wasm saved")
 		}
+*/
 	});
 }
 
 main() {
 	includes = strSplit(getUrlParameter("I"), ",");
-	files0 : [string] = filtermap(getAllUrlParametersArray(), \a -> if (a[1] == "") Some(changeFileExt(a[0], ".wase")) else None());
+	files0 : [string] = filtermap(getAllUrlParametersArray(), \a -> if (a[1] == "") Some(changeFileExt(a[0], ".wise")) else None());
 	files = if (files0 != []) files0 else {
 		if (isUrlParameterTrue("test")) {
 			test = getUrlParameter("test");
 			testFolder = if (test == "1") "tests" else test;
 			tests = readDirectory(testFolder);
-			filtermap(tests, \t -> if (endsWith(t, ".wase")) Some(pathCombine(testFolder, t)) else None());
-		} else [];
+			filtermap(tests, \t -> if (endsWith(t, ".wise")) Some(pathCombine(testFolder, t)) else None());
+		} else ["tests/hello.wise"];
 	}
 	if (files == []) {
-		printWaseHelp();
+		printWiseHelp();
 		quit(1);
 	} else {
 		compiles : [Promise<int, string>]= map(files, \file0 -> {
 			file = resolveWaseFile(includes, file0);
 			if (fileExists(file)) {
-				compileWase2File(includes, file, getFileContent(file))
+				compileWise2File(includes, file, getFileContent(file))
 			} else {
 				Promise(\__, onError -> onError(file0 + " not found"));
 			}
@@ -88,18 +91,15 @@ main() {
 	}
 }
 
-printWaseHelp() -> void {
-	println("wase <files> - Compiles the files to <file>.wasm files");
-	println("  I=<path>,...   Defines the include path for resolving .wase files and includes");
+printWiseHelp() -> void {
+	println("wise <files> - Compiles the files to <file>.wasm files");
+	println("  I=<path>,...   Defines the include path for resolving .wise files and includes");
 	println("");
 	println("  wat=1          Produce .wat disassembly using wasm2wat");
-	println("  nocheck=1      Pass --nocheck to wasm2wat when producing .wat for invalid Wasm");
-//	println("  run=wasm3        Runs the .wasm using wasm3");
-//	println("  run=wasmer       Runs the .wasm using wasmer");
 	println("");
 	println("  verbose=1      Print how includes are resolved to files");
 	println("");
 	println("  test=1         Compiles all test cases in the tests/ folder");
 	println("  debug-type=1   Output the resulting typed AST");
-	println("  debug-wase=1   Output the internal intermediate WASE representation");
+	println("  debug-wise=1   Output the internal intermediate WISE representation");
 }

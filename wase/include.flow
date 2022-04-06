@@ -9,9 +9,8 @@ export {
 	resolveWaseFile(includes : [string], file : string) -> string;
 
 	// Process all wase includes
-	processWaseIncludes(includes : [string], included : ref Set<string>, d : DslAst) -> DslAst;
+	processWaseIncludes(includes : [string], included : ref Set<string>, suffix : string, d : DslAst) -> DslAst;
 }
-
 
 resolveWaseFile(includes : [string], file : string) -> string {
 	if (fileExists(file)) resolveRelativePath(file)
@@ -25,17 +24,17 @@ resolveWaseFile(includes : [string], file : string) -> string {
 	}
 }
 
-processWaseIncludes(includes : [string], included : ref Set<string>, d : DslAst) -> DslAst {
+processWaseIncludes(includes : [string], included : ref Set<string>, suffix : string, d : DslAst) -> DslAst {
 	switch (d) {
 		DslBool(value): d;
 		DslInt(value): d;
 		DslDouble(value): d;
 		DslString(value): d;
-		DslList(value): DslList(mapList(value, \vv -> processWaseIncludes(includes, included, vv)));
+		DslList(value): DslList(mapList(value, \vv -> processWaseIncludes(includes, included, suffix, vv)));
 		DslNode(name, args, pos): {
 			if (name == "wase_include") {
 				file = getDslString(args[0]);
-				filename = resolveWaseFile(includes, changeFileExt(file, ".wase"));
+				filename = resolveWaseFile(includes, changeFileExt(file, suffix));
 				if (containsSet(^included, filename)) {
 					// Already included. No need to do it again
 					args[1];
@@ -46,13 +45,13 @@ processWaseIncludes(includes : [string], included : ref Set<string>, d : DslAst)
 					if (isUrlParameterTrue("verbose")) {
 						println("  Included '" + file + "' as " + resolveRelativePath(filename));
 					}
-					processWaseIncludes(includes, included, replaceWaseEmpty(program, args[1]));
+					processWaseIncludes(includes, included, suffix, replaceWaseEmpty(program, args[1]));
 				} else {
 					println("ERROR: Could not include " + file);
 					args[1];
 				}
 			} else {
-				DslNode(name, map(args, \a -> processWaseIncludes(includes, included, a)), pos);
+				DslNode(name, map(args, \a -> processWaseIncludes(includes, included, suffix, a)), pos);
 			}
 		}
 	}

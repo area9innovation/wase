@@ -1,0 +1,160 @@
+//
+// Sets
+//
+
+interface ISet<?> {
+	isEmpty : () -> bool;
+	contains : (e : ?) -> bool;
+	insert : (e : ?) -> ISet<?>;
+	union : (ISet<?>) -> ISet<?>;
+	remove : (e : ?) -> ISet<?>;
+}
+
+// A set implemented using an array
+interpret xs : [?] as ISet<?> {
+	isEmpty() -> bool { xs == [] };
+	contains(e : ?)  -> bool { contains(xs, e) };
+	insert(e : ?) -> ISet<?> { arrayPush(xs, e) };
+	union(b : ISet<?>) -> ISet<?> { fold(xs, b, \acc, e -> b.insert(e)) };
+	remove : (e : ?) -> ISet<?> { remove(xs, e) };
+	// TODO: Add difference and intersect
+}
+
+/*
+// Interface extension: Probably a bad idea, but not sure
+interface FullSet<?> extend Set<?> {
+	remove : (e : ?) -> FullSet<?>;
+}
+interpret xs : [?] as FullSet<?> {
+	remove(e : ?) -> FullSet<?> { remove(xs, e) };
+}
+
+// Explicit alternative for the same:
+interface FullSet<?> {
+	isEmpty : () -> bool;
+	contains : (e : ?) -> bool;
+	insert : (e : ?) -> Set<?>;
+	union : (Set<?>) -> Set<?>;
+	remove : (e : ?) -> Set<?>;
+}
+
+RemovableSet(s : Set<?>, removed : Set<?>);
+interpret x : RemovableSet as FullSet<?> {
+
+}
+*/
+
+BitSet(xs : [int]);
+interpret b : BitSet as ISet<int> {
+	...
+}
+
+interpret t : Tree<?, bool> as ISet<?> {
+	isEmpty() -> bool { isEmptyTree(t) };
+	contains(e : ?) -> bool { containsKeyTree(t, e) };
+	insert(e : ?) -> ISet<?> { setTreeKey(t, e, true) };
+	remove(e : ?) -> ISet<?> { removeFromTree(t, e) };
+	union(b : ISet<?>) -> ISet<?> { foldTree(t, b, \e, __, acc -> b.insert(e)) };
+}
+
+// Extend a set with all even integers
+EvenUnion(base : ISet<int>, removed : ISet<int>);
+interpret eu : EvenUnion as ISet<int> {
+	isEmpty() -> bool { false };
+	contains(e : int) -> bool { e % 2 == 0 || (eu.base.contains(e)  && !eu.removed.contains(e)) };
+	insert(e : int) -> ISet<int> { eu.removed.remove(e); if (e % 2 == 0) eu.base else base.insert(e) };
+	union(b : ISet<int>) -> ISet<int> { base.union(b) }; // TODO: Trouble with removed: Requires set difference
+	remove(e : ?) -> ISet<?> { EvenUnion(eu with removed = removed.insert(e)) }
+}
+
+// The empty set
+emptySet = [] as ISet<int>;
+emptySet : ISet<int> = [];
+
+// A set of all even numbers
+evens = EvenUnion(emptySet, emptySet) as ISet<int>;
+evens.contains(4);
+evens.insert(5);
+
+evens.base	// compile error: This is not a struct
+e : EvenUnion = evens;
+e.base;
+
+//
+// Foldable
+//
+interface IFoldable<?, ??> {
+	fold : (acc : ??, fn : (acc : ??, ?) -> ??) -> ??;
+}
+
+interpret xs : [?] as IFoldable<?, ??> {
+	fold(acc : ??, fn : (??, ?) -> ??) -> ?? { fold(xs, acc, fn) };
+}
+
+interpret x : string as IFoldable<string, ??> {
+	fold(acc : ??, fn : (??, string) -> ??) -> ?? { foldString(x, acc, fn) }
+}
+
+FoldChar(x : string);
+interpret x : FoldChar as IFoldable<int, ??> {
+	fold(acc : ??, fn : (??, int) -> ??) -> ?? { something(x, acc, fn) }
+}
+
+// Fold over keys
+FoldKey(x : Tree<?, ??>);
+interpret x : FoldKey<?, ??> as IFoldable<?, ???> {
+	foldTree(acc : ???, fn :(???, ?) -> ??? { foldTree(x.x, acc, \k, v, acc2 -> fn(acc2, k))})
+}
+
+// Fold over values
+interpret x : Tree<?, ??> as IFoldable<??, ???> {
+	foldTree(acc : ???, fn :(???, ??) -> ??? { foldTree(x, acc, \k, v, acc2 -> fn(acc2, k))})
+}
+
+FoldKeyValue(x : Tree<?, ??>)
+interpret x : FoldKeyValue as IFoldable<Pair<?, ??>, ???> {
+	Foldable(
+		foldTree(acc : ???, fn : (???, Pair<?, ??>) -> ??? { foldTree(x.x, acc, \k, v, acc2 -> fn(acc2, Pair(k, v))) })
+	)
+}
+
+
+
+// Fully implicit
+mySet : Set<?> = [1,2,3];
+
+BitSetStruct(bits : [int]);
+
+BitSet(xs : BitSetStruct) as Set<int> {
+
+}
+
+// Anden fil:
+sumSetAdd1(set : Set<int> & Foldable<int>) -> int {
+	set.insert(1).fold(0, add);
+
+
+sumSetAdd([1,2,3]);
+
+
+mySet : Set<?> = makeTree1("foo", true);
+myFoldable : Foldable<?, ??> = mySet;
+
+// behind the scenes, the interfaces have a representation type associated:
+mySet : Set([?])<?> = [1,2,3];
+
+// and that is how the foldable can be deduced
+
+# Advantages
+
+No runtime overhead
+Type safe
+Safe & Extendible: Not possible to break code that compiles by adding stuff
+Dependencies are flipped: Instances include the interface, not the other way
+
+TODO:
+Rewrite reducers with interfaces
+
+Rewrite rvalues with interfaces
+
+Rewrite typing and compilation from Wase with interfaces
