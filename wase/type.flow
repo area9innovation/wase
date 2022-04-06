@@ -47,7 +47,7 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 
 				if (isMutable == 0) {
 					// Record that this is NOT mutable
-					acc.constantGlobals := insertSet(^(acc.constantGlobals), gname);
+					acc.constants := insertSet(^(acc.constants), gname);
 				}
 
 				if (containsKeyTree(^(acc.env), gname)) {
@@ -175,7 +175,7 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 				isMutable = getDslInt(args[2]);
 				if (isMutable == 0) {
 					// Record that this is NOT mutable
-					acc.constantGlobals := insertSet(^(acc.constantGlobals), gname);
+					acc.constants := insertSet(^(acc.constants), gname);
 				}
 
 				if (containsKeyTree(^(acc.env), gname)) {
@@ -225,18 +225,23 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 			} else if (name == "let") {
 				// (id, type, exp, body)
 				vname = getDslString(args[0]);
-				type = getChildType(1);
+				isMutable = getDslInt(args[1]);
+				type = getChildType(2);
 
 				if (containsKeyTree(^(acc.env), vname)) {
 					acc.onError(node, "let '" + vname + "' is shadowing");
 				}
 
+				if (isMutable == 0) {
+					// Record that this is NOT mutable
+					acc.constants := insertSet(^(acc.constants), vname);
+				}
 				acc.env := setTree(^(acc.env), vname, type);
 
-				etype = getChildType(2);
+				etype = getChildType(3);
 				acc.unifyTypes(acc, type, etype);
 
-				getChildType(3);
+				getChildType(4);
 
 			} else if (name == "var") {
 				vname = getDslString(args[0]);
@@ -253,7 +258,7 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 				mtype = lookupTree(^(acc.env), vname);
 				valtype = getChildType(1);
 				mtype ?? {
-					if (containsSet(^(acc.constantGlobals), vname)) {
+					if (containsSet(^(acc.constants), vname)) {
 						acc.onError(node, "global '" + vname + "' is not mutable");
 					}
 
@@ -268,6 +273,9 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 				mtype = lookupTree(^(acc.env), vname);
 				valtype = getChildType(1);
 				mtype ?? {
+					if (containsSet(^(acc.constants), vname)) {
+						acc.onError(node, "global '" + vname + "' is not mutable");
+					}
 					acc.unifyTypes(acc, mtype, valtype);
 					valtype;
 				} : {

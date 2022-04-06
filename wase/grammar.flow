@@ -43,7 +43,9 @@ defineWase() -> DslGrammar {
 		include = "include" !letterOrDigit ws $(letterOrDigit+ ("/" letterOrDigit+)+) ws ";" ws decl $"wase_include_2";
 
 		exp = 
-			id opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_4"
+			("var" !letterOrDigit ws $$"1" $"s2i" id $"swap" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
+			 | id $$"0" $"s2i" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
+			)
 			|> exp "|" ws exp $"or_2"
 			|> exp "&" ws exp $"and_2"
 			|> exp "^" ws exp $"xor_2"

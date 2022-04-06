@@ -216,11 +216,11 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 				arrayPush(acc, WaseGet(getDslString(args[0])))
 			} else if (name == "let") {
 				// (id, type, exp, body)
-				type = dsl2WasmValType(onError, waseType(args[1]));
 				vname = getDslString(args[0]);
-				nacc = dsl2WaseInstruction(onError, acc, args[2]);
+				type = dsl2WasmValType(onError, waseType(args[2]));
+				nacc = dsl2WaseInstruction(onError, acc, args[3]);
 				nacc2 = arrayPush(nacc, WaseLet(vname, type));
-				dsl2WaseInstruction(onError, nacc2, args[3]);
+				dsl2WaseInstruction(onError, nacc2, args[4]);
 
 			} else if (name == "set") {
 				// (id, exp)

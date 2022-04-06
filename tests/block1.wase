@@ -4,7 +4,7 @@ export memory 1;
 
 export _start() -> () {
 	block {
-		i = 1;
+		var i = 1;
 		loop {
 			printi32(i);
 			printByte(10);

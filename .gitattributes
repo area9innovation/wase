@@ -5,6 +5,7 @@
 *.flow text eol=lf
 *.lingo text eol=lf
 *.wase text eol=lf
+*.wat text eol=lf
 # Note that 'binary' means '-text -diff', and we still want diffs.
 *.bat -text
 *.cmd -text

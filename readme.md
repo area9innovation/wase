@@ -89,8 +89,8 @@ written in Wase:
 
 	// Iterative version using a loop
 	euler1Loop(limit : i32) -> i32 {
-		start = 1;
-		acc = 0;
+		var start = 1;
+		var acc = 0;
 		loop {
 			// Breaks out of the function when start >= limit with the value acc
 			break_if<1>(acc, start >= limit);
@@ -148,7 +148,7 @@ files have been compiled to `.wasm` and then decompiled to `.wat`.
 
 ## Status
 
-Early beta. The compiler works, and the compiler can parse, type and compile 
+Beta. The compiler works, and the compiler can parse, type and compile 
 most instructions directly to WASM binaries that validate and run correctly.
 
 There is not support for vector SIMD instructions yet.
@@ -209,6 +209,21 @@ You can use explicit type annotations to verify types:
 	}
 
 There are no implicit type conversions.
+
+The compiler tracks whether variables and globals are mutable or not:
+
+	foo() {
+		a = 1;
+		a := 2; // Not allowed.
+
+		var b = 1;
+		b := 2; // This is allowed, since b is "var"
+	}
+
+	c : mutable i32 = 1;
+	bar() {
+		c := 2; // This is allowed
+	}
 
 ## Top-level Syntax
 
@@ -306,7 +321,8 @@ typescript family:
 	a : i32 = 1;
 	<scope> // "a" is defined in this scope
 
-	a := 2; // set local or global
+	var v : i32 = 1;
+	v := 2; // set local or global, when mutable
 
 	// Arithmetic, all signed.
 	1 + 2 / 3 * 4 % 5
@@ -398,7 +414,7 @@ inner most block, while `break<1>()` breaks out of the next level.
 	// Here is a simple do-while loop, which prints from 1 to 10 and then F,
 	// but not E.
 	block {
-		i = 1;
+		var i = 1;
 		loop {
 			printi32(i);
 			printByte(10);
@@ -820,6 +836,9 @@ There are a number of things, that would make Wase better:
 - Better parse errors with positions
 - Support mutual recursion by recording the types and indexes of all globals
   and functions before type checking and code gen
+
+- Add syntax for function arguments to define whether it is mutable or not.
+  Right now, all function arguments are considered mutable.
 
 - Add the last instructions
 - Add SIMD instructions

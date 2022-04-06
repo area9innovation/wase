@@ -59,10 +59,11 @@ defineWise() -> DslGrammar {
 
 		atom = "if" !letterOrDigit ws exp exp "else" ws exp $"ifelse_3"
 				| "if" !letterOrDigit ws exp exp $"if_2"
-				| "true" !letterOrDigit $$"1" $"s2i" $"int_1" ws
-				| "false" !letterOrDigit $$"0" $"s2i" $"int_1" ws
+				| "true" !letterOrDigit $"true_0" ws
+				| "false" !letterOrDigit $"false_0" ws
 				| "return" !letterOrDigit ws (exp | $"nil") $"return_1"
 				| "while"  !letterOrDigit ws "(" ws exp ")" ws exp $"while_2"
+				| "break" !letterOrDigit ws (exp | $"nil") $"break_1"
 				| id ":=" ws exp $"set_2"
 				| id $"var_1"
 				| '[' ws exps ']' ws // list
