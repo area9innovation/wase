@@ -6,7 +6,7 @@ export {
 
 defineWise() -> DslGrammar {
 	grammar = defineGrammar("wise", <<
-		decl = import | include | global | function | $"wase_empty_0";
+		decl = import | include | global | function | $"wise_empty_0";
 
 		global = optexport id $"swap" 
 				":" ws optmutable type $"swap"
@@ -21,10 +21,12 @@ defineWise() -> DslGrammar {
 			"import" ws id ":" ws optmutable type $"swap" "=" ws id "." id ";" ws decl $"import_6" // id, type, mutable, module, name, scope
 			;
 			
-		include = "include" !letterOrDigit ws $(letterOrDigit+ ("/" letterOrDigit+)+) ws ";" ws decl $"wase_include_2";
+		include = "include" !letterOrDigit ws $(letterOrDigit+ ("/" letterOrDigit+)+) ws ";" ws decl $"wise_include_2";
 
 		exp = 
-			id opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_4"
+			("var" !letterOrDigit ws $$"1" $"s2i" id $"swap" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
+			 | id $$"0" $"s2i" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
+			)
 			|> exp "|" ws exp $"or_2"
 			|> exp "&" ws exp $"and_2"
 			|> exp "^" ws exp $"xor_2"

@@ -1,5 +1,5 @@
 import wise/parse;
-import wase/include;
+import tools/dsl/dsl_include;
 //import wise/type;
 //import wise/compile;
 //import wise/pretty_wase;
@@ -8,9 +8,12 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
 		println("\nCompiling '" + filename + "'");
 		program = parseWise(filename, code);
-		extended = processWaseIncludes(includes, ref makeSet(), ".wise", program);
-		println(prettyDsl(program));
-		onError("Not implemented yet");
+		include = DslInclude(includes, [".wise"], "wise_include", "wise_empty", \path, file, content -> {
+			parseWise(path, content);
+		}, ref makeSet());
+		extended = processDslIncludes(include, program);
+		println(prettyDsl(extended));
+		onError("Typing of Wise not implemented yet");
 /*
 		typed = typeWise(extended);
 
@@ -76,7 +79,7 @@ main() {
 		quit(1);
 	} else {
 		compiles : [Promise<int, string>]= map(files, \file0 -> {
-			file = resolveWaseFile(includes, file0);
+			file = resolveDslFile(includes, file0);
 			if (fileExists(file)) {
 				compileWise2File(includes, file, getFileContent(file))
 			} else {

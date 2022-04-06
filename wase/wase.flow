@@ -1,5 +1,5 @@
 import wase/parse;
-import wase/include;
+import tools/dsl/dsl_include;
 import wase/type;
 import wase/compile;
 import wase/pretty_wase;
@@ -9,7 +9,10 @@ compileWase2File(includes, filename : string, code : string) -> Promise<int, str
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
 		println("\nCompiling '" + filename + "'");
 		program = parseWase(filename, code);
-		extended = processWaseIncludes(includes, ref makeSet(), ".wase", program);
+		include = DslInclude(includes, [".wase"], "wase_include", "wase_empty", \path, file, content -> {
+			parseWase(path, content);
+		}, ref makeSet());
+		extended = processDslIncludes(include, program);
 		typed = typeWase(extended);
 
 		if (isUrlParameterTrue("debug-type")) {
@@ -73,7 +76,7 @@ main() {
 		quit(1);
 	} else {
 		compiles : [Promise<int, string>]= map(files, \file0 -> {
-			file = resolveWaseFile(includes, file0);
+			file = resolveDslFile(includes, file0);
 			if (fileExists(file)) {
 				compileWase2File(includes, file, getFileContent(file))
 			} else {
