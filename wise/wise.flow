@@ -1,36 +1,38 @@
 import wise/parse;
 import tools/dsl/dsl_include;
-//import wise/type;
-//import wise/compile;
-//import wise/pretty_wase;
+
+import wase/type;
+import wase/compile;
+import wase/pretty_wase;
 
 compileWise2File(includes, filename : string, code : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
 		println("\nCompiling '" + filename + "'");
 		program = parseWise(filename, code);
-		include = DslInclude(includes, [".wise"], "wise_include", "wise_empty", \path, file, content -> {
+		include = DslInclude(includes, [".wise"], "wise_include", "wase_empty", \path, file, content -> {
 			parseWise(path, content);
 		}, ref makeSet());
 		extended = processDslIncludes(include, program);
-		println(prettyDsl(extended));
-		onError("Typing of Wise not implemented yet");
-/*
-		typed = typeWise(extended);
+
+		// TODO: Here, we should lower Wise constructs to Wase constructs
+
+		// OK, from this point on, we reuse all the Wase stuff
+		typed = typeWase(extended);
 
 		if (isUrlParameterTrue("debug-type")) {
 			println("Typed '" + filename + "'':");
 			println(prettyDsl(typed));
 		}
 
-		wise = dsl2wase(\node, error -> {
+		wase = dsl2wase(\node, error -> {
 			println(filename + ": " + error)
 		}, typed);
 		if (isUrlParameterTrue("debug-wise")) {
-			println("\nAs wise:");
-			println(prettyWise(wise));
+			println("\nAs wase:");
+			println(prettyWase(wase));
 		}
 
-		wasm = wase2wasm(wise);
+		wasm = wase2wasm(wase);
 		bytes = wasmModule2bytes(wasm);
 
 		filebase = changeFileExt(filename, "");
@@ -59,7 +61,6 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 		} else {
 			onError("Could not save " + filebase + ".wasm saved")
 		}
-*/
 	});
 }
 

@@ -6,7 +6,7 @@ export {
 
 defineWise() -> DslGrammar {
 	grammar = defineGrammar("wise", <<
-		decl = import | include | global | function | $"wise_empty_0";
+		decl = import | include | global | function | $"wase_empty_0";
 
 		global = optexport id $"swap" 
 				":" ws optmutable type $"swap"
@@ -96,7 +96,7 @@ defineWise() -> DslGrammar {
 
 		type = $("i32" | "i64" | "f32" | "f64" | "v128" | "bool" | "auto") ws $"type_1"
 			| "(" ws types ")" ws "->" ws type $"fntype_2"
-			| "(" ws types ")" ws $"tupletype_1";
+			| "(" ws types ")" ws;
 		
 		types = $"nil" type $"cons" ("," ws type $"cons")* | $"nil";
 

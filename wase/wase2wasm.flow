@@ -45,8 +45,8 @@ wase2wasm(wase : Wase) -> WasmModule {
 
 	compileWase(context, waseReordered);
 
-	println(getTreeKeys(^(context.get)));
-	println(getTreeValues(^(context.get)));
+	// println(getTreeKeys(^(context.get)));
+	// println(getTreeValues(^(context.get)));
 
 	context.deep := true;
 	// OK, now collect all the instructions
