@@ -2,6 +2,10 @@ import tools/dsl/dsl_typing;
 
 export {
 	typeWase(ast : DslAst) -> DslAst;
+
+	// Wise reuses a lot of this
+	typecheckWase(acc : DslTypeAcc, deep : bool, node : DslAst, getChildType : (int) -> DslAst) -> DslAst;
+	mergeWaseTypes(acc : DslTypeAcc, left : DslAst, right : DslAst) -> DslAst;
 }
 
 typeWase(ast : DslAst) -> DslAst {

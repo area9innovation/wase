@@ -1,0 +1,45 @@
+import tools/dsl/dsl_typing;
+import wase/type;
+
+export {
+	typeWise(ast : DslAst) -> DslAst;
+}
+
+typeWise(ast : DslAst) -> DslAst {
+	deep = ref false;
+	acc = makeDslTypeAcc(mergeWiseTypes, \a, n, g -> typecheckWise(a, ^deep, n, g));
+
+	// OK, first time, we do NOT go deep, but just grab the top-level names
+	dslTypeInfer(acc, ast, false) |> ignore;
+
+//	println(getTreeKeys(^(acc.env)));
+//	println(getTreeValues(^(acc.env)));
+
+	// Then go again, but this time deep and we resolve the final type
+	deep := true;
+	dslTypeInfer(acc, ast, true);
+}
+
+mergeWiseTypes(acc : DslTypeAcc, left : DslAst, right : DslAst) -> DslAst {
+	mergeWaseTypes(acc, left, right);
+}
+
+typecheckWise(acc : DslTypeAcc, deep : bool, node : DslAst, getChildType : (int) -> DslAst) -> DslAst {
+	switch (node) {
+		DslBool(__): DslString("bool");
+		DslNode(name, args, pos): {
+			if (name == "equal" || name == "not_equal" || name == "less_equal" || name == "less"
+				|| name == "greater_equal" || name == "greater") {
+				// Comparisons give bools in Wise
+				left = getChildType(0);
+				right = getChildType(1);
+				acc.unifyTypes(acc, left, right);
+				DslString("bool");
+			} else {
+				// OK, we just reuse typing from Wase
+				typecheckWase(acc, deep, node, getChildType);
+			}
+		}
+		default: typecheckWase(acc, deep, node, getChildType);
+	}
+}

@@ -1,7 +1,7 @@
 import wise/parse;
 import tools/dsl/dsl_include;
 
-import wase/type;
+import wise/type;
 import wase/compile;
 import wase/pretty_wase;
 
@@ -14,10 +14,10 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 		}, ref makeSet());
 		extended = processDslIncludes(include, program);
 
-		// TODO: Here, we should lower Wise constructs to Wase constructs
+		typed = typeWise(extended);
 
-		// OK, from this point on, we reuse all the Wase stuff
-		typed = typeWase(extended);
+		// TODO: Here, we should lower Wise constructs to Wase constructs
+		// "while" as an example
 
 		if (isUrlParameterTrue("debug-type")) {
 			println("Typed '" + filename + "'':");
@@ -27,7 +27,7 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 		wase = dsl2wase(\node, error -> {
 			println(filename + ": " + error)
 		}, typed);
-		if (isUrlParameterTrue("debug-wise")) {
+		if (isUrlParameterTrue("debug-wase")) {
 			println("\nAs wase:");
 			println(prettyWase(wase));
 		}
@@ -105,5 +105,5 @@ printWiseHelp() -> void {
 	println("");
 	println("  test=1         Compiles all test cases in the tests/ folder");
 	println("  debug-type=1   Output the resulting typed AST");
-	println("  debug-wise=1   Output the internal intermediate WISE representation");
+	println("  debug-wase=1   Output the internal intermediate Wase representation");
 }
