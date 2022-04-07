@@ -1,0 +1,11 @@
+import wise/grammar;
+
+export {
+	parseWise(filename : string, code : string) -> DslAst;
+}
+
+wiseGrammar = defineWise();
+
+parseWise(filename : string, code : string) -> DslAst {
+	parseProgram(filename, wiseGrammar, code);
+}

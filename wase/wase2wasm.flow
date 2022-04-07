@@ -28,7 +28,6 @@ wase2wasm(wase : Wase) -> WasmModule {
 	context = WaseContext(ref makeTree(), ref makeTree(), ref makeTree(),
 		ref [], ref makeTree(), 
 		ref 0, ref 0, ref 0, ref 0, ref 0, ref 0,
-		ref true,
 		ref [], ref [], ref [], ref [], ref [], ref [], ref [], ref [],
 		ref -1,
 		// Lookup from fn to fn indexes for indirect fns
@@ -37,11 +36,22 @@ wase2wasm(wase : Wase) -> WasmModule {
 		ref [],
 		// ref.funcs
 		ref makeSet(),
+		// Should we compile deep, or are we just resolving indexes first?
+		ref false,
 	);
 
 	// Reorder the top-level imports here
 	waseReordered = reorder2Wase(reorderWase(WaseReorder(makeList(), makeList(), makeList()), wase));
+
 	compileWase(context, waseReordered);
+
+	// println(getTreeKeys(^(context.get)));
+	// println(getTreeValues(^(context.get)));
+
+	context.deep := true;
+	// OK, now collect all the instructions
+	compileWase(context, waseReordered);
+
 	// Construct the mapping from function index to function name
 	elms = concat(^(context.functions), set2array(^(context.refFuncs)));
 	elements = if (elms == []) [] else [WasmElementFuncs(WasmExpr([WasmI32Const(0)]), elms)];
@@ -78,19 +88,6 @@ wase2wasm(wase : Wase) -> WasmModule {
 	);
 }
 
-wasmElementSize(e : WasmElement) -> int {
-	switch (e) {
-		WasmElementFuncs(offset, funindexes): length(funindexes);
-		WasmElementPassive(funindexes): length(funindexes);
-		WasmElementFuncs2(tableIndex, offset, funindexes): length(funindexes);
-		WasmElementDeclarative(funindexes): length(funindexes);
-		WasmElement4(offset, init): length(init);
-		WasmElement5(et, init): length(init);
-		WasmElement6(tableIndex, offset, et, init): length(init);
-		WasmElement7(et, init): length(init);
-	}
-}
-
 WaseContext(
 	// As we construct functions, imports, etc, we record their indexes here
 	get : ref Tree<string, WasmInstruction>,
@@ -109,9 +106,6 @@ WaseContext(
 	globalidx : ref int,
 	elemidx : ref int,
 	dataidx : ref int,
-
-	// Imports have to come before we see code
-	importsAllowed : ref bool,
 
 	// The func type ids of functions
 	functionTypes : ref [int],
@@ -147,6 +141,9 @@ WaseContext(
 
 	// ref funcs
 	refFuncs : ref Set<int>,
+
+	// Are we compiling deep, or just collecting indexes?
+	deep : ref bool
 );
 
 reorderWase(acc : WaseReorder, w : Wase) -> WaseReorder {
@@ -211,136 +208,134 @@ replaceWaseScope(w : Wase, newScope : Wase) -> Wase {
 compileWase(context : WaseContext, w : Wase) -> void {
 	switch (w) {
 		WaseImportFunction(id, module, name, type, scope): {
-			if (!^(context.importsAllowed)) {
-				println("Import function " + id + " too late");
+			if (!^(context.deep)) {
+				// OK, what index does this function et?
+				fnIndex = ^(context.funcidx);
+				context.funcidx := fnIndex + 1;
+				context.get := setTree(^(context.get), id, WasmRefFunc(fnIndex));
+			} else {
+				// Find or make the index of the function types
+				fnTypeIndex = lookupWasmFuncTypeIndex(context, type);
+				wimport = WasmImport(module, name, WasmImportType(fnTypeIndex));
+				context.imports := arrayPush(^(context.imports), wimport);
 			}
-			// Find or make the index of the function types
-			fnTypeIndex = lookupWasmFuncTypeIndex(context, type);
-			wimport = WasmImport(module, name, WasmImportType(fnTypeIndex));
-			context.imports := arrayPush(^(context.imports), wimport);
-
-			// OK, what index does this function et?
-			fnIndex = ^(context.funcidx);
-			context.funcidx := fnIndex + 1;
-			context.get := setTree(^(context.get), id, WasmRefFunc(fnIndex));
 			compileWase(context, scope)
 		}
 		WaseImportGlobal(id, module, name, type, isMutable, scope): {
-			if (!^(context.importsAllowed)) {
-				println("Import global " + id + " too late");
+			if (!^(context.deep)) {
+				// OK, what index does this function et?
+				globalIndex = ^(context.globalidx);
+				context.globalidx := globalIndex + 1;
+				context.get := setTree(^(context.get), id, WasmGlobalGet(globalIndex));
+				context.set := setTree(^(context.set), id, WasmGlobalSet(globalIndex));
+			} else {
+				wimport = WasmImport(module, name, WasmImportGlobal(WasmGlobalType(type, isMutable)));
+				context.imports := arrayPush(^(context.imports), wimport);
 			}
-			wimport = WasmImport(module, name, WasmImportGlobal(WasmGlobalType(type, isMutable)));
-			context.imports := arrayPush(^(context.imports), wimport);
-
-			// OK, what index does this function et?
-			globalIndex = ^(context.globalidx);
-			context.globalidx := globalIndex + 1;
-			context.get := setTree(^(context.get), id, WasmGlobalGet(globalIndex));
-			context.set := setTree(^(context.set), id, WasmGlobalSet(globalIndex));
 			compileWase(context, scope)
 		}
 		WaseImportMemory(module, name, minimumPages, maximumPages, scope): {
-			if (!^(context.importsAllowed)) {
-				println("Import memory " + module + "." + name + " too late");
+			if (!^(context.deep)) {
+				wimport = WasmImport(module, name, WasmImportMemory(WasmMemoryType(WasmLimits(minimumPages, maximumPages))));
+				context.imports := arrayPush(^(context.imports), wimport);
 			}
-			wimport = WasmImport(module, name, WasmImportMemory(WasmMemoryType(WasmLimits(minimumPages, maximumPages))));
-			context.imports := arrayPush(^(context.imports), wimport);
 			compileWase(context, scope)
 		}
 		WaseImportTable(id, module, name, refType, minimumPages, maximumPages, scope): {
-			if (!^(context.importsAllowed)) {
-				println("Import table " + module + "." + name + " too late");
+			if (!^(context.deep)) {
+				tableIndex = ^(context.tableidx);
+				context.tableidx := tableIndex + 1;
+				context.get := setTree(^(context.get), id, WasmTableGet(tableIndex));
+				context.set := setTree(^(context.set), id, WasmTableSet(tableIndex));
+			} else {
+				wimport = WasmImport(module, name, WasmImportTable(WasmTableType(refType, WasmLimits(minimumPages, maximumPages))));
+				context.imports := arrayPush(^(context.imports), wimport);
 			}
-
-			tableIndex = ^(context.tableidx);
-			context.tableidx := tableIndex + 1;
-			context.get := setTree(^(context.get), id, WasmTableGet(tableIndex));
-			context.set := setTree(^(context.set), id, WasmTableSet(tableIndex));
-
-			wimport = WasmImport(module, name, WasmImportTable(WasmTableType(refType, WasmLimits(minimumPages, maximumPages))));
-			context.imports := arrayPush(^(context.imports), wimport);
 			compileWase(context, scope)
 		}
 		WaseMemory(minimumPages, maximumPages, exportId, scope): {
-			memoryId = length(^(context.memory));
-			wmemory = WasmMemoryType(WasmLimits(minimumPages, maximumPages));
-			context.memory := arrayPush(^(context.memory), wmemory);
+			if (!^(context.deep)) {
+				memoryId = length(^(context.memory));
+				wmemory = WasmMemoryType(WasmLimits(minimumPages, maximumPages));
+				context.memory := arrayPush(^(context.memory), wmemory);
 
-			if (exportId != "") {
-				wexport = WasmExport(exportId, WasmExportMemory(memoryId));
-				context.exports := arrayPush(^(context.exports), wexport);
+				if (exportId != "") {
+					wexport = WasmExport(exportId, WasmExportMemory(memoryId));
+					context.exports := arrayPush(^(context.exports), wexport);
+				}
 			}
 			compileWase(context, scope)
 		}
 		WaseGlobal(id, exportId, type, isMutable, init, scope): {
-			// No more imports from this point on
-			context.importsAllowed := false;
-
 			// OK, what index does this global get?
-			globalIndex = ^(context.globalidx);
-			context.globalidx := globalIndex + 1;
-			context.get := setTree(^(context.get), id, WasmGlobalGet(globalIndex));
-			context.set := setTree(^(context.set), id, WasmGlobalSet(globalIndex));
+			if (!^(context.deep)) {
+				globalIndex = ^(context.globalidx);
+				context.globalidx := globalIndex + 1;
+				context.get := setTree(^(context.get), id, WasmGlobalGet(globalIndex));
+				context.set := setTree(^(context.set), id, WasmGlobalSet(globalIndex));
+				// Should we export this thing?
+				if (exportId != "") {
+					wexport = WasmExport(exportId, WasmExportGlobal(globalIndex));
+					context.exports := arrayPush(^(context.exports), wexport);
+				}
+			} else {
+				// Compile and register it
+				wglobal = WasmGlobal(WasmGlobalType(type, isMutable), waseExpr2wasm(context, init));
+				context.globals := arrayPush(^(context.globals), wglobal);
 
-			// Register it
-			wglobal = WasmGlobal(WasmGlobalType(type, isMutable), waseExpr2wasm(context, init));
-			context.globals := arrayPush(^(context.globals), wglobal);
-
-			// Should we export this thing?
-			if (exportId != "") {
-				wexport = WasmExport(exportId, WasmExportGlobal(globalIndex));
-				context.exports := arrayPush(^(context.exports), wexport);
 			}
 			compileWase(context, scope)
 		}
 		WaseFunction(id, exportId, start, type, args, code, scope): {
-			// No more imports from this point on
-			context.importsAllowed := false;
-
-			// Find or make the index of the function types
-			fnTypeIndex = lookupWasmFuncTypeIndex(context, type);
-			// And register the function in the function section
-			context.functionTypes := arrayPush(^(context.functionTypes), fnTypeIndex);
-
 			// OK, what index does this global get?
-			funcIndex = ^(context.funcidx);
-			context.funcidx := funcIndex + 1;
-			// println("Setting " + id);
-			context.get := setTree(^(context.get), id, WasmRefFunc(funcIndex));
-	
-			locals = extractWasesLocals(context, [], code.instructions);
+			if (!^(context.deep)) {
+				funcIndex = ^(context.funcidx);
+				context.funcidx := funcIndex + 1;
+				// println("Setting " + id);
+				context.get := setTree(^(context.get), id, WasmRefFunc(funcIndex));
 
-			// Register local ids in the environment
-			iteri(concat(args, locals), \i, local : WaseLocal -> {
-				context.get := setTree(^(context.get), local.name, WasmLocalGet(i));
-				context.set := setTree(^(context.set), local.name, WasmLocalSet(i));
-				context.tee := setTree(^(context.tee), local.name, WasmLocalTee(i));
-			});
-			// Register the code
-			wcode = WasmCode(map(locals, \local : WaseLocal -> WasmLocal(1, local.type)), waseExpr2wasm(context, code));
-			context.codes := arrayPush(^(context.codes), wcode);
-
-			if (start) {
-				if (^(context.starts) != -1) {
-					println("We only suppport one start section. " + id);
+				if (start) {
+					if (^(context.starts) != -1) {
+						println("We only suppport one start section. " + id);
+					}
+					if (type.returns != []) {
+						println("Start function can not return anything. " + id);
+					}
+					context.starts := funcIndex;
 				}
-				if (type.returns != []) {
-					println("Start function can not return anything. " + id);
-				}
-				context.starts := funcIndex;
-			}
 
-			// Should we export this thing?
-			if (exportId != "") {
-				wexport = WasmExport(exportId, WasmExportFunc(funcIndex));
-				context.exports := arrayPush(^(context.exports), wexport);
-			}
+				// Should we export this thing?
+				if (exportId != "") {
+					wexport = WasmExport(exportId, WasmExportFunc(funcIndex));
+					context.exports := arrayPush(^(context.exports), wexport);
+				}
+			} else {
+				// Find or make the index of the function types
+				fnTypeIndex = lookupWasmFuncTypeIndex(context, type);
+				// And register the function in the function section
+				context.functionTypes := arrayPush(^(context.functionTypes), fnTypeIndex);
+
+				locals = extractWasesLocals(context, [], code.instructions);
+
+				// Register local ids in the environment
+				iteri(concat(args, locals), \i, local : WaseLocal -> {
+					context.get := setTree(^(context.get), local.name, WasmLocalGet(i));
+					context.set := setTree(^(context.set), local.name, WasmLocalSet(i));
+					context.tee := setTree(^(context.tee), local.name, WasmLocalTee(i));
+				});
+				// Register the code
+				wcode = WasmCode(map(locals, \local : WaseLocal -> WasmLocal(1, local.type)), waseExpr2wasm(context, code));
+				context.codes := arrayPush(^(context.codes), wcode);
+			};
+
 			compileWase(context, scope)
 		}
 		WaseData(id, offset, bytes, scope): {
-			off = waseExpr2wasm(context, offset);
-			// TODO: Bind the name to the address
-			context.data := arrayPush(^(context.data), WasmData0(off, bytes));
+			if (^(context.deep)) {
+				off = waseExpr2wasm(context, offset);
+				// TODO: Bind the name to the address
+				context.data := arrayPush(^(context.data), WasmData0(off, bytes));
+			}
 			compileWase(context, scope)
 		}
 		WaseEmpty(): {}

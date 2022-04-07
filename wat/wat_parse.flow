@@ -13,13 +13,15 @@ parseWat(filename : string, code : string) -> DslAst {
 defineWat() -> DslGrammar {
 	grammar = defineGrammar("wat", <<
 
-		wat = "(" ws $watid ws $"nil" (wat $"cons")* ")" ws $"node_2"
+		wat = "(" ws wat $"nil" (wat $"cons")* ")" ws $"node_2"
+			| $watid ws $"id_1"
 			| "$" ws id $"name_1"
-			| id $"id_1"
 			| "-" ws wat $"negate_1"
 			| string $"string_1"
 			| double $"double_1"
 			| int $"int_1"
+			| ';;' $(!'\n' anychar)* ws$"linecomment_1"
+			| ";" $(!';' anychar)+ ";" ws $"comment_1"
 			;
 
 		watid = wid "." wid | wid;
@@ -32,7 +34,7 @@ defineWat() -> DslGrammar {
 }
 
 main() {
-	file = getFileContent("tests/linked_list.wat");
+	file = getFileContent("tests/block1.wat");
 	ast = parseWat("list", file);
 	println(prettyDsl(ast));
 	quit(0);

@@ -1,8 +1,8 @@
 
 // Implementation using a loop
 euler1Loop(limit : i32) -> i32 {
-	start = 1;
-	acc = 0;
+	var start = 1;
+	var acc = 0;
 	loop {
 		break_if<1>(acc, start >= limit);
 		if (start % 3 == 0 | start % 5 == 0) {
