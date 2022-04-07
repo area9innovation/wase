@@ -441,7 +441,7 @@ typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs 
 	list2 = \t1, t2 -> DslList(Cons(t1, makeList1(t2)));
 	list3 = \t1, t2, t3 -> DslList(Cons(t1, Cons(t2, makeList1(t3))));
 
-	if (op == "store" || op == "store8" || op == "store16" || op == "store32") {
+	if (op == "store" || op == "store8" || op == "store16" || op == "store32" || op == "v128.store") {
 		acc.unifyTypes(acc, opargs, list2(i32, infer()));
 		list0;
 	} else if (op == "load" || op == "load8_s" || op == "load8_u"
@@ -674,8 +674,13 @@ typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs 
 		acc.unifyTypes(acc, opargs, list0);
 		i32;
 
-	} else if (startsWith(op, "v128")) {
+	} else if (op == "v128.const") {
 		v128;
+	} else if (op == "v128.load") {
+		acc.unifyTypes(acc, opargs, list1(i32));
+		v128;
+	/*} else if (op == "v128.store") {
+		v128;*/
 	} else {
 		println("TODO: What is the type of  '" + op  + "' " + toString(pars) + " : " + summarizeDsl(opargs));
 		DslList(makeList());

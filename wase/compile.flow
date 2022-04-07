@@ -818,8 +818,7 @@ dslWasmOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id 
 		WaseFunctionIndex(fn);
 		
 	} else {
-		onError(node, "Can not compile wasm op " + id);
-		WasmUnreachable();
+		dslWasmVectorOp2WaseInstruction(onError, node, id, pars, types, retType);
 	}
 }
 
@@ -1219,7 +1218,8 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 
 	*/
 	else {
-		error();
+		onError(node, "Can not compile wasm op " + id);
+		WasmUnreachable();
 	}
 }
 
