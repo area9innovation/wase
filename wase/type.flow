@@ -406,6 +406,7 @@ typecheckWase(acc : DslTypeAcc, node : DslAst, getChildType : (int) -> DslAst) -
 typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs : DslAst, getChildType : (int) -> DslAst) -> DslAst {
 	i32 = DslString("i32");
 	i64 = DslString("i64");
+	v128 = DslString("v128");
 	infer = \ -> makeDslTypeVar(acc);
 	list0 = DslList(makeList());
 	list1 = \t1 -> DslList(makeList1(t1));
@@ -645,6 +646,8 @@ typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs 
 		acc.unifyTypes(acc, opargs, list0);
 		i32;
 
+	} else if (startsWith(op, "v128")) {
+		v128;
 	} else {
 		println("TODO: What is the type of  '" + op  + "' " + toString(pars) + " : " + summarizeDsl(opargs));
 		DslList(makeList());

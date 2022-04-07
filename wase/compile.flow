@@ -911,18 +911,12 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		if (rtype != WasmVecType()) error() else 
 		WasmI16x8ExtractLane_u(getDslInt(pars[0]));
 	} 
-	else if (id == "i32x4.extract_lane_s") {
+	else if (id == "i32x4.extract_lane") {
 		if (rtype != WasmVecType()) error() else 
-		WasmI32x4ExtractLane_s(getDslInt(pars[0]));
-	} else if (id == "i32x4.extract_lane_u") {
+		WasmI32x4ExtractLane(getDslInt(pars[0]));
+	} else if (id == "i64x2.extract_lane") {
 		if (rtype != WasmVecType()) error() else 
-		WasmI32x4ExtractLane_u(getDslInt(pars[0]));
-	} else if (id == "i64x2.extract_lane_s") {
-		if (rtype != WasmVecType()) error() else 
-		WasmI64x2ExtractLane_s(getDslInt(pars[0]));
-	} else if (id == "i64x2.extract_lane_u") {
-		if (rtype != WasmVecType()) error() else 
-		WasmI64x2ExtractLane_u(getDslInt(pars[0]));
+		WasmI64x2ExtractLane(getDslInt(pars[0]));
 	} 
 	/*
 	WasmI8x16ExtractLane_s(lane : int);
@@ -933,12 +927,10 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmI16x8ExtractLane_u(lane : int);
 		WasmI16x8ReplaceLane(lane : int);
 
-		WasmI32x4ExtractLane_s(lane : int);
-		WasmI32x4ExtractLane_u(lane : int);
+		WasmI32x4ExtractLane(lane : int);
 		WasmI32x4ReplaceLane(lane : int);
 
-		WasmI64x2ExtractLane_s(lane : int);
-		WasmI64x2ExtractLane_u(lane : int);
+		WasmI64x2ExtractLane(lane : int);
 		WasmI64x2ReplaceLane(lane : int);
 
 		WasmF32x4ExtractLane(lane : int);
