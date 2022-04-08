@@ -825,7 +825,6 @@ dslWasmOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id 
 dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id : string, pars : [DslAst], types : [DslAst], retType : DslAst) -> WaseInstruction {
 	wtypes = map(types, \t -> dsl2WasmBlockType(onError, t));
 	rtype = dsl2WasmBlockType(onError, retType);
-	partypes = map(pars, waseType);
 
 	memargs = \defalign -> {
 		if (pars != []) {
@@ -839,35 +838,53 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmUnreachable();
 	}
 	if (id == "v128.const") {
-		if (rtype != WasmVecType()) error() else 
 		WasmV128Const(map(pars, getDslInt));
 	} else if (id == "i8x16.shuffle") {
-		if (rtype != WasmVecType()) error() else 
 		WasmV128Shuffle(map(pars, getDslInt));
 	} else if (id == "v128.load") {
-		if (rtype != WasmVecType()) error() else 
 		WasmV128Load(memargs(4));
 	} else if (id == "v128.load8x8_s") {
-		if (rtype != WasmVecType()) error() else 
 		WasmV128Load8x8_s(memargs(4));
 	} else if (id == "v128.load8x8_u") {
-		if (rtype != WasmVecType()) error() else 
 		WasmV128Load8x8_u(memargs(4));
 	} else if (id == "v128.load16x4_u") {
-		if (rtype != WasmVecType()) error() else 
 		WasmV128Load16x4_u(memargs(4));
 	} else if (id == "v128.load16x4_s") {
-		if (rtype != WasmVecType()) error() else 
 		WasmV128Load16x4_s(memargs(4));
 	} else if (id == "v128.load32x2_u") {
-		if (rtype != WasmVecType()) error() else 
 		WasmV128Load32x2_u(memargs(4));
 	} else if (id == "v128.load32x2_s") {
-		if (rtype != WasmVecType()) error() else 
 		WasmV128Load32x2_s(memargs(4));
 	} else if (id == "v128.load8_splat") {
-		if (rtype != WasmVecType()) error() else 
 		WasmV128Load8_splat(memargs(4));
+	} else if (id == "v128.load16_splat") {
+		WasmV128Load16_splat(memargs(4));
+	} else if (id == "v128.load32_splat") {
+		WasmV128Load32_splat(memargs(4));
+	} else if (id == "v128.load64_splat") {
+		WasmV128Load64_splat(memargs(4));
+	} else if (id == "v128.load32_zero") {
+		WasmV128Load32_zero(memargs(4));
+	} else if (id == "v128.load64_splat") {
+		WasmV128Load64_splat(memargs(4));
+	} else if (id == "v128.store") {
+		WasmV128Store(memargs(4));
+	} else if (id == "v128.load8_lane") {
+		WasmV128Load8_lane(memargs(4), getDslInt(pars[2]));
+	} else if (id == "v128.load16_lane") {
+		WasmV128Load16_lane(memargs(4), getDslInt(pars[2]));
+	} else if (id == "v128.load32_lane") {
+		WasmV128Load32_lane(memargs(4), getDslInt(pars[2]));
+	} else if (id == "v128.load64_lane") {
+		WasmV128Load64_lane(memargs(4), getDslInt(pars[2]));
+	} else if (id == "v128.store8_lane") {
+		WasmV128Store8_lane(memargs(4), getDslInt(pars[2]));
+	} else if (id == "v128.store16_lane") {
+		WasmV128Store16_lane(memargs(4), getDslInt(pars[2]));
+	} else if (id == "v128.store32_lane") {
+		WasmV128Store32_lane(memargs(4), getDslInt(pars[2]));
+	} else if (id == "v128.store64_lane") {
+		WasmV128Store64_lane(memargs(4), getDslInt(pars[2]));
 	} 
 	/*
 	WasmV128Load8x8_s(m : WasmMemArg);
@@ -898,23 +915,16 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmV128Store64_lane(m : WasmMemArg, lane : int);
 	*/
 	else if (id == "i8x16.extract_lane_s") {
-		if (rtype != WasmVecType()) error() else 
 		WasmI8x16ExtractLane_s(getDslInt(pars[0]));
 	} else if (id == "i8x16.extract_lane_u") {
-		if (rtype != WasmVecType()) error() else 
 		WasmI8x16ExtractLane_u(getDslInt(pars[0]));
 	} else if (id == "i16x8.extract_lane_s") {
-		if (rtype != WasmVecType()) error() else 
 		WasmI16x8ExtractLane_s(getDslInt(pars[0]));
 	} else if (id == "i16x8.extract_lane_u") {
-		if (rtype != WasmVecType()) error() else 
 		WasmI16x8ExtractLane_u(getDslInt(pars[0]));
-	} 
-	else if (id == "i32x4.extract_lane") {
-		if (rtype != WasmVecType()) error() else 
+	} else if (id == "i32x4.extract_lane") {
 		WasmI32x4ExtractLane(getDslInt(pars[0]));
-	} else if (id == "i64x2.extract_lane") {
-		if (rtype != WasmVecType()) error() else 
+	} else if (id == "i64x2.extract_lane") { 
 		WasmI64x2ExtractLane(getDslInt(pars[0]));
 	} 
 	/*
@@ -1229,7 +1239,7 @@ waseType(d : DslAst) -> DslAst {
 			lastElement(args, d);
 		}
 		DslInt(tv): {
-			println("TODO: Why do we have a tyvar, and not a resolved type?");
+			println("TODO: Why do we have a tyvar " + i2s(tv) + ", and not a resolved type?");
 			d;
 		}
 		default: d;
