@@ -838,7 +838,13 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmUnreachable();
 	}
 	if (id == "v128.const") {
-		WasmV128Const(map(pars, getDslInt));
+		if (length(pars) == 16) {
+			WasmV128Const(map(pars, getDslInt));
+		} else if (length(pars) == 4) {
+			WasmV128Const(concatA(map(pars, \p -> i32toBytesLE(getDslInt(p)))));
+		} else {
+			error();
+		}
 	} else if (id == "i8x16.shuffle") {
 		WasmV128Shuffle(map(pars, getDslInt));
 	} else if (id == "v128.load") {
@@ -1351,6 +1357,23 @@ dsl2WasmBlockType(onError : (DslAst, string) -> void, d : DslAst) -> WasmBlockTy
 
 */
 
+i32toBytes(i : int) -> [int] {
+	[
+		bitUshr(bitAnd(i, 0xff000000), 24),
+		bitUshr(bitAnd(i, 0x00ff0000), 16),
+		bitUshr(bitAnd(i, 0x0000ff00), 8),
+		bitAnd(i, 0x000000ff)
+	]
+}
+
+i32toBytesLE(i : int) -> [int] {
+	[
+		bitAnd(i, 0x000000ff),
+		bitUshr(bitAnd(i, 0x0000ff00), 8),
+		bitUshr(bitAnd(i, 0x00ff0000), 16),
+		bitUshr(bitAnd(i, 0xff000000), 24)
+	]
+}
 
 isNumericWaseType(d : DslAst) -> bool {
 	contains([DslString("i32"), DslString("i64"), DslString("f32"), DslString("f64")], d)
