@@ -1,10 +1,30 @@
 include lib/runtime;
 
+export memory 32;
+
+print_bytes() -> () {
+	var i = 33;
+	loop {
+		printByte(i);
+		i := i + 1;
+		// Breaks out of _start function
+		break_if<1>(i > 47);
+		// This is really continue
+		break<>();
+	};
+}
+
 export _start() -> () {
-	val : v128 = v128.const<1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16>();
-	//printv128(val);
+	print_bytes();
+	printByte(10);
+	val : v128 = v128.const<33,34,35,36,37,38,39,40,41,41,42,43,44,45,46,47>();
+	printv128(val);
+	printByte(10);
+	val1 : v128 = v128.const<572727841,640099877,707471913,774843949>();
+	printv128(val1);
 	//v128.store<>(0, val);
 	//x : v128 = v128.load<>(0);
 	//printi32(x);
+	printByte(10);
     {}
 }

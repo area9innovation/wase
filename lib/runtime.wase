@@ -44,3 +44,16 @@ printHex32(i : i32) -> () {
 		printHex32(i & 0xf);
 	}
 }
+
+printv128(v : v128) -> () {
+	// What offset to write from
+	store<>(0, 12);
+	// How many bytes to write
+	store<>(4, 16);
+	// The byte to write
+	v128.store<>(12, v);
+
+	// Print it to stdout
+	fd_write(1, 0, 1, 8);
+	{}
+}
