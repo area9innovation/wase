@@ -1231,7 +1231,388 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmI8x16Max_s();
 		WasmI8x16Max_u();
 		WasmI8x16Avgr_u();
+	*/
+	else if (id == "i16x8.extract_add_pairwise_i8x16_s") {
+		WasmI16x8ExtaddPairwiseI8x16_s();
+	} else if (id == "i16x8.extract_add_pairwise_i8x16_u") {
+		WasmI16x8ExtaddPairwiseI8x16_u();
+	} else if (id == "i16x8.abs") {
+		WasmI16x8Abs();
+	} else if (id == "i16x8.neg") {
+		WasmI16x8Neg();
+	} else if (id == "i16x8.q15mulr_sat_s") {
+		WasmI16x8Q15mulrSat_s();
+	} else if (id == "i16x8.all_true") {
+		WasmI16x8AllTrue();
+	} else if (id == "i16x8.bitmask") {
+		WasmI16x8Bitmask();
+	} else if (id == "i16x8.narrow_i32x4_s") {
+		WasmI16x8NarrowI32x4_s();
+	} else if (id == "i16x8.narrow_i32x4_u") {
+		WasmI16x8NarrowI32x4_u();
+	} else if (id == "i16x8.extend_low_i8x16_s") {
+		WasmI16x8ExtendLowI8x16_s();
+	} else if (id == "i16x8.extend_high_i8x16_s") {
+		WasmI16x8ExtendHighI8x16_s();
+	} else if (id == "i16x8.extend_low_i8x16_u") {
+		WasmI16x8ExtendLowI8x16_u();
+	} else if (id == "i16x8.extend_high_i8x16_u") {
+		WasmI16x8ExtendHighI8x16_u();
+	} else if (id == "i16x8.shl") {
+		WasmI16x8Shl();
+	} else if (id == "i16x8.shr_s") {
+		WasmI16x8Shr_s();
+	} else if (id == "i16x8.shr_u") {
+		WasmI16x8Shr_u();
+	} else if (id == "i16x8.add") {
+		WasmI16x8Add();
+	} else if (id == "i16x8.add_sat_s") {
+		WasmI16x8Add_sat_s();
+	} else if (id == "i16x8.add_sat_u") {
+		WasmI16x8Add_sat_u();
+	} else if (id == "i16x8.sub") {
+		WasmI16x8Sub();
+	} else if (id == "i16x8.sub_sat_s") {
+		WasmI16x8Sub_sat_s();
+	} else if (id == "i16x8.sub_sat_u") {
+		WasmI16x8Sub_sat_u();
+	} else if (id == "i16x8.mul") {
+		WasmI16x8Sub();
+	} else if (id == "i16x8.min_s") {
+		WasmI16x8Min_s();
+	} else if (id == "i16x8.min_u") {
+		WasmI16x8Min_u();
+	} else if (id == "i16x8.max_s") {
+		WasmI16x8Max_s();
+	} else if (id == "i16x8.max_u") {
+		WasmI16x8Max_u();
+	} else if (id == "i16x8.avgr_u") {
+		WasmI16x8Avgr_u();
+	} else if (id == "i16x8.extmul_low_i8x16_s") {
+		WasmI16x8ExtmulLowI8x16_s();
+	} else if (id == "i16x8.extmul_high_i8x16_s") {
+		WasmI16x8ExtmulHighI8x16_s();
+	} else if (id == "i16x8.extmul_low_i8x16_u") {
+		WasmI16x8ExtmulLowI8x16_u();
+	} else if (id == "i16x8.extmul_high_i8x16_u") {
+		WasmI16x8ExtmulHighI8x16_u();
+	} 
+	/*
+	WasmI16x8ExtaddPairwiseI8x16_s();
+		WasmI16x8ExtaddPairwiseI8x16_u();
+		WasmI16x8Abs();
+		WasmI16x8Neg();
+		WasmI16x8Q15mulrSat_s();
+		WasmI16x8AllTrue();
+		WasmI16x8Bitmask();
+		WasmI16x8NarrowI32x4_s();
+		WasmI16x8NarrowI32x4_u();
+		WasmI16x8ExtendLowI8x16_s();
+		WasmI16x8ExtendHighI8x16_s();
+		WasmI16x8ExtendLowI8x16_u();
+		WasmI16x8ExtendHighI8x16_u();
+		WasmI16x8Shl();
+		WasmI16x8Shr_s();
+		WasmI16x8Shr_u();
+		WasmI16x8Add();
+		WasmI16x8Add_sat_s();
+		WasmI16x8Add_sat_u();
+		WasmI16x8Sub();
+		WasmI16x8Sub_sat_s();
+		WasmI16x8Sub_sat_u();
+		WasmI16x8Mul();
+		WasmI16x8Min_s();
+		WasmI16x8Min_u();
+		WasmI16x8Max_s();
+		WasmI16x8Max_u();
+		WasmI16x8Avgr_u();
+		WasmI16x8ExtmulLowI8x16_s();
+		WasmI16x8ExtmulHighI8x16_s();
+		WasmI16x8ExtmulLowI8x16_u();
+		WasmI16x8ExtmulHighI8x16_u();
+	*/
 
+
+
+
+
+
+
+	else if (id == "i32x4.extract_add_pairwise_i16x8_s") {
+		WasmI32x4ExtaddPairwiseI16x8_s();
+	} else if (id == "i32x4.extract_add_pairwise_i16x8_u") {
+		WasmI32x4ExtaddPairwiseI16x8_u();
+	} else if (id == "i32x4.abs") {
+		WasmI32x4Abs();
+	} else if (id == "i32x4.neg") {
+		WasmI32x4Neg();
+	} else if (id == "i32x4.all_true") {
+		WasmI32x4AllTrue();
+	} else if (id == "i32x4.bitmask") {
+		WasmI32x4Bitmask();
+	} else if (id == "i32x4.extend_low_i16x8_s") {
+		WasmI32x4ExtendLowI16x8_s();
+	} else if (id == "i32x4.extend_high_i16x8_s") {
+		WasmI32x4ExtendHighI16x8_s();
+	} else if (id == "i32x4.extend_low_i16x8_u") {
+		WasmI32x4ExtendLowI16x8_u();
+	} else if (id == "i32x4.extend_high_i16x8_u") {
+		WasmI32x4ExtendHighI16x8_u();
+	} else if (id == "i32x4.shl") {
+		WasmI32x4Shl();
+	} else if (id == "i32x4.shr_s") {
+		WasmI32x4Shr_s();
+	} else if (id == "i32x4.shr_u") {
+		WasmI32x4Shr_u();
+	} else if (id == "i32x4.add") {
+		WasmI32x4Add();
+	} else if (id == "i32x4.sub") {
+		WasmI32x4Sub();
+	} else if (id == "i32x4.mul") {
+		WasmI32x4Mul();
+	} else if (id == "i32x4.min_s") {
+		WasmI32x4Min_s();
+	} else if (id == "i32x4.min_u") {
+		WasmI32x4Min_u();
+	} else if (id == "i32x4.max_s") {
+		WasmI32x4Max_s();
+	} else if (id == "i32x4.max_u") {
+		WasmI32x4Max_u();
+	} else if (id == "i32x4.dot_i16x8_s") {
+		WasmI32x4DotI16x8_s();
+	} else if (id == "i32x4.extmul_low_i16x8_s") {
+		WasmI32x4ExtMulLowI16x8_s();
+	} else if (id == "i32x4.extmul_high_i16x8_s") {
+		WasmI32x4ExtMulHighI16x8_s();
+	} else if (id == "i32x4.extmul_low_i16x8_u") {
+		WasmI32x4ExtMulLowI16x8_u();
+	} else if (id == "i32x4.extmul_high_i16x8_u") {
+		WasmI32x4ExtMulHighI16x8_u();
+	} 
+	/*
+	WasmI32x4ExtaddPairwiseI16x8_s();
+		WasmI32x4ExtaddPairwiseI16x8_u();
+		WasmI32x4Abs();
+		WasmI32x4Neg();
+		WasmI32x4AllTrue();
+		WasmI32x4Bitmask();
+		WasmI32x4ExtendLowI16x8_s();
+		WasmI32x4ExtendHighI16x8_s();
+		WasmI32x4ExtendLowI16x8_u();
+		WasmI32x4ExtendHighI16x8_u();
+		WasmI32x4Shl();
+		WasmI32x4Shr_s();
+		WasmI32x4Shr_u();
+		WasmI32x4Add();
+		WasmI32x4Sub();
+		WasmI32x4Mul();
+		WasmI32x4Min_s();
+		WasmI32x4Min_u();
+		WasmI32x4Max_s();
+		WasmI32x4Max_u();
+		WasmI32x4DotI16x8_s();
+		WasmI32x4ExtMulLowI16x8_s();
+		WasmI32x4ExtMulHighI16x8_s();
+		WasmI32x4ExtMulLowI16x8_u();
+		WasmI32x4ExtMulHighI16x8_u();
+	*/
+
+
+
+	else if (id == "i64x2.abs") {
+		WasmI64x2Abs();
+	} else if (id == "i64x2.neg") {
+		WasmI64x2Neg();
+	} else if (id == "i64x2.all_true") {
+		WasmI64x2AllTrue();
+	} else if (id == "i64x2.bitmask") {
+		WasmI64x2Bitmask();
+	} else if (id == "i64x2.extend_low_i32x4_s") {
+		WasmI64x2ExtendLowI32x4_s();
+	} else if (id == "i64x2.extend_high_i32x4_s") {
+		WasmI64x2ExtendHighI32x4_s();
+	} else if (id == "i64x2.extend_low_i32x4_u") {
+		WasmI64x2ExtendLowI32x4_u();
+	} else if (id == "i64x2.extend_high_i32x4_u") {
+		WasmI64x2ExtendHighI32x4_u();
+	} else if (id == "i64x2.shl") {
+		WasmI64x2Shl();
+	} else if (id == "i64x2.shr_s") {
+		WasmI64x2Shr_s();
+	} else if (id == "i64x2.shr_u") {
+		WasmI64x2Shr_u();
+	} else if (id == "i64x2.add") {
+		WasmI64x2Add();
+	} else if (id == "i64x2.sub") {
+		WasmI64x2Sub();
+	} else if (id == "i64x2.mul") {
+		WasmI64x2Mul();
+	} else if (id == "i64x2.extmul_low_i32x4_s") {
+		WasmI64x2ExtmulLowI32x4_s();
+	} else if (id == "i64x2.extmul_high_i32x4_s") {
+		WasmI64x2ExtmulHighI32x4_s();
+	} else if (id == "i64x2.extmul_low_i32x4_u") {
+		WasmI64x2ExtmulLowI32x4_u();
+	} else if (id == "i64x2.extmul_high_i32x4_u") {
+		WasmI64x2ExtmulHighI32x4_u();
+	} 
+	/*
+
+		WasmI64x2Abs();
+		WasmI64x2Neg();
+		WasmI64x2AllTrue();
+		WasmI64x2Bitmask();
+		WasmI64x2ExtendLowI32x4_s();
+		WasmI64x2ExtendHighI32x4_s();
+		WasmI64x2ExtendLowI32x4_u();
+		WasmI64x2ExtendHighI32x4_u();
+		WasmI64x2Shl();
+		WasmI64x2Shr_s();
+		WasmI64x2Shr_u();
+		WasmI64x2Add();
+		WasmI64x2Sub();
+		WasmI64x2Mul();
+		WasmI64x2ExtmulLowI32x4_s();
+		WasmI64x2ExtmulHighI32x4_s();
+		WasmI64x2ExtmulLowI32x4_u();
+		WasmI64x2ExtmulHighI32x4_u();
+	*/
+
+
+
+	else if (id == "f32x4.ceil") {
+		WasmF32x4Ceil();
+	} else if (id == "f32x4.floor") {
+		WasmF32x4Floor();
+	} else if (id == "f32x4.trunc") {
+		WasmF32x4Trunc();
+	} else if (id == "f32x4.nearest") {
+		WasmF32x4Nearest();
+	} else if (id == "f32x4.abs") {
+		WasmF32x4Abs();
+	} else if (id == "f32x4.neg") {
+		WasmF32x4Neg();
+	} else if (id == "f32x4.sqrt") {
+		WasmF32x4Sqrt();
+	} else if (id == "f32x4.add") {
+		WasmF32x4Add();
+	} else if (id == "f32x4.sub") {
+		WasmF32x4Sub();
+	} else if (id == "f32x4.mul") {
+		WasmF32x4Mul();
+	} else if (id == "f32x4.div") {
+		WasmF32x4Div();
+	} else if (id == "f32x4.min") {
+		WasmF32x4Min();
+	} else if (id == "f32x4.max") {
+		WasmF32x4Max();
+	} else if (id == "f32x4.pmin") {
+		WasmF32x4Pmin();
+	} else if (id == "f32x4.pmax") {
+		WasmF32x4PMax();
+	} 
+	/*
+	WasmF32x4Ceil();
+		WasmF32x4Floor();
+		WasmF32x4Trunc();
+		WasmF32x4Nearest();
+		WasmF32x4Abs();
+		WasmF32x4Neg();
+		WasmF32x4Sqrt();
+		WasmF32x4Add();
+		WasmF32x4Sub();
+		WasmF32x4Mul();
+		WasmF32x4Div();
+		WasmF32x4Min();
+		WasmF32x4Max();
+		WasmF32x4Pmin();
+		WasmF32x4PMax();
+	*/
+
+
+	else if (id == "f64x2.ceil") {
+		WasmF64x2Ceil();
+	} else if (id == "f64x2.floor") {
+		WasmF64x2Floor();
+	} else if (id == "f64x2.trunc") {
+		WasmF64x2Trunc();
+	} else if (id == "f64x2.nearest") {
+		WasmF64x2Nearest();
+	} else if (id == "f64x2.abs") {
+		WasmF64x2Abs();
+	} else if (id == "f64x2.neg") {
+		WasmF64x2Neg();
+	} else if (id == "f64x2.sqrt") {
+		WasmF64x2Sqrt();
+	} else if (id == "f64x2.add") {
+		WasmF64x2Add();
+	} else if (id == "f64x2.sub") {
+		WasmF64x2Sub();
+	} else if (id == "f64x2.mul") {
+		WasmF64x2Mul();
+	} else if (id == "f64x2.div") {
+		WasmF64x2Div();
+	} else if (id == "f64x2.min") {
+		WasmF64x2Min();
+	} else if (id == "f64x2.max") {
+		WasmF64x2Max();
+	} else if (id == "f64x2.pmin") {
+		WasmF64x2Pmin();
+	} else if (id == "f64x2.pmax") {
+		WasmF64x2PMax();
+	} 
+	/*
+	WasmF64x2Ceil();
+		WasmF64x2Floor();
+		WasmF64x2Trunc();
+		WasmF64x2Nearest();
+		WasmF64x2Abs();
+		WasmF64x2Neg();
+		WasmF64x2Sqrt();
+		WasmF64x2Add();
+		WasmF64x2Sub();
+		WasmF64x2Mul();
+		WasmF64x2Div();
+		WasmF64x2Min();
+		WasmF64x2Max();
+		WasmF64x2Pmin();
+		WasmF64x2PMax();
+	*/
+
+
+
+	else if (id == "i32x4.trunc_sat_f32x4_s") {
+		WasmI32x4TruncSatF32x4_s();
+	} else if (id == "i32x4.trunc_sat_f32x4_u") {
+		WasmI32x4TruncSatF32x4_u();
+	} else if (id == "f32x4.convert_i32x4_s") {
+		WasmF32x4ConvertI32x4_s();
+	} else if (id == "f32x4.convert_i32x4_u") {
+		WasmF32x4ConvertI32x4_u();
+	} else if (id == "i32x4.trunc_sat_f64x2_s") {
+		WasmI32x4TruncSatF64x2_s();
+	} else if (id == "i32x4.trunc_sat_f64x2_u") {
+		WasmI32x4TruncSatF64x2_u();
+	} else if (id == "f64x2.convert_low_i32x4_s") {
+		WasmF64x2ConvertLowI32x4_s();
+	} else if (id == "f64x2.convert_low_i32x4_u") {
+		WasmF64x2ConvertLowI32x4_u();
+	} else if (id == "f32x4.demote_f64x2_zero") {
+		WasmF32x4DemoteF64x2Zero();
+	} else if (id == "f64x2.promote_low_f32x4") {
+		WasmF64x2PromoteLowF32x4();
+	} 
+	/*
+	WasmI32x4TruncSatF32x4_s();
+		WasmI32x4TruncSatF32x4_u();
+		WasmF32x4ConvertI32x4_s();
+		WasmF32x4ConvertI32x4_u();
+		WasmI32x4TruncSatF64x2_s();
+		WasmI32x4TruncSatF64x2_u();
+		WasmF64x2ConvertLowI32x4_s();
+		WasmF64x2ConvertLowI32x4_u();
+		WasmF32x4DemoteF64x2Zero();
+		WasmF64x2PromoteLowF32x4();
 	*/
 	else {
 		onError(node, "Can not compile wasm op " + id);
