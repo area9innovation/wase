@@ -1,4 +1,4 @@
-include lib/runtime;
+include lib/vector;
 
 export memory 32;
 
@@ -14,79 +14,40 @@ print_bytes() -> () {
 	};
 }
 
-new_line() -> () {
-	printByte(10);
-}
-
-print_i23x4(v : v128) -> () {
-	printi32(i32x4.extract_lane<0>(v));
-	printByte(32);
-	printi32(i32x4.extract_lane<1>(v));
-	printByte(32);
-	printi32(i32x4.extract_lane<2>(v));
-	printByte(32);
-	printi32(i32x4.extract_lane<3>(v));
-	printByte(32);
-	new_line();
-}
-
-test_load_store() -> () {
+test_v128_const() -> () {
 	print_bytes();
-	new_line();
+	printByte(10);
 
 	val : v128 = v128.const<33,34,35,36,37,38,39,40,41,41,42,43,44,45,46,47>();
 	printv128(val);
-	new_line(); // new line
+	printByte(10); // new line
 
 	// Test val: lane by lane
-	printi32(i8x16.extract_lane_u<0>(val));
-	printByte(32);
-	printi32(i8x16.extract_lane_u<1>(val));
-	printByte(32);
-	printi32(i8x16.extract_lane_u<2>(val));
-	printByte(32);
-	printi32(i8x16.extract_lane_u<3>(val));
-	printByte(32);
-	new_line(); // new line
+	println_i8x16(val);
 
-	
 	val1 : v128 = v128.const<572727841,640099877,707471913,774843949>();
 	printv128(val1);
-	new_line();
-
+	printByte(10);
 	
 	// Test val1: lane by lane
-	printi32(i32x4.extract_lane<0>(val1));
-	printByte(32);
-	printi32(i32x4.extract_lane<1>(val1));
-	printByte(32);
-	printi32(i32x4.extract_lane<2>(val1));
-	printByte(32);
-	printi32(i32x4.extract_lane<3>(val1));
-	printByte(32);
-	new_line();
-
-	//v128.store<>(0, val);
-	//x : v128 = v128.load<>(0);
-	//printi32(x);
-	new_line();
+	println_i32x4(val1);
 }
 
 test_arithmetics() -> () {
 	a = v128.const<0, 1, 2, 3>();
 	b = v128.const<1, 2, 4, 8>();
 	c = v128.const<5, 6, 7, 8>();
-	//x = i32x4.add<>(a, b);
-	print_i23x4(i32x4.add<>(a, b));
-	print_i23x4(i32x4.mul<>(a, b));
-	print_i23x4(i32x4.add<>(a, c));
-	print_i23x4(i32x4.mul<>(a, c));
-	print_i23x4(i32x4.add<>(b, c));
-	print_i23x4(i32x4.mul<>(b, c));
+
+	println_i32x4(i32x4.add<>(a, b));
+	println_i32x4(i32x4.mul<>(a, b));
+	println_i32x4(i32x4.add<>(a, c));
+	println_i32x4(i32x4.mul<>(a, c));
+	println_i32x4(i32x4.add<>(b, c));
+	println_i32x4(i32x4.mul<>(b, c));
 }
 
 export _start() -> () {
-	test_load_store();
+	test_v128_const();
 	test_arithmetics();
     {}
 }

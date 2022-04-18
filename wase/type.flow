@@ -674,8 +674,6 @@ typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs 
 		i32;
 	} else {
 		typecheckWaseVectorInstruction(acc, op, pars, opargs, getChildType);
-		//println("TODO: What is the type of  '" + op  + "' " + toString(pars) + " : " + summarizeDsl(opargs));
-		//DslList(makeList());
 	}
 }
 
