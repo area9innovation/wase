@@ -434,7 +434,6 @@ typecheckWase(acc : DslTypeAcc, deep : bool, node : DslAst, getChildType : (int)
 typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs : DslAst, getChildType : (int) -> DslAst) -> DslAst {
 	i32 = DslString("i32");
 	i64 = DslString("i64");
-	v128 = DslString("v128");
 	infer = \ -> makeDslTypeVar(acc);
 	list0 = DslList(makeList());
 	list1 = \t1 -> DslList(makeList1(t1));
@@ -673,17 +672,111 @@ typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs 
 		}
 		acc.unifyTypes(acc, opargs, list0);
 		i32;
-
-	} else if (op == "v128.const") {
-		v128;
-	} else if (op == "v128.load") {
-		acc.unifyTypes(acc, opargs, list1(i32));
-		v128;
-	} else if (op == "v128.store") {
-		acc.unifyTypes(acc, opargs, list2(i32, infer()));
-		list0;
 	} else {
-		println("TODO: What is the type of  '" + op  + "' " + toString(pars) + " : " + summarizeDsl(opargs));
-		DslList(makeList());
+		typecheckWaseVectorInstruction(acc, op, pars, opargs, getChildType);
 	}
 }
+
+typecheckWaseVectorInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs : DslAst, getChildType : (int) -> DslAst) -> DslAst {
+	i32 = DslString("i32");
+	i64 = DslString("i64");
+	f32 = DslString("f32");
+	f64 = DslString("f64");
+	v128 = DslString("v128");
+	list0 = DslList(makeList());
+	list1 = \t1 -> DslList(makeList1(t1));
+	list2 = \t1, t2 -> DslList(Cons(t1, makeList1(t2)));
+	list3 = \t1, t2, t3 -> DslList(Cons(t1, Cons(t2, makeList1(t3))));
+
+	parts = strSplit(op, ".");
+	if (length(parts) != 2) {
+		println("TODO: What is the type of  '" + op  + "' " + toString(pars) + " : " + summarizeDsl(opargs));
+		DslList(makeList());
+	} else {
+		shape = parts[0];
+		v128op = parts[1];
+
+		unpacked = \t ->
+			if (t == "i8x16") i32 else 
+			if (t == "i16x8") i32 else
+			if (t == "i32x4") i32 else
+			if (t == "i64x2") i64 else
+			if (t == "f32x4") f32 else
+			if (t == "f64x2") f64 else list0;
+
+		if (v128op == "const") {
+			acc.unifyTypes(acc, opargs, list0);
+			v128;
+		} else if (startsWith(v128op, "load")) {
+			acc.unifyTypes(acc, opargs, list1(i32));
+			v128;
+		} else if (startsWith(v128op,  "store")) {
+			acc.unifyTypes(acc, opargs, list2(i32, v128));
+			list0;
+		} else if (containsSet(v128_unary_ops, v128op)) {
+			acc.unifyTypes(acc, opargs, list1(v128));
+			v128;
+		} else if (containsSet(v128_binary_ops, v128op)) {
+			acc.unifyTypes(acc, opargs, list2(v128, v128));
+			v128;
+		} else if (containsSet(v128_binary_rels, v128op)) {
+			acc.unifyTypes(acc, opargs, list2(v128, v128));
+			v128;
+		} else if (startsWith(v128op, "min_") || startsWith(v128op, "max_") || 
+			startsWith(v128op, "add_sub_") || startsWith(v128op, "sub_sat_")) {
+			acc.unifyTypes(acc, opargs, list2(v128, v128));
+			v128;
+		} else if (v128op == "bitselect") {
+			acc.unifyTypes(acc, opargs, list3(v128, v128, v128));
+			v128;
+		} else if (v128op == "any_true" || v128op == "bitmask") {
+			acc.unifyTypes(acc, opargs, list1(v128));
+			i32;
+		} else if (v128op == "shl" || v128op == "shr_u" || v128op == "shr_s") {
+			acc.unifyTypes(acc, opargs, list2(v128, i32));
+			v128;
+		} else if (startsWith(v128op, "extend") || startsWith(v128op, "trunc_sat") || startsWith(v128op, "convert") || startsWith(v128op, "demote") || startsWith(v128op, "promote")) {
+			acc.unifyTypes(acc, opargs, list1(v128));
+			v128;
+		} else if (v128op == "splat") {
+			acc.unifyTypes(acc, opargs, list1(unpacked(shape)));
+			v128;
+		} else if (startsWith(v128op, "extract_lane")) {
+			acc.unifyTypes(acc, opargs, list1(v128));
+			unpacked(shape);
+		} else if (startsWith(v128op, "replace_lane")) {
+			acc.unifyTypes(acc, opargs, list2(v128, unpacked(shape)));
+			v128;
+		} else if (startsWith(v128op, "narrow_")) {
+			acc.unifyTypes(acc, opargs, list2(v128, v128));
+			v128;
+		} else if (startsWith(v128op, "dot_")) {
+			acc.unifyTypes(acc, opargs, list2(v128, v128));
+			v128;
+		} else if (startsWith(v128op, "extmul_")) {
+			acc.unifyTypes(acc, opargs, list2(v128, v128));
+			v128;
+		} else if (startsWith(v128op, "extadd_pairwise_")) {
+			acc.unifyTypes(acc, opargs, list1(v128));
+			v128;
+		} else {
+			println("TODO: What is the type of  '" + op  + "' " + toString(pars) + " : " + summarizeDsl(opargs));
+			DslList(makeList());
+		}
+	}
+}
+
+v128_unary_ops = buildSet([
+	"not", "abs", "neg", "sqrt", "ceil", "floor", "truct", "nearest", "popcnt"
+]);
+
+v128_binary_ops = buildSet([
+	"and", "andnot", "or", "xor", "swizzle", "shuffle", 
+	"add", "sub", "mul", "min", "max", "div", "pmin", "pmax", "avgr_u", "q15mulr_sat_s"
+]);
+
+v128_binary_rels = buildSet([
+	"eq", "ne", "lt", "gt", "le", "ge",
+	"eq_u", "ne_u", "lt_u", "gt_u", "le_u", "ge_u",
+	"eq_s", "ne_s", "lt_s", "gt_s", "le_s", "ge_s",
+]);
