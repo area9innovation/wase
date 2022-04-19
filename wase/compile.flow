@@ -843,6 +843,8 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 	if (id == "v128.const") {
 		if (length(pars) == 16) {
 			WasmV128Const(map(pars, getDslInt));
+		} else if (length(pars) == 8) {
+			WasmV128Const(concatA(map(pars, \p -> i16toBytesLE(getDslInt(p)))));
 		} else if (length(pars) == 4) {
 			WasmV128Const(concatA(map(pars, \p -> i32toBytesLE(getDslInt(p)))));
 		} else {
@@ -853,47 +855,47 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 	} else if (id == "v128.load") {
 		WasmV128Load(memargs(4));
 	} else if (id == "v128.load8x8_s") {
-		WasmV128Load8x8_s(memargs(4));
+		WasmV128Load8x8_s(memargs(0));
 	} else if (id == "v128.load8x8_u") {
-		WasmV128Load8x8_u(memargs(4));
+		WasmV128Load8x8_u(memargs(0));
 	} else if (id == "v128.load16x4_u") {
-		WasmV128Load16x4_u(memargs(4));
+		WasmV128Load16x4_u(memargs(1));
 	} else if (id == "v128.load16x4_s") {
-		WasmV128Load16x4_s(memargs(4));
+		WasmV128Load16x4_s(memargs(1));
 	} else if (id == "v128.load32x2_u") {
-		WasmV128Load32x2_u(memargs(4));
+		WasmV128Load32x2_u(memargs(2));
 	} else if (id == "v128.load32x2_s") {
-		WasmV128Load32x2_s(memargs(4));
+		WasmV128Load32x2_s(memargs(2));
 	} else if (id == "v128.load8_splat") {
-		WasmV128Load8_splat(memargs(4));
+		WasmV128Load8_splat(memargs(1));
 	} else if (id == "v128.load16_splat") {
-		WasmV128Load16_splat(memargs(4));
+		WasmV128Load16_splat(memargs(1));
 	} else if (id == "v128.load32_splat") {
-		WasmV128Load32_splat(memargs(4));
+		WasmV128Load32_splat(memargs(2));
 	} else if (id == "v128.load64_splat") {
-		WasmV128Load64_splat(memargs(4));
+		WasmV128Load64_splat(memargs(2));
 	} else if (id == "v128.load32_zero") {
-		WasmV128Load32_zero(memargs(4));
+		WasmV128Load32_zero(memargs(2));
 	} else if (id == "v128.load64_splat") {
-		WasmV128Load64_splat(memargs(4));
+		WasmV128Load64_splat(memargs(3));
 	} else if (id == "v128.store") {
 		WasmV128Store(memargs(4));
 	} else if (id == "v128.load8_lane") {
-		WasmV128Load8_lane(memargs(4), getDslInt(pars[2]));
+		WasmV128Load8_lane(memargs(0), getDslInt(pars[2]));
 	} else if (id == "v128.load16_lane") {
-		WasmV128Load16_lane(memargs(4), getDslInt(pars[2]));
+		WasmV128Load16_lane(memargs(1), getDslInt(pars[2]));
 	} else if (id == "v128.load32_lane") {
-		WasmV128Load32_lane(memargs(4), getDslInt(pars[2]));
+		WasmV128Load32_lane(memargs(2), getDslInt(pars[2]));
 	} else if (id == "v128.load64_lane") {
-		WasmV128Load64_lane(memargs(4), getDslInt(pars[2]));
+		WasmV128Load64_lane(memargs(3), getDslInt(pars[2]));
 	} else if (id == "v128.store8_lane") {
-		WasmV128Store8_lane(memargs(4), getDslInt(pars[2]));
+		WasmV128Store8_lane(memargs(0), getDslInt(pars[2]));
 	} else if (id == "v128.store16_lane") {
-		WasmV128Store16_lane(memargs(4), getDslInt(pars[2]));
+		WasmV128Store16_lane(memargs(1), getDslInt(pars[2]));
 	} else if (id == "v128.store32_lane") {
-		WasmV128Store32_lane(memargs(4), getDslInt(pars[2]));
+		WasmV128Store32_lane(memargs(2), getDslInt(pars[2]));
 	} else if (id == "v128.store64_lane") {
-		WasmV128Store64_lane(memargs(4), getDslInt(pars[2]));
+		WasmV128Store64_lane(memargs(3), getDslInt(pars[2]));
 	} 
 	/*
 	WasmV128Load8x8_s(m : WasmMemArg);
@@ -1759,6 +1761,20 @@ i32toBytesLE(i : int) -> [int] {
 		bitUshr(bitAnd(i, 0x0000ff00), 8),
 		bitUshr(bitAnd(i, 0x00ff0000), 16),
 		bitUshr(bitAnd(i, 0xff000000), 24)
+	]
+}
+
+i16toBytes(i : int) -> [int] {
+	[
+		bitUshr(bitAnd(i, 0x0000ff00), 8),
+		bitAnd(i, 0x000000ff)
+	]
+}
+
+i16toBytesLE(i : int) -> [int] {
+	[
+		bitAnd(i, 0x000000ff),
+		bitUshr(bitAnd(i, 0x0000ff00), 8)
 	]
 }
 

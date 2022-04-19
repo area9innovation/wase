@@ -1,6 +1,6 @@
 include lib/vector;
 
-export memory 32;
+export memory 2;
 
 print_bytes() -> () {
 	var i = 33;
@@ -46,8 +46,38 @@ test_arithmetics() -> () {
 	println_i32x4(i32x4.mul<>(b, c));
 }
 
+test_load_store() -> () {
+
+	shift = 128;
+
+	// Test store/load of a v128
+	v = v128.const<0, 1, 2, 3, 4, 5, 6, 7>();
+	println_i16x8(v);
+
+	v128.store<>(0 + shift, v);
+	w = v128.load<>(0 + shift);
+	println_i16x8(w);
+
+	// Test store/load of a v128 lane-wise
+	x = v128.const<5, 6, 7, 8>();
+	println_i32x4(x);
+
+	v128.store32_lane<0,2,0>(0 + shift, x);
+	v128.store32_lane<0,2,1>(4 + shift, x);
+	v128.store32_lane<0,2,2>(8 + shift, x);
+	v128.store32_lane<0,2,3>(12 + shift, x);
+
+	printi32(load<>(0 + shift)); printByte(32);
+	printi32(load<>(4 + shift)); printByte(32);
+	printi32(load<>(8 + shift)); printByte(32);
+	printi32(load<>(12 + shift)); printByte(32);
+
+	printByte(10);
+}
+
 export _start() -> () {
 	test_v128_const();
 	test_arithmetics();
+	test_load_store();
     {}
 }
