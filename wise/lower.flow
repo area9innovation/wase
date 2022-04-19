@@ -1,0 +1,34 @@
+import tools/dsl/dsl_ast;
+import ds/array;
+import runtime;
+import wase/compile;
+
+export {
+	lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst;
+}
+
+lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst {
+	switch (d) {
+		DslBool(value): d;
+		DslInt(value): d;
+		DslDouble(value): d;
+		DslString(value): d;
+		DslList(value): DslList(mapList(value, \v -> lowerWise2Wase(onError, v)));
+		DslNode(name, args, pos): {
+			if (name == "true") {
+				DslNode("int", [DslInt(1), DslString("i32")], pos);
+			} else if (name == "false") {
+				DslNode("int", [DslInt(0), DslString("i32")], pos);
+			} else {
+				if (name == "and" || name == "or" || name == "xor") {
+					// OK, check that the type is integer
+					type = waseType(d);
+					if (type != DslString("i32") && type != DslString("i64")) {
+						onError(d, "bitwise operation only works on i32 and i64");
+					}
+				}
+				DslNode(name, map(args, \a -> lowerWise2Wase(onError, a)), pos);
+			}
+		}
+	}
+}

@@ -7,6 +7,9 @@ import formats/wasm/wasm_encode;
 export {
 	// After type inference, we can lower to Wase
 	dsl2wase(onError : (DslAst, string) -> void, d : DslAst) -> Wase;
+
+	// Extract the type of this AST
+	waseType(d : DslAst) -> DslAst;
 }
 
 dsl2wase(onError : (DslAst, string) -> void, d : DslAst) -> Wase {
@@ -1629,7 +1632,10 @@ waseType(d : DslAst) -> DslAst {
 			println("TODO: Why do we have a tyvar " + i2s(tv) + ", and not a resolved type?");
 			d;
 		}
-		default: d;
+		default: {
+			println("Unknown type " + summarizeDsl(d));
+			d;
+		}
 	}
 }
 

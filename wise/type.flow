@@ -35,6 +35,8 @@ typecheckWise(acc : DslTypeAcc, deep : bool, node : DslAst, getChildType : (int)
 				right = getChildType(1);
 				acc.unifyTypes(acc, left, right);
 				DslString("bool");
+			} else if (name == "true" || name == "false") {
+				DslString("bool");
 			} else {
 				// OK, we just reuse typing from Wase
 				typecheckWase(acc, deep, node, getChildType);

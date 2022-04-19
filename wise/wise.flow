@@ -2,6 +2,7 @@ import wise/parse;
 import tools/dsl/dsl_include;
 
 import wise/type;
+import wise/lower;
 import wase/compile;
 import wase/pretty_wase;
 
@@ -16,17 +17,24 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 
 		typed = typeWise(extended);
 
-		// TODO: Here, we should lower Wise constructs to Wase constructs
-		// "while" as an example
-
 		if (isUrlParameterTrue("debug-type")) {
 			println("Typed '" + filename + "'':");
 			println(prettyDsl(typed));
 		}
 
+		// Here, we should lower Wise constructs to Wase constructs
+		lowered = lowerWise2Wase(\node, error -> {
+			println(error + " at " + summarizeDsl(node));
+		}, typed);
+
+		if (isUrlParameterTrue("debug-lower")) {
+			println("Wase '" + filename + "'':");
+			println(prettyDsl(lowered));
+		}
+
 		wase = dsl2wase(\node, error -> {
 			println(filename + ": " + error)
-		}, typed);
+		}, lowered);
 		if (isUrlParameterTrue("debug-wase")) {
 			println("\nAs wase:");
 			println(prettyWase(wase));
