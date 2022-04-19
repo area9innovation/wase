@@ -1,6 +1,6 @@
 include lib/math;
 
 main() -> () {
-	1;
+	true || false;
 	{}
 }
