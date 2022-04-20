@@ -19,6 +19,12 @@ lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst {
 				DslNode("int", [DslInt(1), DslString("i32")], pos);
 			} else if (name == "false") {
 				DslNode("int", [DslInt(0), DslString("i32")], pos);
+			} else if (name == "bool_or") {
+				// TODO: Make this short-circuit
+				DslNode("or", map(args, \a -> lowerWise2Wase(onError, a)), pos);
+			} else if (name == "bool_and") {
+				// TODO: Make this short-circuit
+				DslNode("and", map(args, \a -> lowerWise2Wase(onError, a)), pos);
 			} else {
 				if (name == "and" || name == "or" || name == "xor") {
 					// OK, check that the type is integer
