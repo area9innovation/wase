@@ -36,13 +36,55 @@ typecheckWise(acc : DslTypeAcc, deep : bool, node : DslAst, getChildType : (int)
 				acc.unifyTypes(acc, left, right);
 				DslString("bool");
 			} else if (name == "true" || name == "false") {
+				DslString("bool");
+
+			} else if (name == "ifelse") {
+				cond = getChildType(0);
+				acc.unifyTypes(acc, cond, DslString("bool"));
+
+				blockType = makeDslTypeVar(acc);
+				preBlocks = ^(acc.blocks);
+				acc.blocks := arrayPush(preBlocks, blockType);
+
+				thenType = getChildType(1);
+				elseType = getChildType(2);
+				acc.unifyTypes(acc, thenType, elseType);
+				acc.unifyTypes(acc, blockType, thenType);
+
+				acc.blocks := preBlocks;
+
+				blockType;
+			} else if (name == "if") {
+				cond = getChildType(0);
+				acc.unifyTypes(acc, cond, DslString("bool"));
+
+				blockType = DslList(makeList());
+				preBlocks = ^(acc.blocks);
+
+				thenType = getChildType(1);
+				acc.unifyTypes(acc, thenType, blockType);
+				acc.blocks := preBlocks;
+
+				blockType;
+			} else if (name == "bool_or" || name == "bool_and") {
 				left = getChildType(0);
 				right = getChildType(1);
 				acc.unifyTypes(acc, left, DslString("bool"));
 				acc.unifyTypes(acc, right, DslString("bool"));
 				DslString("bool");
-			} else if (name == "bool_or" || name == "bool_and") {
-				DslString("bool");
+			} else if (name == "while") {
+				// TODO: Handle block types so we can 
+				// record where "break" and "continue" should refer to 
+				// so we can translate break and continue correctly
+				cond = getChildType(0);
+				body = getChildType(1);
+				acc.unifyTypes(acc, cond, DslString("bool"));
+
+				// The result is always void
+				DslList(makeList());
+			} else if (name == "break" || name == "continue") {
+				// The result is always void
+				DslList(makeList());
 			} else {
 				// OK, we just reuse typing from Wase
 				typecheckWase(acc, deep, node, getChildType);

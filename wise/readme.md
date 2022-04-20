@@ -9,7 +9,7 @@ Compared to Wase, it has these changes:
 - types are more orthogonal, and include functions and tuples, as well as bool
 - comparisons return bool
 - We have || and && operators for boolean or/and with short-circuit semantics
-- no loop and block, but rather just while
+- Introduce "while" with normal break/continue, which always returns "void"
 
 ## TODO
 

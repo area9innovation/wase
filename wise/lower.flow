@@ -31,6 +31,19 @@ lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst {
 				// TODO: If a does not have side-effects, we can do a bitwise and
 				largs = map(args, \a -> lowerWise2Wase(onError, a));
 				DslNode("ifelse", [largs[0], largs[1], DslInt(0), DslString("i32")], pos);
+			} else if (name == "while") {
+				// while (cond) { <exp> } =>
+				// loop { break_if<1>(cond); <exp>; break<>() }
+				largs = map(args, \a -> lowerWise2Wase(onError, a));
+				/*
+					loop([
+							wasm_op("break_if", [1], [cond], []),
+							exp,
+							wasm_op("break", [], [], [])
+					])
+				*/
+				println("TODO: Convert while to loop");
+				DslNode(name, map(args, \a -> lowerWise2Wase(onError, a)), pos);
 			} else {
 				if (name == "and" || name == "or" || name == "xor") {
 					// OK, check that the type is integer

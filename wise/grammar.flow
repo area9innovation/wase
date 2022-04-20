@@ -67,7 +67,8 @@ defineWise() -> DslGrammar {
 				| "false" !letterOrDigit $"false_0" ws
 				| "return" !letterOrDigit ws (exp | $"nil") $"return_1"
 				| "while"  !letterOrDigit ws "(" ws exp ")" ws exp $"while_2"
-				| "break" !letterOrDigit ws (exp | $"nil") $"break_1"
+				| "break" !letterOrDigit ws $"break_0"
+				| "continue" !letterOrDigit ws $"continue_0" 
 				| id ":=" ws exp $"set_2"
 				| id $"var_1"
 				| '[' ws exps ']' ws // list

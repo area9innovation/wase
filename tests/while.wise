@@ -1,0 +1,10 @@
+main() -> () {
+    while (true) {
+        if (true) break;
+
+        break;
+        0;
+        continue;
+        1;
+    }
+}
