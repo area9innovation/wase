@@ -708,11 +708,21 @@ typecheckWaseVectorInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], o
 			acc.unifyTypes(acc, opargs, list0);
 			v128;
 		} else if (startsWith(v128op, "load")) {
-			acc.unifyTypes(acc, opargs, list1(i32));
-			v128;
+			if (!strContains(v128op, "lane")) {
+				acc.unifyTypes(acc, opargs, list1(i32));
+				v128;
+			} else {
+				acc.unifyTypes(acc, opargs, list2(i32, v128));
+				v128;
+			}
 		} else if (startsWith(v128op,  "store")) {
-			acc.unifyTypes(acc, opargs, list2(i32, v128));
-			list0;
+			if (!strContains(v128op, "lane")) {
+				acc.unifyTypes(acc, opargs, list2(i32, v128));
+				list0;
+			} else {
+				acc.unifyTypes(acc, opargs, list2(i32, v128));
+				list0;
+			}
 		} else if (containsSet(v128_unary_ops, v128op)) {
 			acc.unifyTypes(acc, opargs, list1(v128));
 			v128;
