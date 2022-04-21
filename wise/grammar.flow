@@ -27,6 +27,8 @@ defineWise() -> DslGrammar {
 			("var" !letterOrDigit ws $$"1" $"s2i" id $"swap" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
 			 | id $$"0" $"s2i" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
 			)
+			|> exp "||" ws exp $"bool_or_2"
+			|> exp "&&" ws exp $"bool_and_2"
 			|> exp "|" ws exp $"or_2"
 			|> exp "&" ws exp $"and_2"
 			|> exp "^" ws exp $"xor_2"
@@ -65,7 +67,8 @@ defineWise() -> DslGrammar {
 				| "false" !letterOrDigit $"false_0" ws
 				| "return" !letterOrDigit ws (exp | $"nil") $"return_1"
 				| "while"  !letterOrDigit ws "(" ws exp ")" ws exp $"while_2"
-				| "break" !letterOrDigit ws (exp | $"nil") $"break_1"
+				| "break" !letterOrDigit ws $"break_0"
+				| "continue" !letterOrDigit ws $"continue_0" 
 				| id ":=" ws exp $"set_2"
 				| id $"var_1"
 				| '[' ws exps ']' ws // list

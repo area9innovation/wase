@@ -19,6 +19,31 @@ lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst {
 				DslNode("int", [DslInt(1), DslString("i32")], pos);
 			} else if (name == "false") {
 				DslNode("int", [DslInt(0), DslString("i32")], pos);
+			} else if (name == "bool_or") {
+				// Make this short-circuit
+				// if (a) 1 else b
+				// TODO: If a does not have side-effects, we can do a bitwise or
+				largs = map(args, \a -> lowerWise2Wase(onError, a));
+				DslNode("ifelse", [largs[0], DslInt(1), largs[1], DslString("i32")], pos);
+			} else if (name == "bool_and") {
+				// Make this short-circuit
+				// if (a) b else 0
+				// TODO: If a does not have side-effects, we can do a bitwise and
+				largs = map(args, \a -> lowerWise2Wase(onError, a));
+				DslNode("ifelse", [largs[0], largs[1], DslInt(0), DslString("i32")], pos);
+			} else if (name == "while") {
+				// while (cond) { <exp> } =>
+				// loop { break_if<1>(cond); <exp>; break<>() }
+				largs = map(args, \a -> lowerWise2Wase(onError, a));
+				/*
+					loop([
+							wasm_op("break_if", [1], [cond], []),
+							exp,
+							wasm_op("break", [], [], [])
+					])
+				*/
+				println("TODO: Convert while to loop");
+				DslNode(name, map(args, \a -> lowerWise2Wase(onError, a)), pos);
 			} else {
 				if (name == "and" || name == "or" || name == "xor") {
 					// OK, check that the type is integer

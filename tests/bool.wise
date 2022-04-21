@@ -2,5 +2,6 @@ include lib/math;
 
 main() -> () {
 	true || false;
+	false && true;
 	{}
 }
