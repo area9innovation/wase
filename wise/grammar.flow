@@ -43,8 +43,8 @@ defineWise() -> DslGrammar {
 			|> wasmop
 
 			|> (
-				// '!' ws exp $"not_1"
-				"-" ws exp $"negate_1" // Only for floats
+				'!' ws exp $"bool_not_1"
+				| "-" ws exp $"negate_1" // Only for floats
 				| exp (
 					postfix
 				)*

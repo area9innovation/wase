@@ -33,17 +33,24 @@ lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst {
 				DslNode("ifelse", [largs[0], largs[1], DslInt(0), DslString("i32")], pos);
 			} else if (name == "while") {
 				// while (cond) { <exp> } =>
-				// loop { break_if<1>(cond); <exp>; break<>() }
+				// loop { break_if<1>(!cond); <exp>; break<>() }
+				// cond, exp, type = void
+				// TODO: Record label for break and continue inside
 				largs = map(args, \a -> lowerWise2Wase(onError, a));
-				/*
-					loop([
-							wasm_op("break_if", [1], [cond], []),
-							exp,
-							wasm_op("break", [], [], [])
-					])
-				*/
-				println("TODO: Convert while to loop");
-				DslNode(name, map(args, \a -> lowerWise2Wase(onError, a)), pos);
+				l = DslNode("loop", [
+					DslList(
+						fold([
+							DslNode("wasm_op", [DslString("break_if"), DslInt(1), 
+								negateWise(largs[0]),
+							DslList(makeList())], pos),
+							largs[1],
+							DslNode("wasm_op", [DslString("break"), DslList(makeList()), DslList(makeList()), DslList(makeList())], pos),
+
+						], makeList(), \acc, e -> Cons(e, acc))
+					), largs[2]
+				], pos);
+				// println(prettyDsl(l));
+				l;
 			} else {
 				if (name == "and" || name == "or" || name == "xor") {
 					// OK, check that the type is integer
@@ -55,5 +62,21 @@ lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst {
 				DslNode(name, map(args, \a -> lowerWise2Wase(onError, a)), pos);
 			}
 		}
+	}
+}
+
+negateWise(d : DslAst) -> DslAst {
+	n = getDslNode(d);
+	name = n.name;
+	flip = \nn -> DslNode(nn, n.args, n.pos);
+	if (name == "equal") flip("not_equal")
+	else if (name == "not_equal") flip("equal")
+	else if (name == "less_equal") flip("greater")
+	else if (name == "less") flip("greater_equal")
+	else if (name == "greater_equal") flip("less")
+	else if (name == "greater") flip("less_equal")
+	else if (name == "bool_not") n.args[0]
+	else {
+		DslNode("bool_not", [d, DslString("bool")], n.pos);
 	}
 }
