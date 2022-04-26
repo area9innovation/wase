@@ -58,7 +58,7 @@ gcRegion(region : i32) -> () {
 
 }
 
-gcRegionMarkAlive(region : i32, address : i32, type : i32, generation : i32) -> void {
+gcRegionMarkAlive(region : i32, address : i32, type : i32, generation : i32) -> () {
 	// Find internal roots in this object, and recursively mark those alive
 	// based on the type signature
 }

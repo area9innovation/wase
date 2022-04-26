@@ -1,9 +1,10 @@
 (module
   (type (;0;) (func (param i32 i32 i32 i32) (result i32)))
   (type (;1;) (func (param i32)))
-  (type (;2;) (func (param i32) (result i32)))
-  (type (;3;) (func (param i32 i32 i32) (result i32)))
-  (type (;4;) (func))
+  (type (;2;) (func (param v128)))
+  (type (;3;) (func (param i32) (result i32)))
+  (type (;4;) (func (param i32 i32 i32) (result i32)))
+  (type (;5;) (func))
   (import "wasi_snapshot_preview1" "fd_write" (func (;0;) (type 0)))
   (func (;1;) (type 1) (param i32)
     i32.const 0
@@ -84,7 +85,23 @@
         call 4
       end
     end)
-  (func (;5;) (type 2) (param i32) (result i32)
+  (func (;5;) (type 2) (param v128)
+    i32.const 0
+    i32.const 12
+    i32.store
+    i32.const 4
+    i32.const 16
+    i32.store
+    i32.const 12
+    local.get 0
+    v128.store
+    i32.const 1
+    i32.const 0
+    i32.const 1
+    i32.const 8
+    call 0
+    drop)
+  (func (;6;) (type 3) (param i32) (result i32)
     (local i32 i32)
     i32.const 1
     local.set 1
@@ -120,7 +137,7 @@
       br 0 (;@1;)
     end
     local.get 2)
-  (func (;6;) (type 3) (param i32 i32 i32) (result i32)
+  (func (;7;) (type 4) (param i32 i32 i32) (result i32)
     local.get 0
     local.get 1
     i32.le_s
@@ -147,28 +164,28 @@
       else
         local.get 2
       end
-      call 6
+      call 7
     else
       local.get 2
     end)
-  (func (;7;) (type 2) (param i32) (result i32)
+  (func (;8;) (type 3) (param i32) (result i32)
     i32.const 1
     local.get 0
     i32.const 1
     i32.sub
     i32.const 0
-    call 6)
-  (func (;8;) (type 4)
+    call 7)
+  (func (;9;) (type 5)
     i32.const 1000
-    call 5
+    call 6
     call 3
     i32.const 10
     call 1
     i32.const 1000
-    call 7
+    call 8
     call 3
     i32.const 10
     call 1)
   (memory (;0;) 32)
   (export "memory" (memory 0))
-  (export "_start" (func 8)))
+  (export "_start" (func 9)))

@@ -1,0 +1,14 @@
+include lib/runtime;
+
+export memory 1;
+
+export _start() -> () {
+	var i = 10;
+	loop {
+		// Breaks out of _start function
+		break_if<1>(i > 10);
+		// This is really continue
+		i := i + 1;
+		break<>();
+	};
+}

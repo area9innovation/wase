@@ -1,9 +1,10 @@
 (module
   (type (;0;) (func (param i32 i32 i32 i32) (result i32)))
   (type (;1;) (func (param i32)))
-  (type (;2;) (func))
-  (type (;3;) (func (result i32)))
-  (type (;4;) (func (param i32) (result i32)))
+  (type (;2;) (func (param v128)))
+  (type (;3;) (func))
+  (type (;4;) (func (result i32)))
+  (type (;5;) (func (param i32) (result i32)))
   (import "wasi_snapshot_preview1" "fd_write" (func (;0;) (type 0)))
   (func (;1;) (type 1) (param i32)
     i32.const 0
@@ -84,14 +85,30 @@
         call 4
       end
     end)
-  (func (;5;) (type 2)
+  (func (;5;) (type 2) (param v128)
+    i32.const 0
+    i32.const 12
+    i32.store
+    i32.const 4
+    i32.const 16
+    i32.store
+    i32.const 12
+    local.get 0
+    v128.store
+    i32.const 1
+    i32.const 0
+    i32.const 1
+    i32.const 8
+    call 0
+    drop)
+  (func (;6;) (type 3)
     i32.const 1
     br_table 0 (;@0;))
-  (func (;6;) (type 3) (result i32)
+  (func (;7;) (type 4) (result i32)
     i32.const 42
     i32.const 1
     br_table 0 (;@0;))
-  (func (;7;) (type 4) (param i32) (result i32)
+  (func (;8;) (type 5) (param i32) (result i32)
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -109,42 +126,42 @@
       return
     end
     i32.const 103)
-  (func (;8;) (type 2)
-    call 5
+  (func (;9;) (type 3)
     call 6
+    call 7
     call 3
     i32.const 10
     call 1
     i32.const 0
-    call 7
+    call 8
     call 3
     i32.const 10
     call 1
     i32.const 1
-    call 7
+    call 8
     call 3
     i32.const 10
     call 1
     i32.const 2
-    call 7
+    call 8
     call 3
     i32.const 10
     call 1
     i32.const 3
-    call 7
+    call 8
     call 3
     i32.const 10
     call 1
     i32.const 4
-    call 7
+    call 8
     call 3
     i32.const 10
     call 1
     i32.const 5
-    call 7
+    call 8
     call 3
     i32.const 10
     call 1)
   (memory (;0;) 1)
   (export "memory" (memory 0))
-  (export "_start" (func 8)))
+  (export "_start" (func 9)))

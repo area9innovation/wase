@@ -81,7 +81,7 @@ main() {
 			testFolder = if (test == "1") "tests" else test;
 			tests = readDirectory(testFolder);
 			filtermap(tests, \t -> if (endsWith(t, ".wise")) Some(pathCombine(testFolder, t)) else None());
-		} else ["tests/hello.wise"];
+		} else ["tests/while.wise"];
 	}
 	if (files == []) {
 		printWiseHelp();
