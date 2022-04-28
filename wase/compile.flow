@@ -841,12 +841,34 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmUnreachable();
 	}
 	if (id == "v128.const") {
+		vals = map(pars, getDslInt);
 		if (length(pars) == 16) {
-			WasmV128Const(map(pars, getDslInt));
-		} else if (length(pars) == 8) {
-			WasmV128Const(concatA(map(pars, \p -> i16toBytesLE(getDslInt(p)))));
-		} else if (length(pars) == 4) {
-			WasmV128Const(concatA(map(pars, \p -> i32toBytesLE(getDslInt(p)))));
+			// Other values would cause runtime errors
+			if (exists(vals, \v ->(v > 127) || (v < 0))) {
+				error();
+			} else {
+				WasmV128Const(vals);
+			}
+		} else if (length(vals) == 8) {
+			encoded = map(vals, wasmEncodeU32);
+			if (exists(encoded, \v -> length(v) > 2)) {
+				error();
+			} else {
+				padded = map(encoded, \v -> padArray(v, 0, 2));
+				bytes = concatA(padded);
+				WasmV128Const(bytes);
+			}
+		} else if (length(vals) == 4) {
+			encoded = map(vals, wasmEncodeU32);
+			if (exists(encoded, \v -> length(v) > 4)) {
+				error();
+			} else {
+				padded = map(encoded, \v -> padArray(v, 0, 4));
+				bytes = concatA(padded);
+				WasmV128Const(bytes);
+			}
+		} else if (length(vals) == 0) {
+			WasmV128Const(padArray([], 0, 16));
 		} else {
 			error();
 		}
@@ -900,14 +922,30 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmI8x16ExtractLane_s(getDslInt(pars[0]));
 	} else if (id == "i8x16.extract_lane_u") {
 		WasmI8x16ExtractLane_u(getDslInt(pars[0]));
+	} else if (id == "i8x16.replace_lane") {
+		WasmI8x16ReplaceLane(getDslInt(pars[0]));
 	} else if (id == "i16x8.extract_lane_s") {
 		WasmI16x8ExtractLane_s(getDslInt(pars[0]));
 	} else if (id == "i16x8.extract_lane_u") {
 		WasmI16x8ExtractLane_u(getDslInt(pars[0]));
+	} else if (id == "i16x8.replace_lane") {
+		WasmI16x8ReplaceLane(getDslInt(pars[0]));
 	} else if (id == "i32x4.extract_lane") {
 		WasmI32x4ExtractLane(getDslInt(pars[0]));
-	} else if (id == "i64x2.extract_lane") { 
+	} else if (id == "i32x4.replace_lane") {
+		WasmI32x4ReplaceLane(getDslInt(pars[0]));
+	} else if (id == "i64x2.extract_lane") {
 		WasmI64x2ExtractLane(getDslInt(pars[0]));
+	} else if (id == "i64x2.replace_lane") {
+		WasmI64x2ReplaceLane(getDslInt(pars[0]));
+	} else if (id == "f32x4.extract_lane") {
+		WasmF32x4ExtractLane(getDslInt(pars[0]));
+	} else if (id == "f32x4.replace_lane") {
+		WasmF32x4ReplaceLane(getDslInt(pars[0]));
+	} else if (id == "f64x2.extract_lane") {
+		WasmF64x2ExtractLane(getDslInt(pars[0]));
+	} else if (id == "f64x2.replace_lane") {
+		WasmF64x2ReplaceLane(getDslInt(pars[0]));
 	} else if (id == "i8x16.swizzle") {
 		WasmI8x16Swizzle();
 	} else if (id == "i8x16.splat") {
@@ -1425,44 +1463,6 @@ dsl2WasmBlockType(onError : (DslAst, string) -> void, d : DslAst) -> WasmBlockTy
 		}
 		default: error();
 	}
-}
-
-/*
-		type = "(" ws types ")" ws "->" ws type $"fntype_2"
-			| id "<" ws types ">" ws $"partype_2"
-
-*/
-
-i32toBytes(i : int) -> [int] {
-	[
-		bitUshr(bitAnd(i, 0xff000000), 24),
-		bitUshr(bitAnd(i, 0x00ff0000), 16),
-		bitUshr(bitAnd(i, 0x0000ff00), 8),
-		bitAnd(i, 0x000000ff)
-	]
-}
-
-i32toBytesLE(i : int) -> [int] {
-	[
-		bitAnd(i, 0x000000ff),
-		bitUshr(bitAnd(i, 0x0000ff00), 8),
-		bitUshr(bitAnd(i, 0x00ff0000), 16),
-		bitUshr(bitAnd(i, 0xff000000), 24)
-	]
-}
-
-i16toBytes(i : int) -> [int] {
-	[
-		bitUshr(bitAnd(i, 0x0000ff00), 8),
-		bitAnd(i, 0x000000ff)
-	]
-}
-
-i16toBytesLE(i : int) -> [int] {
-	[
-		bitAnd(i, 0x000000ff),
-		bitUshr(bitAnd(i, 0x0000ff00), 8)
-	]
 }
 
 isNumericWaseType(d : DslAst) -> bool {
