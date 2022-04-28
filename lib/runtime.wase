@@ -57,27 +57,3 @@ printv128(v : v128) -> () {
 	fd_write(1, 0, 1, 8);
 	{}
 }
-
-// Print i32 as binary
-printb32(i : i32) -> () {
-	doprintb32(i, 0x80000000);
-}
-
-// Print i16 as binary
-printb16(i : i32) -> () {
-	doprintb32(i, 0x8000);
-}
-
-// Print i8 as binary
-printb8(i : i32) -> () {
-	doprintb32(i, 0x80);
-}
-
-doprintb32(i : i32, m0 : i32) -> () {
-	bit = (i & m0) > 0;
-	printByte(48 + bit);
-	m1 = shr_u<>(m0, 1);
-	if (0 < m1) {
-		doprintb32(i, m1);
-	}
-}

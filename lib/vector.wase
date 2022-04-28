@@ -1,4 +1,4 @@
-include lib/runtime;
+include lib/binary_utils;
 
 println_i32x4(v : v128) -> () {
 	printi32(i32x4.extract_lane<0>(v));
