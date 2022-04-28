@@ -24,13 +24,6 @@ test_v128_const() -> () {
 
 	// Test val: lane by lane
 	println_i8x16(val);
-
-	val1 : v128 = v128.const<572727841,640099877,707471913,774843949>();
-	printv128(val1);
-	printByte(10);
-	
-	// Test val1: lane by lane
-	println_i32x4(val1);
 }
 
 test_arithmetics() -> () {
@@ -45,6 +38,7 @@ test_arithmetics() -> () {
 	println_i32x4(i32x4.add<>(b, c));
 	println_i32x4(i32x4.mul<>(b, c));
 }
+
 
 test_load_store() -> () {
 
@@ -75,9 +69,17 @@ test_load_store() -> () {
 	printByte(10);
 }
 
+test_set_lanes() -> () {
+	println_i32x4(set_lanes_i32x4(v128.const<>(), 1, 2, 3, 4));
+	println_i32x4(set_lanes_i32x4(v128.const<>(), -1, -2, -3, -4));
+	println_i32x4(set_lanes_i32x4(v128.const<>(), 9999, 8888, 7777, 6666));
+	println_i32x4(set_lanes_i32x4(v128.const<>(), -9999, -8888, -7777, -6666));
+}
+
 export _start() -> () {
 	test_v128_const();
 	test_arithmetics();
 	test_load_store();
+	test_set_lanes();
     {}
 }
