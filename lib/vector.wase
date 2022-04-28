@@ -12,6 +12,30 @@ println_i32x4(v : v128) -> () {
 	printByte(10);
 }
 
+set_lanes_i32x4(v : v128, l0 : i32, l1 : i32, l2 : i32, l3 : i32) -> v128 {
+	i32x4.replace_lane<3>(
+		i32x4.replace_lane<2>(
+			i32x4.replace_lane<1>(
+				i32x4.replace_lane<0>(v, l0), l1
+			),
+			l2
+		),
+		l3
+	);
+}
+
+println_b32x4(v : v128) -> () {
+	printb32(i32x4.extract_lane<0>(v));
+	printByte(32);
+	printb32(i32x4.extract_lane<1>(v));
+	printByte(32);
+	printb32(i32x4.extract_lane<2>(v));
+	printByte(32);
+	printb32(i32x4.extract_lane<3>(v));
+	printByte(32);
+	printByte(10);
+}
+
 println_i16x8(val : v128) -> () {
 	printi32(i16x8.extract_lane_u<0>(val));
 	printByte(32);
@@ -29,6 +53,50 @@ println_i16x8(val : v128) -> () {
 	printi32(i16x8.extract_lane_u<6>(val));
 	printByte(32);
 	printi32(i16x8.extract_lane_u<7>(val));
+	printByte(32);
+
+	printByte(10);
+}
+
+println_u16x8(val : v128) -> () {
+	printu32(i16x8.extract_lane_u<0>(val));
+	printByte(32);
+	printu32(i16x8.extract_lane_u<1>(val));
+	printByte(32);
+	printu32(i16x8.extract_lane_u<2>(val));
+	printByte(32);
+	printu32(i16x8.extract_lane_u<3>(val));
+	printByte(32);
+
+	printu32(i16x8.extract_lane_u<4>(val));
+	printByte(32);
+	printu32(i16x8.extract_lane_u<5>(val));
+	printByte(32);
+	printu32(i16x8.extract_lane_u<6>(val));
+	printByte(32);
+	printu32(i16x8.extract_lane_u<7>(val));
+	printByte(32);
+
+	printByte(10);
+}
+
+println_b16x8(val : v128) -> () {
+	printb16(i16x8.extract_lane_u<0>(val));
+	printByte(32);
+	printb16(i16x8.extract_lane_u<1>(val));
+	printByte(32);
+	printb16(i16x8.extract_lane_u<2>(val));
+	printByte(32);
+	printb16(i16x8.extract_lane_u<3>(val));
+	printByte(32);
+
+	printb16(i16x8.extract_lane_u<4>(val));
+	printByte(32);
+	printb16(i16x8.extract_lane_u<5>(val));
+	printByte(32);
+	printb16(i16x8.extract_lane_u<6>(val));
+	printByte(32);
+	printb16(i16x8.extract_lane_u<7>(val));
 	printByte(32);
 
 	printByte(10);
@@ -52,7 +120,7 @@ println_i8x16(val : v128) -> () {
 	printByte(32);
 	printi32(i8x16.extract_lane_u<7>(val));
 	printByte(32);
-	
+
 	printi32(i8x16.extract_lane_u<8>(val));
 	printByte(32);
 	printi32(i8x16.extract_lane_u<9>(val));
@@ -69,6 +137,46 @@ println_i8x16(val : v128) -> () {
 	printi32(i8x16.extract_lane_u<14>(val));
 	printByte(32);
 	printi32(i8x16.extract_lane_u<15>(val));
+	printByte(32);
+
+	printByte(10);
+}
+
+println_b8x16(val : v128) -> () {
+	printb8(i8x16.extract_lane_u<0>(val));
+	printByte(32);
+	printb8(i8x16.extract_lane_u<1>(val));
+	printByte(32);
+	printb8(i8x16.extract_lane_u<2>(val));
+	printByte(32);
+	printb8(i8x16.extract_lane_u<3>(val));
+	printByte(32);
+
+	printb8(i8x16.extract_lane_u<4>(val));
+	printByte(32);
+	printb8(i8x16.extract_lane_u<5>(val));
+	printByte(32);
+	printb8(i8x16.extract_lane_u<6>(val));
+	printByte(32);
+	printb8(i8x16.extract_lane_u<7>(val));
+	printByte(32);
+
+	printb8(i8x16.extract_lane_u<8>(val));
+	printByte(32);
+	printb8(i8x16.extract_lane_u<9>(val));
+	printByte(32);
+	printb8(i8x16.extract_lane_u<10>(val));
+	printByte(32);
+	printb8(i8x16.extract_lane_u<11>(val));
+	printByte(32);
+
+	printb8(i8x16.extract_lane_u<12>(val));
+	printByte(32);
+	printb8(i8x16.extract_lane_u<13>(val));
+	printByte(32);
+	printb8(i8x16.extract_lane_u<14>(val));
+	printByte(32);
+	printb8(i8x16.extract_lane_u<15>(val));
 	printByte(32);
 
 	printByte(10);
