@@ -23,9 +23,10 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 		}
 
 		// Here, we should lower Wise constructs to Wase constructs
-		lowered = lowerWise2Wase(\node, error -> {
+		env = LowerWiseEnv(0, [], \node, error -> {
 			println(error + " at " + summarizeDsl(node));
-		}, typed);
+		});
+		lowered = lowerWise2Wase(env, typed);
 
 		if (isUrlParameterTrue("debug-lower")) {
 			println("Wase '" + filename + "'':");

@@ -13,5 +13,6 @@ Compared to Wase, it has these changes:
 
 ## TODO
 
-- Implement while
 - Fix first-order function use
+- Implement import of Wase
+- Check short-circuit and break/continue

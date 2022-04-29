@@ -4,18 +4,29 @@ import runtime;
 import wase/compile;
 
 export {
-	lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst;
+	LowerWiseEnv(
+		blocks : int,
+		loops : [int],
+		onError : (DslAst, string) -> void, 
+	);
+	lowerWise2Wase(acc : LowerWiseEnv, d : DslAst) -> DslAst;
 }
 
-lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst {
+lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 	switch (d) {
 		DslBool(value): d;
 		DslInt(value): d;
 		DslDouble(value): d;
 		DslString(value): d;
-		DslList(value): DslList(mapList(value, \v -> lowerWise2Wase(onError, v)));
+		DslList(value): DslList(mapList(value, \v -> lowerWise2Wase(env, v)));
 		DslNode(name, args, pos): {
-			largs = map(args, \a -> lowerWise2Wase(onError, a));
+			nenv = if (name == "while") {
+				LowerWiseEnv(env.blocks + 2, arrayPush(env.loops, env.blocks), env.onError);
+			} else if (name == "if" || name == "ifelse") {
+				// TODO: What about bool_or and bool_and?
+				LowerWiseEnv(env.blocks + 1, env.loops, env.onError);
+			} else env;
+			largs = map(args, \a -> lowerWise2Wase(nenv, a));
 			if (name == "true") {
 				DslNode("int", [DslInt(1), DslString("i32")], pos);
 			} else if (name == "false") {
@@ -32,28 +43,44 @@ lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst {
 				DslNode("ifelse", [largs[0], largs[1], DslInt(0), DslString("i32")], pos);
 			} else if (name == "while") {
 				// while (cond) { <exp> } =>
-				// loop { break_if<1>(!cond); <exp>; break<>() }
+				// block { loop { break_if<2>(!cond); <exp>; break<>() } }
 				// cond, exp, type = void
-				// TODO: Record label for break and continue inside
-				l = DslNode("loop", [
-					DslList(
-						fold([
-							DslNode("wasm_op", [DslString("break_if"), DslInt(1), 
-								negateWise(largs[0]),
-							DslList(makeList())], pos),
-							largs[1],
-							DslNode("wasm_op", [DslString("break"), DslList(makeList()), DslList(makeList()), DslList(makeList())], pos),
-
-						], makeList(), \acc, e -> Cons(e, acc))
-					), largs[2]
+				l = DslNode("block", [
+					DslList(makeList1(
+					DslNode("loop", [
+						DslList(
+							fold([
+								DslNode("wasm_op", [DslString("break_if"), DslInt(1), 
+									negateWise(largs[0]),
+								DslList(makeList())], pos),
+								largs[1],
+								DslNode("wasm_op", [DslString("break"), DslList(makeList()), DslList(makeList()), DslList(makeList())], pos),
+							], makeList(), \acc, e -> Cons(e, acc))
+						), largs[2]
+					], pos))), 
+					DslList(makeList())
 				], pos);
-				// println(prettyDsl(l));
+				// println(l);
 				l;
+			} else if (name == "break") {
+				depth = (env.blocks - 1) - (if (env.loops == []) {
+					env.onError(d, "break only in while");
+					0;
+				} else lastElement(env.loops, 0));
+				DslNode("wasm_op", [DslString("break"), DslList(makeList1(DslInt(depth))), DslList(makeList()), largs[0]], pos);
+			} else if (name == "continue") {
+				depth = (env.blocks - 2) - (if (env.loops == []) {
+					env.onError(d, "continue only in while");
+					0;
+				} else lastElement(env.loops, 0));
+				DslNode("wasm_op", [DslString("break"), DslList(makeList1(DslInt(depth))), DslList(makeList()), largs[0]], pos);
+//			} else if (name == "continue") {
+
 			} else if (name == "and" || name == "or" || name == "xor") {
 				// OK, check that the type is integer
 				type = waseType(d);
 				if (type != DslString("i32") && type != DslString("i64")) {
-					onError(d, "bitwise operation only works on i32 and i64");
+					env.onError(d, "bitwise operation only works on i32 and i64");
 				}
 				DslNode(name, largs, pos);
 			} else if (name == "equal" || name == "not_equal" || name == "less_equal" || name == "less"
