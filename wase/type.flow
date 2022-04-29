@@ -4,13 +4,13 @@ export {
 	typeWase(ast : DslAst) -> DslAst;
 
 	// Wise reuses a lot of this
-	typecheckWase(acc : DslTypeAcc, deep : bool, node : DslAst, getChildType : (int) -> DslAst) -> DslAst;
-	mergeWaseTypes(acc : DslTypeAcc, left : DslAst, right : DslAst) -> DslAst;
+	typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (int) -> DslAst) -> DslAst;
+	mergeWaseTypes(acc : DslTypeAcc<?>, left : DslAst, right : DslAst) -> DslAst;
 }
 
 typeWase(ast : DslAst) -> DslAst {
 	deep = ref false;
-	acc = makeDslTypeAcc(mergeWaseTypes, \a, n, g -> typecheckWase(a, ^deep, n, g));
+	acc = makeDslTypeAcc(false, mergeWaseTypes, \a, n, g -> typecheckWase(a, ^deep, n, g));
 
 	// OK, first time, we do NOT go deep, but just grab the top-level names
 	dslTypeInfer(acc, ast, false) |> ignore;
@@ -23,7 +23,7 @@ typeWase(ast : DslAst) -> DslAst {
 	dslTypeInfer(acc, ast, true);
 }
 
-mergeWaseTypes(acc : DslTypeAcc, left : DslAst, right : DslAst) -> DslAst {
+mergeWaseTypes(acc : DslTypeAcc<?>, left : DslAst, right : DslAst) -> DslAst {
 	if (left == right) left
 	else {
 		println("TODO: Merge these types " + toString(left) + " and " + toString(right));
@@ -31,7 +31,7 @@ mergeWaseTypes(acc : DslTypeAcc, left : DslAst, right : DslAst) -> DslAst {
 	}
 }
 
-typecheckWase(acc : DslTypeAcc, deep : bool, node : DslAst, getChildType : (int) -> DslAst) -> DslAst {
+typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (int) -> DslAst) -> DslAst {
 	// println(summarizeDsl(node));
 	switch (node) {
 		DslBool(__): DslString("i32");

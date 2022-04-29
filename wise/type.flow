@@ -5,9 +5,14 @@ export {
 	typeWise(ast : DslAst) -> DslAst;
 }
 
+WiseTypeAcc(
+	// The depth of labels for break and continue resolution
+	loops : [int],
+);
+
 typeWise(ast : DslAst) -> DslAst {
 	deep = ref false;
-	acc = makeDslTypeAcc(mergeWiseTypes, \a, n, g -> typecheckWise(a, ^deep, n, g));
+	acc = makeDslTypeAcc(WiseTypeAcc([]), mergeWiseTypes, \a, n, g -> typecheckWise(a, ^deep, n, g));
 
 	// OK, first time, we do NOT go deep, but just grab the top-level names
 	dslTypeInfer(acc, ast, false) |> ignore;
@@ -20,11 +25,11 @@ typeWise(ast : DslAst) -> DslAst {
 	dslTypeInfer(acc, ast, true);
 }
 
-mergeWiseTypes(acc : DslTypeAcc, left : DslAst, right : DslAst) -> DslAst {
+mergeWiseTypes(acc : DslTypeAcc<WiseTypeAcc>, left : DslAst, right : DslAst) -> DslAst {
 	mergeWaseTypes(acc, left, right);
 }
 
-typecheckWise(acc : DslTypeAcc, deep : bool, node : DslAst, getChildType : (int) -> DslAst) -> DslAst {
+typecheckWise(acc : DslTypeAcc<WiseTypeAcc>, deep : bool, node : DslAst, getChildType : (int) -> DslAst) -> DslAst {
 	switch (node) {
 		DslBool(__): DslString("bool");
 		DslNode(name, args, pos): {
