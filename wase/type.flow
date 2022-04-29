@@ -415,6 +415,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 
 				blockType = DslList(makeList());
 				preBlocks = ^(acc.blocks);
+				acc.blocks := arrayPush(preBlocks, blockType);
 
 				thenType = getChildType(1);
 				acc.unifyTypes(acc, thenType, blockType);

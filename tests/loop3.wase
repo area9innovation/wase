@@ -4,11 +4,14 @@ export memory 1;
 
 export _start() -> () {
 	var i = 10;
-	loop {
-		// Breaks out of _start function
-		break_if<1>(i > 10);
-		// This is really continue
-		i := i + 1;
-		break<>();
+	block {
+		loop {
+			// Breaks out of block
+			break_if<1>(i > 10);
+			i := i + 1;
+			// This is really continue
+			break<>();
+		};
 	};
+	printi32(i);
 }
