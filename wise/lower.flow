@@ -15,6 +15,7 @@ lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst {
 		DslString(value): d;
 		DslList(value): DslList(mapList(value, \v -> lowerWise2Wase(onError, v)));
 		DslNode(name, args, pos): {
+			largs = map(args, \a -> lowerWise2Wase(onError, a));
 			if (name == "true") {
 				DslNode("int", [DslInt(1), DslString("i32")], pos);
 			} else if (name == "false") {
@@ -23,20 +24,17 @@ lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst {
 				// Make this short-circuit
 				// if (a) 1 else b
 				// TODO: If a does not have side-effects, we can do a bitwise or
-				largs = map(args, \a -> lowerWise2Wase(onError, a));
 				DslNode("ifelse", [largs[0], DslInt(1), largs[1], DslString("i32")], pos);
 			} else if (name == "bool_and") {
 				// Make this short-circuit
 				// if (a) b else 0
 				// TODO: If a does not have side-effects, we can do a bitwise and
-				largs = map(args, \a -> lowerWise2Wase(onError, a));
 				DslNode("ifelse", [largs[0], largs[1], DslInt(0), DslString("i32")], pos);
 			} else if (name == "while") {
 				// while (cond) { <exp> } =>
 				// loop { break_if<1>(!cond); <exp>; break<>() }
 				// cond, exp, type = void
 				// TODO: Record label for break and continue inside
-				largs = map(args, \a -> lowerWise2Wase(onError, a));
 				l = DslNode("loop", [
 					DslList(
 						fold([
@@ -51,15 +49,23 @@ lowerWise2Wase(onError : (DslAst, string) -> void, d : DslAst) -> DslAst {
 				], pos);
 				// println(prettyDsl(l));
 				l;
-			} else {
-				if (name == "and" || name == "or" || name == "xor") {
-					// OK, check that the type is integer
-					type = waseType(d);
-					if (type != DslString("i32") && type != DslString("i64")) {
-						onError(d, "bitwise operation only works on i32 and i64");
-					}
+			} else if (name == "and" || name == "or" || name == "xor") {
+				// OK, check that the type is integer
+				type = waseType(d);
+				if (type != DslString("i32") && type != DslString("i64")) {
+					onError(d, "bitwise operation only works on i32 and i64");
 				}
-				DslNode(name, map(args, \a -> lowerWise2Wase(onError, a)), pos);
+				DslNode(name, largs, pos);
+			} else if (name == "equal" || name == "not_equal" || name == "less_equal" || name == "less"
+				|| name == "greater_equal" || name == "greater") {
+				// The type becomes int
+				DslNode(name, [largs[0], largs[1], DslString("i32")], pos)
+			} else {
+				type = lastElement(args, d);
+				if (type == DslString("bool")) {
+					println(prettyDsl(d));
+				}
+				DslNode(name, largs, pos);
 			}
 		}
 	}
