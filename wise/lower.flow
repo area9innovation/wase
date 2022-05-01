@@ -13,6 +13,7 @@ export {
 }
 
 lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
+	list2 = \l, r -> DslList(Cons(r, Cons(l, makeList())));
 	switch (d) {
 		DslBool(value): d;
 		DslInt(value): d;
@@ -50,9 +51,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 					DslNode("loop", [
 						DslList(
 							fold([
-								DslNode("wasm_op", [DslString("break_if"), DslInt(1), 
-									negateWise(largs[0]),
-								DslList(makeList())], pos),
+								DslNode("wasm_op", [DslString("break_if"), DslInt(1), negateWise(largs[0]),DslList(makeList())], pos),
 								largs[1],
 								DslNode("wasm_op", [DslString("break"), DslList(makeList()), DslList(makeList()), DslList(makeList())], pos),
 							], makeList(), \acc, e -> Cons(e, acc))
@@ -74,8 +73,12 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 					0;
 				} else lastElement(env.loops, 0));
 				DslNode("wasm_op", [DslString("break"), DslList(makeList1(DslInt(depth))), DslList(makeList()), largs[0]], pos);
-//			} else if (name == "continue") {
-
+			} else if (name == "import") {
+				if (getDslNode(largs[1]).name == "fntype") {
+					DslNode("import_fun", [largs[0], largs[1], largs[3], largs[4], largs[5]], pos)
+				} else {
+					DslNode("import_global", largs, pos)
+				}
 			} else if (name == "and" || name == "or" || name == "xor") {
 				// OK, check that the type is integer
 				type = waseType(d);
@@ -87,10 +90,18 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 				|| name == "greater_equal" || name == "greater") {
 				// The type becomes int
 				DslNode(name, [largs[0], largs[1], DslString("i32")], pos)
+			} else if (name == "less_equalu") {
+				DslNode("wasm_op", [DslString("le_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
+			} else if (name == "lessu") {
+				DslNode("wasm_op", [DslString("lt_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
+			} else if (name == "greater_equalu") {
+				DslNode("wasm_op", [DslString("ge_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
+			} else if (name == "greateru") {
+				DslNode("wasm_op", [DslString("gt_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
 			} else {
 				type = lastElement(args, d);
 				if (type == DslString("bool")) {
-					println(prettyDsl(d));
+					println("Figure out how to get rid of bool type when lowering: " + prettyDsl(d));
 				}
 				DslNode(name, largs, pos);
 			}

@@ -34,7 +34,10 @@ typecheckWise(acc : DslTypeAcc<WiseTypeAcc>, deep : bool, node : DslAst, getChil
 		DslBool(__): DslString("bool");
 		DslNode(name, args, pos): {
 			if (name == "equal" || name == "not_equal" || name == "less_equal" || name == "less"
-				|| name == "greater_equal" || name == "greater") {
+				|| name == "greater_equal" || name == "greater"
+				|| name == "less_equalu" || name == "lessu"
+				|| name == "greater_equalu" || name == "greateru"
+				) {
 				// Comparisons give bools in Wise
 				left = getChildType(0);
 				right = getChildType(1);
@@ -109,6 +112,36 @@ typecheckWise(acc : DslTypeAcc<WiseTypeAcc>, deep : bool, node : DslAst, getChil
 
 				// The result is does not have any info
 				makeDslTypeVar(acc);
+			} else if (name == "import") {
+				// Wise:
+				// "import" ws id ":" ws optmutable type $"swap" "=" ws id "." id ";" ws decl $"import_6" // id, type, mutable, module, name, scope
+
+				// Wase:
+				// "import" ws id ":" ws optmutable type $"swap" "=" ws id "." id ";" ws decl $"import_global_6" // id, type, mutable, module, name, scope
+				// "import" ws id ":" ws fntype "=" ws id "." id ";" ws decl $"import_fun_5"; // id type module name scope
+				
+				// id type mutable module name scope
+				gname = getDslString(args[0]);
+				type = getChildType(1);
+
+				if (getDslNode(type).name != "func") {
+					// Global
+					isMutable = getDslInt(args[2]);
+
+					if (isMutable == 0) {
+						// Record that this is NOT mutable
+						acc.constants := insertSet(^(acc.constants), gname);
+					}
+				}
+
+				if (!deep && containsKeyTree(^(acc.env), gname)) {
+					acc.onError(node, "import '" + gname + "' is duplicate");
+				}
+
+				// OK, record the import type
+				acc.env := setTree(^(acc.env), gname, type);
+				getChildType(5);
+
 			} else {
 				// OK, we just reuse typing from Wase
 				typecheckWase(acc, deep, node, getChildType);

@@ -9,10 +9,12 @@ Compared to Wase, it has these changes:
 - types are more orthogonal, and include functions and tuples, as well as bool
 - comparisons return bool
 - We have || and && operators for boolean or/and with short-circuit semantics
+- <=u <u >=u >u syntax for unsigned comparisons
 - Introduce "while" with normal break/continue, which always returns "void"
 
 ## TODO
 
 - Fix first-order function use
-- Implement import of Wase
-- Check short-circuit and break/continue
+- Check short-circuit operations and break/continue
+- Add flag to choose target: If we are targetting Wasi, then add memory and export main
+- Automatic conversion of "main" to _start for Wasi interfacing. See tests/print.wise

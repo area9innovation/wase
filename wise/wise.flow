@@ -26,7 +26,9 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 		env = LowerWiseEnv(0, [], \node, error -> {
 			println(error + " at " + summarizeDsl(node));
 		});
-		lowered = lowerWise2Wase(env, typed);
+		lowered0 = lowerWise2Wase(env, typed);
+		// Add exported memory
+		lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered0], 0);
 
 		if (isUrlParameterTrue("debug-lower")) {
 			println("Wase '" + filename + "'':");
@@ -82,7 +84,7 @@ main() {
 			testFolder = if (test == "1") "tests" else test;
 			tests = readDirectory(testFolder);
 			filtermap(tests, \t -> if (endsWith(t, ".wise")) Some(pathCombine(testFolder, t)) else None());
-		} else ["tests/while.wise"];
+		} else ["tests/print.wise"];
 	}
 	if (files == []) {
 		printWiseHelp();
