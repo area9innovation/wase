@@ -23,7 +23,7 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 		}
 
 		// Here, we should lower Wise constructs to Wase constructs
-		env = LowerWiseEnv(0, [], \node, error -> {
+		env = makeLowerWiseEnv(\node, error -> {
 			println(error + " at " + summarizeDsl(node));
 		});
 		lowered0 = lowerWise2Wase(env, typed);

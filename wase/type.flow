@@ -270,7 +270,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 					mtype
 				} : {
 					acc.onError(node, "Unknown var '" + vname + "' when type checking");
-					DslInt(0);
+					makeDslTypeVar(acc);
 				}
 
 			} else if (name == "set") {
@@ -286,7 +286,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 					DslList(makeList());
 				} : {
 					acc.onError(node, "Unknown var '" + vname + "' to set when type checking");
-					DslInt(0);
+					makeDslTypeVar(acc);
 				}
 			} else if (name == "tee") {
 				vname = getDslString(args[0]);
@@ -300,7 +300,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 					valtype;
 				} : {
 					acc.onError(node, "Unknown var '" + vname + "' to tee when type checking");
-					DslInt(0);
+					makeDslTypeVar(acc);
 				}
 
 			} else if (name == "typeannotation") {
@@ -426,7 +426,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 			} else {
 				acc.onError(node, "TODO: Type check " + summarizeDsl(node));
 				// This signifies a tyvar
-				DslInt(0);
+				makeDslTypeVar(acc);
 			}
 		}
 	}
