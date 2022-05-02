@@ -62,7 +62,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 					withFn = DslList(Cons(fncall, fnargs));
 
 					// OK, turn this into a func ref
-					ic = DslNode("wasm_op", [DslString("call_indirect"), DslList(makeList()), withFn, lowerWise2Wase(env, args[2])], pos);
+					ic = DslNode("wasm_op", [DslString("call_indirect"), DslList(makeList()), withFn, lowerWiseType(lowerWise2Wase(env, args[2]))], pos);
 					// println(prettyDsl(ic));
 					ic;
 				};
@@ -73,7 +73,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 					} else {
 						// Direct call - do not lower the var, but keep as is
 						arg = lowerWise2Wase(env, args[1]);
-						DslNode(name, [args[0], arg, lowerWise2Wase(env, args[2])], pos);
+						DslNode(name, [args[0], arg, lowerWiseType(lowerWise2Wase(env, args[2]))], pos);
 					}
 				} else {
 					indirect();
@@ -82,21 +82,24 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 				// TODO: What about bool_or and bool_and?
 				nenv = LowerWiseEnv(env with blocks = env.blocks + 1);
 				largs = map(args, \a -> lowerWise2Wase(nenv, a));
-				DslNode(name, largs, pos);
+				DslNode(name, lowerWiseExpType(largs), pos);
 			} else if (name == "if") {
 				// TODO: What about bool_or and bool_and?
 				nenv = LowerWiseEnv(env with blocks = env.blocks + 1);
 				largs = map(args, \a -> lowerWise2Wase(nenv, a));
-				DslNode(name, largs, pos);
+				DslNode(name, lowerWiseExpType(largs), pos);
 			} else if (name == "let") {
-				// (id, mut, type, exp, body)
+				// (id, mut, type, exp, body, bodytype)
 				id = getDslString(args[0]);
 				largs = mapi(args, \i, a -> {
 					nenv = if (i == 4) {
 						// Mark this var as local in the environment
 						LowerWiseEnv(env with locals = insertSet(env.locals, id))
 					} else env;
-					lowerWise2Wase(nenv, a)
+					t = lowerWise2Wase(nenv, a);
+					if (i == 2) lowerWiseExplicitType(t)
+					else if (i == 5) lowerWiseType(t) 
+					else t
 				});
 				DslNode(name, largs, pos);
 
@@ -133,7 +136,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 					DslNode("wasm_op", [DslString("break"), DslList(makeList1(DslInt(depth))), DslList(makeList()), largs[0]], pos);
 				} else if (name == "import") {
 					if (getDslNode(largs[1]).name == "fntype") {
-						DslNode("import_fun", [largs[0], largs[1], largs[3], largs[4], largs[5]], pos)
+						DslNode("import_fun", [largs[0], largs[1], largs[3], largs[4], largs[5], largs[6]], pos)
 					} else {
 						DslNode("import_global", largs, pos)
 					}
@@ -163,7 +166,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 						// OK, turn this into a func ref
 						DslNode("wasm_op", [DslString("fn"), DslList(makeList1(args[0])), DslList(makeList()), DslString("i32")], pos);
 					} else {
-						DslNode(name, largs, pos);
+						DslNode(name, lowerWiseExpType(largs), pos);
 					}
 				} else {
 					type = lastElement(args, d);
@@ -190,5 +193,38 @@ negateWise(d : DslAst) -> DslAst {
 	else if (name == "bool_not") n.args[0]
 	else {
 		DslNode("bool_not", [d, DslString("bool")], n.pos);
+	}
+}
+
+// For expressions, lower the last argument to a Wase type
+lowerWiseExpType(args : [DslAst]) -> [DslAst] {
+	typepos = length(args) - 1;
+	replace(args, typepos, lowerWiseType(args[typepos]));
+}
+
+// Lower an inferred type to Wase land
+lowerWiseType(d : DslAst) -> DslAst {
+	node = getDslNode(d);
+	if (node.name == "func") DslString("i32")
+	else if (node.name == "bool") {
+		println("TODO: This bool is not expected");
+		DslString("i32");
+	} else d;
+}
+
+// Type annotations lower them to Wase land
+lowerWiseExplicitType(d : DslAst) -> DslAst {
+	switch (d) {
+		DslNode(name, args, pos): {
+			if (name == "fntype") {
+				DslNode("type", [DslString("i32"), DslString("i32")], pos)
+			} else if (name == "type") {
+				// Check if it is inferred
+				if (getDslString(args[0]) == "auto") {
+					DslNode(name, [lowerWiseType(args[1])], pos)
+				} else d;
+			} else d;
+		}
+		default: d;
 	}
 }

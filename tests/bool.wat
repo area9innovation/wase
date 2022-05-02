@@ -15,5 +15,7 @@
       i32.const 0
     end
     drop)
+  (memory (;0;) 1)
   (global (;0;) f64 (f64.const 0x1.921fb54442d1ap+1 (;=3.14159;)))
+  (export "memory" (memory 0))
   (start 0))

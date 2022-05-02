@@ -14,7 +14,7 @@ Compared to Wase, it has these changes:
 
 ## TODO
 
-- Fix first-order function use: Convert first-order function types to i32
+- Convert first-order function types to i32 in all expressions where possible
 - Check short-circuit operations and break/continue
 - Add flag to choose target: If we are targetting Wasi, then add memory and export main
 - Automatic conversion of "main" to _start for Wasi interfacing. See tests/print.wise
@@ -26,6 +26,3 @@ To compare against the corresponding Wase program, use:
 	bin\wised tests/fn.wise debug-lower=1 >out.flow
 
 	bin\wased tests/fn.wase debug-type=1 >out2.flow
-
-
-

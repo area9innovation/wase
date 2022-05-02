@@ -36,4 +36,6 @@
     end
     i32.const 2
     drop)
+  (memory (;0;) 1)
+  (export "memory" (memory 0))
   (start 0))
