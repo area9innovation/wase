@@ -63,7 +63,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 
 					// OK, turn this into a func ref
 					ic = DslNode("wasm_op", [DslString("call_indirect"), DslList(makeList()), withFn, lowerWise2Wase(env, args[2])], pos);
-					println(prettyDsl(ic));
+					// println(prettyDsl(ic));
 					ic;
 				};
 				if (fn.name == "var") {
@@ -73,7 +73,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 					} else {
 						// Direct call - do not lower the var, but keep as is
 						arg = lowerWise2Wase(env, args[1]);
-						DslNode(name, [args[0], arg], pos);
+						DslNode(name, [args[0], arg, lowerWise2Wase(env, args[2])], pos);
 					}
 				} else {
 					indirect();
