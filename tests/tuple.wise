@@ -7,6 +7,7 @@ include lib/runtime;
 	printi32(si);
 }
 */
+
 _start() -> () {
 	t = (1, 2.1);
 	t.1;

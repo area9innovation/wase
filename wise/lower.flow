@@ -112,6 +112,29 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 						DslNode(name, largs, pos);
 					}
 				}
+			} else if (name == "tupledot") {
+				arg = getDslNode(args[0]);
+				if (arg.name == "var") {
+					index = getDslInt(args[1]);
+					DslNode("var", [DslString(getDslString(arg.args[0]) + "." + i2s(index))], pos);
+				} else {
+					largs = map(args, \a -> lowerWise2Wase(env, a));
+					value = largs[0];
+					varType = wiseType(value);
+					switch (varType) {
+						DslList(t): {
+							types = list2array(t);
+							index = getDslInt(largs[1]);
+							dot = DslNode("call", [DslNode("var", [DslString("dot" + i2s(length(types)))], pos), list2(largs[0], largs[1])], pos);
+							println("TODO: Lowered dot to " + prettyDsl(dot) + " from " + prettyDsl(d) + ". Add the dot* function");
+							dot;
+						}
+						default: {
+							env.onError(d, ". only for tuples " + prettyDsl(varType));
+							d;
+						}
+					}
+				}
 			} else {
 
 				// Those that do not affect the lowering environment
@@ -187,22 +210,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 					}
 				} else if (name == "tuple") {
 					largs[0];
-				} else if (name == "tupledot") {
-					value = largs[0];
-					varType = wiseType(value);
-					switch (varType) {
-						DslList(t): {
-							types = list2array(t);
-							index = getDslInt(largs[1]);
-							dot = DslNode("call", [DslNode("var", [DslString("dot" + i2s(length(types)))], pos), list2(largs[0], largs[1])], pos);
-							println("Lowered dot to " + prettyDsl(dot));
-							dot;
-						}
-						default: {
-							env.onError(d, ". only for tuples " + prettyDsl(varType));
-							d;
-						}
-					}
+
 				} else {
 					type = lastElement(args, d);
 					if (type == DslString("bool")) {

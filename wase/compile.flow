@@ -232,7 +232,7 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 				});
 				nacc = dsl2WaseInstruction(onError, acc, args[3]);
 				// OK, build them in reverse
-				nacc2 = foldi(reverseA(types), nacc, \i, tacc, type -> {
+				nacc2 = foldi(types, nacc, \i, tacc, type -> {
 					arrayPush(tacc, WaseLet(vname + "." + i2s(length(types) - i - 1), type))
 				});
 				dsl2WaseInstruction(onError, nacc2, args[4]);
