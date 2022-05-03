@@ -28,6 +28,67 @@ that are stackable should be specialized. Polymorphism on other types on the
 heap are always tagged. Maybe this will automatically happen if we represent 
 heap objects as tuples.
 
+# Tuples
+
+Tuples are written like this:
+
+	zero : () = ();
+	one : (i32) = (1,);
+	two : (i32, f64) = (1, 3.141);
+
+These are expanded to multiple lets:
+
+	zero : () = ();
+	one_0 : i32 = 1;
+	// This is a new construct that initializes multiple lets from a tuple value
+	two_0 : i32, two_1 : f64 = (1, 3.141);
+
+When we reference one of these, it should be expanded to a tuple construction:
+
+	one => (one_0)
+	two => (two_0, two_1)
+
+When using ., it should be a call to a function, which takes that number of tuples:
+
+	two.0  => dot2(two, 0) => dot2((two_0, two_1), 0) => two_0
+
+When a function takes a tuple argument, it should expand to multiple arguments:
+
+	foo(two : (i32, f64)) -> () {
+		...
+	}
+
+	=>
+
+	foo(two_0 : i32, two_1 : f64) -> () {
+		...
+	}
+
+and calls to tuple arguments should just be rewritten to be each member:
+	
+	two = (1, 3.141);
+	foo(two)
+=>
+	// This is a new construct that initializes multiple lets from a tuple value
+	two_0 : i32, two_1 : f64 = (1, 3.141);
+	foo(two_0, two_1)
+
+Returning tuples does not require any changes:
+
+	bar() -> (i32, f64) {
+		(1, 3.141)
+	}
+
+	two = bar();
+
+=>
+
+	bar() -> (i32, f64) {
+		(1, 3.141)
+	}
+
+	two_0 : i32, two_1 : f64 = bar();
+
 # Plan
 - Support tuples as arguments in functions and lets: Expand into multiple locals
 

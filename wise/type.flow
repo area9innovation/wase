@@ -117,8 +117,11 @@ typecheckWise(acc : DslTypeAcc<WiseTypeAcc>, deep : bool, node : DslAst, getChil
 
 			} else if (name == "tupledot") {
 				res = makeDslTypeVar(acc);
+				// This is a list
 				val = getChildType(0);
-				acc.unifyTypes(acc, val, DslNode("tupledottype", [args[1], res], pos));
+				index = getChildType(1);
+				// tupledottype(val, index, res)
+				acc.unifyTypes(acc, val, DslNode("tupledottype", [val, args[1], res], pos));
 				res;
 
 			} else if (name == "import") {
@@ -166,9 +169,16 @@ unifyWiseType(acc : DslTypeAcc<WiseTypeAcc>, left : DslAst, right : DslAst) -> b
 			switch (right) {
 				DslNode(rname, rargs, __): {
 					if (rname == "tupledottype") {
+						// tupledottype(val, index, res)
 						ttypes = list2array(lvalue);
-						index = getDslInt(rargs[0]);
-						acc.unifyTypes(acc, ttypes[length(ttypes) - index - 1], rargs[1]);
+		
+						index = getDslInt(rargs[1]);
+						// Extract the tuple index type
+						acc.unifyTypes(acc, ttypes[length(ttypes) - index - 1], rargs[2]);
+
+						// And set the tuple to the list
+						acc.unifyTypes(acc, left, rargs[0]);
+
 						true;
 					} else false;
 				}

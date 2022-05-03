@@ -86,7 +86,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 
 				getChildType(5);
 			} else if (name == "function") {
-				// function(id, export : bool, args : [idtype(id, type)], returnType, body, scope)
+				// function(id : string, export : bool, args : [idtype(id, type)], returnType, body, scope)
 				fname = getDslString(args[0]);
 				acc.errorPrefix := fname + ": ";
 
@@ -97,15 +97,18 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 					acc.onError(node, "function '" + fname + "' is duplicate");
 				}
 
-				fntype = DslNode("func", [fargtypes, rettypes], 0);
+				// OK, special handling if the rettype is a single one
+				rets = getDslList(rettypes);
+				returnType = if (countList(rets) == 1) list2array(rets)[0] else rettypes;
+
+				fntype = DslNode("func", [fargtypes, returnType], 0);
 				acc.env := setTree(^(acc.env), fname, fntype);
 
 				if (deep) {
 					// OK, safe the environment so we do not pollute it
 					safeEnv = ^(acc.env);
 
-					// OK, special handling if the rettype is a single one
-					rets = getDslList(rettypes);
+
 					if (countList(rets) == 1) {
 						acc.blocks := [list2array(rets)[0]];
 					} else {
@@ -134,7 +137,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 
 					// Check the type of the body
 					bodyType = getChildType(4);
-					acc.unifyTypes(acc, rettypes, bodyType);
+					acc.unifyTypes(acc, returnType, bodyType);
 
 					// And unroll the existing types for args
 					iteri(prevTypes, \i, mpt -> {
@@ -149,6 +152,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 					acc.env := safeEnv;
 				}
 
+				// Check the scope
 				getChildType(5);
 			} else if (name == "idtype") {
 				// Used in functions. The type is the second child
@@ -243,7 +247,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 				DslString("f64");
 
 			} else if (name == "let") {
-				// (id, type, exp, body)
+				// (id, ismut, type, exp, body)
 				vname = getDslString(args[0]);
 				isMutable = getDslInt(args[1]);
 				type = getChildType(2);
@@ -256,6 +260,22 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 					// Record that this is NOT mutable
 					acc.constants := insertSet(^(acc.constants), vname);
 				}
+				acc.env := setTree(^(acc.env), vname, type);
+
+				etype = getChildType(3);
+				acc.unifyTypes(acc, type, etype);
+
+				getChildType(4);
+			} else if (name == "lettuple") {
+				// (id, type, exp, body)
+				vname = getDslString(args[0]);
+				type = getChildType(2);
+
+				if (containsKeyTree(^(acc.env), vname)) {
+					acc.onError(node, "let '" + vname + "' is shadowing");
+				}
+				// Record that this is NOT mutable
+				acc.constants := insertSet(^(acc.constants), vname);
 				acc.env := setTree(^(acc.env), vname, type);
 
 				etype = getChildType(3);

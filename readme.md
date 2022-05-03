@@ -342,6 +342,9 @@ typescript family:
 	// Tuples, aka multi-values
 	[1, 2.0, 45]
 
+	// Tuple-let: This expands into multiple let-bindings with names like "t.0" and "t.1"
+	t : (i32, f64) = [1, 3.141];
+
 ## Control flow
 
 	// Function call
