@@ -12,7 +12,7 @@ WiseTypeAcc(
 
 typeWise(ast : DslAst) -> DslAst {
 	deep = ref false;
-	acc = makeDslTypeAcc(WiseTypeAcc(ref []), mergeWiseTypes, \a, n, g -> typecheckWise(a, ^deep, n, g));
+	acc = makeDslTypeAcc(WiseTypeAcc(ref []), mergeWiseTypes, \a, n, g -> typecheckWise(a, ^deep, n, g), unifyWiseType);
 
 	// OK, first time, we do NOT go deep, but just grab the top-level names
 	dslTypeInfer(acc, ast, false) |> ignore;
@@ -112,6 +112,15 @@ typecheckWise(acc : DslTypeAcc<WiseTypeAcc>, deep : bool, node : DslAst, getChil
 
 				// The result is does not have any info
 				makeDslTypeVar(acc);
+			} else if (name == "tuple") {
+				getChildType(0);
+
+			} else if (name == "tupledot") {
+				res = makeDslTypeVar(acc);
+				val = getChildType(0);
+				acc.unifyTypes(acc, val, DslNode("tupledottype", [args[1], res], pos));
+				res;
+
 			} else if (name == "import") {
 				// Wise:
 				// "import" ws id ":" ws optmutable type $"swap" "=" ws id "." id ";" ws decl $"import_6" // id, type, mutable, module, name, scope
@@ -148,5 +157,34 @@ typecheckWise(acc : DslTypeAcc<WiseTypeAcc>, deep : bool, node : DslAst, getChil
 			}
 		}
 		default: typecheckWase(acc, deep, node, getChildType);
+	}
+}
+
+unifyWiseType(acc : DslTypeAcc<WiseTypeAcc>, left : DslAst, right : DslAst) -> bool {
+	switch (left) {
+		DslList(lvalue): {
+			switch (right) {
+				DslNode(rname, rargs, __): {
+					if (rname == "tupledottype") {
+						ttypes = list2array(lvalue);
+						index = getDslInt(rargs[0]);
+						acc.unifyTypes(acc, ttypes[length(ttypes) - index - 1], rargs[1]);
+						true;
+					} else false;
+				}
+				default: false;
+			}
+		}
+		DslNode(lname, largs, __): {
+			switch (right) {
+				DslList(rvalue): unifyWiseType(acc, right, left);
+				DslNode(rname, rargs, __): {
+					println("TODO: Unify " + prettyDsl(left) + " vs " + prettyDsl(right));
+					false;
+				}
+				default: false;
+			}
+		}
+		default: false;
 	}
 }

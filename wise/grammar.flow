@@ -56,7 +56,8 @@ defineWise() -> DslGrammar {
 			|> atom;
 
 		// Give this a name, so it can be extended
-		postfix = ( "(" ws exps ")" ws $"call_2");
+		postfix = "(" ws exps ")" ws $"call_2"
+			| "." ws int $"tupledot_2";
 
 		opttype = ":" ws type | $$"auto" $"type_1";
 
@@ -72,7 +73,12 @@ defineWise() -> DslGrammar {
 				| "continue" !letterOrDigit ws $"continue_0" 
 				| id ":=" ws exp $"set_2"
 				| id $"var_1"
-				| '[' ws exps ']' ws // list
+
+				| '(' ws ')' ws $"nil" $"tuple_1" 
+				| '(' ws $"nil" exp "," ws $"cons" ')' ws $"tuple_1"
+				| '(' ws exp ')' ws // Normal parenthesis
+				| '(' ws exps ')' ws $"tuple_1"
+
 //				| string $"string_1"
 				| "0x" $(hexdigit+) ("w" $"hex64_1" | "n" $"hexf32_1" | "h" $"hexf64_1" | $"hex32_1") ws
 				| $('0'-'9'+) "w" ws $"i64_1"
@@ -100,7 +106,7 @@ defineWise() -> DslGrammar {
 
 		type = $("i32" | "i64" | "f32" | "f64" | "v128" | "bool" | "auto") ws $"type_1"
 			| "(" ws types ")" ws "->" ws type $"fntype_2"
-			| "(" ws types ")" ws;
+			| "(" ws types ")" ws; // Tuples
 		
 		types = $"nil" type $"cons" ("," ws type $"cons")* | $"nil";
 

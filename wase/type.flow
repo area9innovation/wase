@@ -10,7 +10,7 @@ export {
 
 typeWase(ast : DslAst) -> DslAst {
 	deep = ref false;
-	acc = makeDslTypeAcc(false, mergeWaseTypes, \a, n, g -> typecheckWase(a, ^deep, n, g));
+	acc = makeDslTypeAcc(false, mergeWaseTypes, \a, n, g -> typecheckWase(a, ^deep, n, g), \a, l, r -> false);
 
 	// OK, first time, we do NOT go deep, but just grab the top-level names
 	dslTypeInfer(acc, ast, false) |> ignore;
