@@ -26,3 +26,18 @@ To compare against the corresponding Wase program, use:
 	bin\wised tests/fn.wise debug-lower=1 >out.flow
 
 	bin\wased tests/fn.wase debug-type=1 >out2.flow
+
+## Polymorphism
+
+Polymorphism on basic types like i32, i64, f32, f64 that are stackable are
+specialized. Polymorphism on other types on the heap are always tagged.
+
+Plan:
+- Typedef
+- Polymorphism with specialization
+- Interface
+- Heap
+- Polymorphism with generic tagged code
+- Closures - lambda lifting
+- Problem: How to implement memory allocation of map
+- Concept: map will check what interfaces are implemented
