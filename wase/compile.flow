@@ -853,18 +853,42 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmUnreachable();
 	}
 	if (id == "v128.const") {
+		vals = map(pars, getDslInt);
 		if (length(pars) == 16) {
-			WasmV128Const(map(pars, getDslInt));
-		} else if (length(pars) == 8) {
-			WasmV128Const(concatA(map(pars, \p -> i16toBytesLE(getDslInt(p)))));
-		} else if (length(pars) == 4) {
-			WasmV128Const(concatA(map(pars, \p -> i32toBytesLE(getDslInt(p)))));
+			// Other values would cause runtime errors
+			if (exists(vals, \v ->(v > 127) || (v < 0))) {
+				error();
+			} else {
+				WasmV128Const(vals);
+			}
+		} else if (length(vals) == 8) {
+			encoded = map(vals, wasmEncodeU32);
+			if (exists(encoded, \v -> length(v) > 2)) {
+				error();
+			} else {
+				padded = map(encoded, \v -> padArray(v, 0, 2));
+				bytes = concatA(padded);
+				WasmV128Const(bytes);
+			}
+		} else if (length(vals) == 4) {
+			encoded = map(vals, wasmEncodeU32);
+			if (exists(encoded, \v -> length(v) > 4)) {
+				error();
+			} else {
+				padded = map(encoded, \v -> padArray(v, 0, 4));
+				bytes = concatA(padded);
+				WasmV128Const(bytes);
+			}
+		} else if (length(vals) == 0) {
+			WasmV128Const(padArray([], 0, 16));
 		} else {
 			error();
 		}
 	} else if (id == "i8x16.shuffle") {
 		WasmV128Shuffle(map(pars, getDslInt));
-	} else if (id == "v128.load") {
+	}
+	// 22 mem instructions
+	else if (id == "v128.load") {
 		WasmV128Load(memargs(4));
 	} else if (id == "v128.load8x8_s") {
 		WasmV128Load8x8_s(memargs(0));
@@ -908,25 +932,45 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmV128Store32_lane(memargs(2), getDslInt(pars[2]));
 	} else if (id == "v128.store64_lane") {
 		WasmV128Store64_lane(memargs(3), getDslInt(pars[2]));
-	} else if (id == "i8x16.extract_lane_s") {
+	}
+	// 14 extract/replace lane instructions
+	else if (id == "i8x16.extract_lane_s") {
 		WasmI8x16ExtractLane_s(getDslInt(pars[0]));
 	} else if (id == "i8x16.extract_lane_u") {
 		WasmI8x16ExtractLane_u(getDslInt(pars[0]));
+	} else if (id == "i8x16.replace_lane") {
+		WasmI8x16ReplaceLane(getDslInt(pars[0]));
 	} else if (id == "i16x8.extract_lane_s") {
 		WasmI16x8ExtractLane_s(getDslInt(pars[0]));
 	} else if (id == "i16x8.extract_lane_u") {
 		WasmI16x8ExtractLane_u(getDslInt(pars[0]));
+	} else if (id == "i16x8.replace_lane") {
+		WasmI16x8ReplaceLane(getDslInt(pars[0]));
 	} else if (id == "i32x4.extract_lane") {
 		WasmI32x4ExtractLane(getDslInt(pars[0]));
-	} else if (id == "i64x2.extract_lane") { 
+	} else if (id == "i32x4.replace_lane") {
+		WasmI32x4ReplaceLane(getDslInt(pars[0]));
+	} else if (id == "i64x2.extract_lane") {
 		WasmI64x2ExtractLane(getDslInt(pars[0]));
-	} else if (id == "i8x16.swizzle") {
+	} else if (id == "i64x2.replace_lane") {
+		WasmI64x2ReplaceLane(getDslInt(pars[0]));
+	} else if (id == "f32x4.extract_lane") {
+		WasmF32x4ExtractLane(getDslInt(pars[0]));
+	} else if (id == "f32x4.replace_lane") {
+		WasmF32x4ReplaceLane(getDslInt(pars[0]));
+	} else if (id == "f64x2.extract_lane") {
+		WasmF64x2ExtractLane(getDslInt(pars[0]));
+	} else if (id == "f64x2.replace_lane") {
+		WasmF64x2ReplaceLane(getDslInt(pars[0]));
+	}
+	// group of 7 swizzle/splat instrucions
+	else if (id == "i8x16.swizzle") {
 		WasmI8x16Swizzle();
 	} else if (id == "i8x16.splat") {
 		WasmI8x16Splat();
 	} else if (id == "i16x8.splat") {
 		WasmI16x8Splat();
-	} else if (id == "32x4.splat") {
+	} else if (id == "i32x4.splat") {
 		WasmI64x2Splat();
 	} else if (id == "i64x2.splat") {
 		WasmI64x2Splat();
@@ -934,9 +978,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmF32x4Splat();
 	} else if (id == "f64x2.splat") {
 		WasmF64x2Splat();
-	} else if (id == "i64x2.splat") {
-		WasmF64x2Splat();
-	} else if (id == "i8x16.eq") {
+	}
+	// group of 10 relational i8x16 instructions
+	else if (id == "i8x16.eq") {
 		WasmI8x16Eq();
 	} else if (id == "i8x16.ne") {
 		WasmI8x16Ne();
@@ -956,7 +1000,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmI8x16Ge_s();
 	} else if (id == "i8x16.ge_u") {
 		WasmI8x16Ge_u();
-	} else if (id == "i16x8.eq") {
+	}
+	// group of 10 relational i16x8 instructions
+	else if (id == "i16x8.eq") {
 		WasmI16x8Eq();
 	} else if (id == "i16x8.ne") {
 		WasmI16x8Ne();
@@ -976,7 +1022,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmI16x8Ge_s();
 	} else if (id == "i16x8.ge_u") {
 		WasmI16x8Ge_u();
-	} else if (id == "i32x4.eq") {
+	}
+	// group of 10 relational i32x4 instructions
+	else if (id == "i32x4.eq") {
 		WasmI32x4Eq();
 	} else if (id == "i32x4.ne") {
 		WasmI32x4Ne();
@@ -996,7 +1044,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmI32x4Ge_s();
 	} else if (id == "i32x4.ge_u") {
 		WasmI32x4Ge_u();
-	} else if (id == "i64x2.eq") {
+	}
+	// group of 6 relational i64x2 instructions
+	else if (id == "i64x2.eq") {
 		WasmI64x2Eq();
 	} else if (id == "i64x2.ne") {
 		WasmI64x2Ne();
@@ -1008,7 +1058,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmI64x2Le_s();
 	} else if (id == "i64x2.ge_s") {
 		WasmI64x2Ge_s();
-	} else if (id == "f32x4.eq") {
+	}
+	// group of 6 relational f32x4 instructions
+	else if (id == "f32x4.eq") {
 		WasmF32x4Eq();
 	} else if (id == "f32x4.ne") {
 		WasmF32x4Ne();
@@ -1020,7 +1072,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmF32x4Le();
 	} else if (id == "f32x4.ge") {
 		WasmF32x4Ge();
-	} else if (id == "f64x2.eq") {
+	}
+	// group of 6 relational f64x2 instructions
+	else if (id == "f64x2.eq") {
 		WasmF64x2Eq();
 	} else if (id == "f64x2.ne") {
 		WasmF64x2Ne();
@@ -1032,7 +1086,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmF64x2Le();
 	} else if (id == "f64x2.ge") {
 		WasmF64x2Ge();
-	} else if (id == "v128.not") {
+	}
+	// group of 7 v128x2 instructions
+	else if (id == "v128.not") {
 		WasmV128Not();
 	} else if (id == "v128.and") {
 		WasmV128And();
@@ -1046,7 +1102,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmV128Bitselect();
 	} else if (id == "v128.any_true") {
 		WasmV128AnyTrue();
-	} else if (id == "i8x16.abs") {
+	}
+	// group of 21 i8x16 instructions
+	else if (id == "i8x16.abs") {
 		WasmI8x16Abs();
 	} else if (id == "i8x16.neg") {
 		WasmI8x16Neg();
@@ -1088,7 +1146,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmI8x16Max_u();
 	} else if (id == "i8x16.avgr_u") {
 		WasmI8x16Avgr_u();
-	} else if (id == "i16x8.extract_add_pairwise_i8x16_s") {
+	}
+	// group of 32 i16x8 instructions
+	else if (id == "i16x8.extract_add_pairwise_i8x16_s") {
 		WasmI16x8ExtaddPairwiseI8x16_s();
 	} else if (id == "i16x8.extract_add_pairwise_i8x16_u") {
 		WasmI16x8ExtaddPairwiseI8x16_u();
@@ -1152,7 +1212,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmI16x8ExtmulLowI8x16_u();
 	} else if (id == "i16x8.extmul_high_i8x16_u") {
 		WasmI16x8ExtmulHighI8x16_u();
-	} else if (id == "i32x4.extract_add_pairwise_i16x8_s") {
+	}
+	// group of 25 i32x4 instructions
+	else if (id == "i32x4.extract_add_pairwise_i16x8_s") {
 		WasmI32x4ExtaddPairwiseI16x8_s();
 	} else if (id == "i32x4.extract_add_pairwise_i16x8_u") {
 		WasmI32x4ExtaddPairwiseI16x8_u();
@@ -1202,7 +1264,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmI32x4ExtMulLowI16x8_u();
 	} else if (id == "i32x4.extmul_high_i16x8_u") {
 		WasmI32x4ExtMulHighI16x8_u();
-	} else if (id == "i64x2.abs") {
+	}
+	// group of 18 i64x2 instructions
+	else if (id == "i64x2.abs") {
 		WasmI64x2Abs();
 	} else if (id == "i64x2.neg") {
 		WasmI64x2Neg();
@@ -1238,7 +1302,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmI64x2ExtmulLowI32x4_u();
 	} else if (id == "i64x2.extmul_high_i32x4_u") {
 		WasmI64x2ExtmulHighI32x4_u();
-	} else if (id == "f32x4.ceil") {
+	}
+	// group of 15 f32x4 instructions
+	else if (id == "f32x4.ceil") {
 		WasmF32x4Ceil();
 	} else if (id == "f32x4.floor") {
 		WasmF32x4Floor();
@@ -1268,7 +1334,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmF32x4Pmin();
 	} else if (id == "f32x4.pmax") {
 		WasmF32x4PMax();
-	} else if (id == "f64x2.ceil") {
+	}
+	// group of 15 f64x2 instructions
+	else if (id == "f64x2.ceil") {
 		WasmF64x2Ceil();
 	} else if (id == "f64x2.floor") {
 		WasmF64x2Floor();
@@ -1298,7 +1366,9 @@ dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAs
 		WasmF64x2Pmin();
 	} else if (id == "f64x2.pmax") {
 		WasmF64x2PMax();
-	} else if (id == "i32x4.trunc_sat_f32x4_s") {
+	}
+	// group of 10 truct/convert instructions
+	else if (id == "i32x4.trunc_sat_f32x4_s") {
 		WasmI32x4TruncSatF32x4_s();
 	} else if (id == "i32x4.trunc_sat_f32x4_u") {
 		WasmI32x4TruncSatF32x4_u();
@@ -1450,44 +1520,6 @@ dsl2WasmBlockType(onError : (DslAst, string) -> void, d : DslAst) -> WasmBlockTy
 		}
 		default: error();
 	}
-}
-
-/*
-		type = "(" ws types ")" ws "->" ws type $"fntype_2"
-			| id "<" ws types ">" ws $"partype_2"
-
-*/
-
-i32toBytes(i : int) -> [int] {
-	[
-		bitUshr(bitAnd(i, 0xff000000), 24),
-		bitUshr(bitAnd(i, 0x00ff0000), 16),
-		bitUshr(bitAnd(i, 0x0000ff00), 8),
-		bitAnd(i, 0x000000ff)
-	]
-}
-
-i32toBytesLE(i : int) -> [int] {
-	[
-		bitAnd(i, 0x000000ff),
-		bitUshr(bitAnd(i, 0x0000ff00), 8),
-		bitUshr(bitAnd(i, 0x00ff0000), 16),
-		bitUshr(bitAnd(i, 0xff000000), 24)
-	]
-}
-
-i16toBytes(i : int) -> [int] {
-	[
-		bitUshr(bitAnd(i, 0x0000ff00), 8),
-		bitAnd(i, 0x000000ff)
-	]
-}
-
-i16toBytesLE(i : int) -> [int] {
-	[
-		bitAnd(i, 0x000000ff),
-		bitUshr(bitAnd(i, 0x0000ff00), 8)
-	]
 }
 
 isNumericWaseType(d : DslAst) -> bool {
