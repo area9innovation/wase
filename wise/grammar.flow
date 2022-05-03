@@ -74,9 +74,7 @@ defineWise() -> DslGrammar {
 				| id ":=" ws exp $"set_2"
 				| id $"var_1"
 
-				| '(' ws ')' ws $"nil" $"tuple_1" 
 				| '(' ws $"nil" exp "," ws $"cons" ')' ws $"tuple_1"
-				| '(' ws exp ')' ws // Normal parenthesis
 				| '(' ws exps ')' ws $"tuple_1"
 
 //				| string $"string_1"

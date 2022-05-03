@@ -247,7 +247,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 				DslString("f64");
 
 			} else if (name == "let") {
-				// (id, type, exp, body)
+				// (id, ismut, type, exp, body)
 				vname = getDslString(args[0]);
 				isMutable = getDslInt(args[1]);
 				type = getChildType(2);
@@ -260,6 +260,22 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 					// Record that this is NOT mutable
 					acc.constants := insertSet(^(acc.constants), vname);
 				}
+				acc.env := setTree(^(acc.env), vname, type);
+
+				etype = getChildType(3);
+				acc.unifyTypes(acc, type, etype);
+
+				getChildType(4);
+			} else if (name == "lettuple") {
+				// (id, type, exp, body)
+				vname = getDslString(args[0]);
+				type = getChildType(2);
+
+				if (containsKeyTree(^(acc.env), vname)) {
+					acc.onError(node, "let '" + vname + "' is shadowing");
+				}
+				// Record that this is NOT mutable
+				acc.constants := insertSet(^(acc.constants), vname);
 				acc.env := setTree(^(acc.env), vname, type);
 
 				etype = getChildType(3);

@@ -105,18 +105,13 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 				varType = wiseType(largs[3]);
 				switch (varType) {
 					DslList(t): {
-						// OK, a tuple
-						println("TODO: Should we expand this into multiple lets? " + prettyDsl(largs[3]));
-						DslNode(name, largs, pos);
+						// OK, a tuple-let
+						DslNode("lettuple", largs, pos);
 					}
 					default: {
 						DslNode(name, largs, pos);
 					}
 				}
-			} else if (name == "tupledot") {
-				println("TODO: Figure out how lower tuple dot " + prettyDsl(d));
-				d;
-	
 			} else {
 
 				// Those that do not affect the lowering environment
@@ -180,10 +175,34 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 						// OK, turn this into a func ref
 						DslNode("wasm_op", [DslString("fn"), DslList(makeList1(largs[0])), DslList(makeList()), DslString("i32")], pos);
 					} else {
-						DslNode(name, lowerWiseExpType(largs), pos);
+						switch (type) {
+							DslList(tt): {
+								// OK, a tuple. We have to expand this to a tuple constructor
+								println("TODO: Expand " + id + " : "  + prettyDsl(type) + " to tuple constructor");
+								DslList(makeList());
+							}
+							default: DslNode(name, lowerWiseExpType(largs), pos);
+						}
+
 					}
 				} else if (name == "tuple") {
 					largs[0];
+				} else if (name == "tupledot") {
+					value = largs[0];
+					varType = wiseType(value);
+					switch (varType) {
+						DslList(t): {
+							types = list2array(t);
+							index = getDslInt(largs[1]);
+							dot = DslNode("call", [DslNode("var", [DslString("dot" + i2s(length(types)))], pos), list2(largs[0], largs[1])], pos);
+							println("Lowered dot to " + prettyDsl(dot));
+							dot;
+						}
+						default: {
+							env.onError(d, ". only for tuples " + prettyDsl(varType));
+							d;
+						}
+					}
 				} else {
 					type = lastElement(args, d);
 					if (type == DslString("bool")) {
@@ -237,27 +256,30 @@ lowerWiseExplicitType(d : DslAst) -> DslAst {
 			} else if (name == "type") {
 				// Check if it is inferred
 				if (getDslString(args[0]) == "auto") {
-					DslNode(name, [lowerWiseType(args[1])], pos)
+					childType = lowerWiseType(args[1]);
+					switch (childType) {
+						DslList(__): childType;
+						default: DslNode(name, [childType], pos)
+					}
 				} else d;
 			} else d;
 		}
-		default: d;
+		default: {
+			d;
+		}
 	}
 }
 
 wiseType(d : DslAst) -> DslAst {
 	switch (d) {
 		DslList(t): {
-			DslList(mapList(t, wiseType));
+			r = DslList(mapList(t, wiseType));
+			r;
+		}
+		DslNode(n, args, __): {
+			type = waseType(d);
+			type;
 		}
 		default: waseType(d);
 	}
 }
-
-/*
-expandWiseTupleType(d : DslAst) -> [DslAst] {
-	node = getDslNode(d);
-	if (node.name == "type") {
-
-	}
-}*/
