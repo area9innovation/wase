@@ -101,8 +101,22 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 					else if (i == 5) lowerWiseType(t) 
 					else t
 				});
-				DslNode(name, largs, pos);
 
+				varType = wiseType(largs[3]);
+				switch (varType) {
+					DslList(t): {
+						// OK, a tuple
+						println("TODO: Should we expand this into multiple lets? " + prettyDsl(largs[3]));
+						DslNode(name, largs, pos);
+					}
+					default: {
+						DslNode(name, largs, pos);
+					}
+				}
+			} else if (name == "tupledot") {
+				println("TODO: Figure out how lower tuple dot " + prettyDsl(d));
+				d;
+	
 			} else {
 
 				// Those that do not affect the lowering environment
@@ -142,7 +156,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 					}
 				} else if (name == "and" || name == "or" || name == "xor") {
 					// OK, check that the type is integer
-					type = waseType(d);
+					type = wiseType(d);
 					if (type != DslString("i32") && type != DslString("i64")) {
 						env.onError(d, "bitwise operation only works on i32 and i64");
 					}
@@ -160,14 +174,16 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 				} else if (name == "greateru") {
 					DslNode("wasm_op", [DslString("gt_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
 				} else if (name == "var") {
-					id = getDslString(args[0]);
-					type = waseType(d);
+					id = getDslString(largs[0]);
+					type = wiseType(d);
 					if (getDslNode(type).name == "func" && !containsSet(env.locals, id)) {
 						// OK, turn this into a func ref
-						DslNode("wasm_op", [DslString("fn"), DslList(makeList1(args[0])), DslList(makeList()), DslString("i32")], pos);
+						DslNode("wasm_op", [DslString("fn"), DslList(makeList1(largs[0])), DslList(makeList()), DslString("i32")], pos);
 					} else {
 						DslNode(name, lowerWiseExpType(largs), pos);
 					}
+				} else if (name == "tuple") {
+					largs[0];
 				} else {
 					type = lastElement(args, d);
 					if (type == DslString("bool")) {
@@ -228,3 +244,20 @@ lowerWiseExplicitType(d : DslAst) -> DslAst {
 		default: d;
 	}
 }
+
+wiseType(d : DslAst) -> DslAst {
+	switch (d) {
+		DslList(t): {
+			DslList(mapList(t, wiseType));
+		}
+		default: waseType(d);
+	}
+}
+
+/*
+expandWiseTupleType(d : DslAst) -> [DslAst] {
+	node = getDslNode(d);
+	if (node.name == "type") {
+
+	}
+}*/

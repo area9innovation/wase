@@ -1,13 +1,15 @@
 include lib/runtime;
 
-print2(t : (i32, f64)) -> () {
+/*print2(t : (i32, f64)) -> () {
 	printi32(t.0);
 	fi : f64 = t.1;
 	si : i32 = trunc_s<>(fi);
 	printi32(si);
 }
-
+*/
 _start() -> () {
 	t = (1, 2.1);
-	print2( (1, 2.2) );
+	t.1;
+	{}
+//	print2( (1, 2.2) );
 }
