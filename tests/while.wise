@@ -2,5 +2,10 @@ main() -> () {
     var i = 0;
     while (i <= 10) {
         i := i + 1;
-    }
+        if (i == 4) continue else 1;
+        if (i == 8) break;
+        2;
+    };
+    2;
+    {}
 }

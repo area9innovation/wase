@@ -1,0 +1,27 @@
+include lib/runtime;
+
+/*
+If we list all the natural numbers below 10 that are multiples of 3 or 5, 
+we get 3, 5, 6 and 9. The sum of these multiples is 23.
+
+Find the sum of all the multiples of 3 or 5 below 1000.
+*/
+
+// Implementation using a loop
+euler1Loop(limit : i32) -> i32 {
+	var start = 1;
+	var acc = 0;
+	while (start < limit) {
+		if (start % 3 == 0 || start % 5 == 0) {
+			acc := acc + start;
+		};
+		start := start + 1;
+	};
+	acc;
+}
+
+export _start() -> () {
+	printi32(euler1Loop(1000)); // Correct: 233168
+	printByte(10);
+    {}
+}

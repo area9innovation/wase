@@ -89,6 +89,7 @@ defineWase() -> DslGrammar {
 				| id "::=" ws exp $"tee_2"
 				| id $"var_1"
 				| '[' ws exps ']' ws // list
+				| '(' ws exp ')' ws // Parenthesis
 //				| string $"string_1"
 				| "0x" $(hexdigit+) ("w" $"hex64_1" | "n" $"hexf32_1" | "h" $"hexf64_1" | $"hex32_1") ws
 				| $('0'-'9'+) "w" ws $"i64_1"

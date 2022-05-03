@@ -1,0 +1,5 @@
+include lib/runtime;
+
+export _start() -> () {
+	printi32(65);
+}

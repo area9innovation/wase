@@ -145,6 +145,26 @@ mySet : Set([?])<?> = [1,2,3];
 
 // and that is how the foldable can be deduced
 
+
+
+# Interface conversion
+
+	interface IComparable<?> {
+		// -1, 0, 1
+		compare : (left : ?, right : ?) -> i32;
+	}
+
+	interface IEqual<?> {
+		isEqual : (left : ?, right : ?) -> bool
+	}
+
+Now, make it possible to convert any IComparable<?> to an IEqual<?>:
+
+	interpret IComparable<?> as IEqual<?> {
+		isEqual(left : ?, right : ?) -> bool { compare(left, right) == 0; }
+	}
+
+
 # Advantages
 
 No runtime overhead
@@ -158,3 +178,6 @@ Rewrite reducers with interfaces
 Rewrite rvalues with interfaces
 
 Rewrite typing and compilation from Wase with interfaces
+
+
+

@@ -1359,6 +1359,14 @@ waseType(d : DslAst) -> DslAst {
 			println("TODO: Why do we have a tyvar " + i2s(tv) + ", and not a resolved type?");
 			d;
 		}
+		DslList(l): {
+			if (isEmptyList(l)) {
+				d;
+			} else {
+				println("Unknown type " + summarizeDsl(d));
+				d;
+			}
+		}
 		default: {
 			println("Unknown type " + summarizeDsl(d));
 			d;

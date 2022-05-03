@@ -5,9 +5,14 @@ export {
 	typeWise(ast : DslAst) -> DslAst;
 }
 
+WiseTypeAcc(
+	// The depth of labels for break and continue resolution
+	loops : ref [int],
+);
+
 typeWise(ast : DslAst) -> DslAst {
 	deep = ref false;
-	acc = makeDslTypeAcc(mergeWiseTypes, \a, n, g -> typecheckWise(a, ^deep, n, g));
+	acc = makeDslTypeAcc(WiseTypeAcc(ref []), mergeWiseTypes, \a, n, g -> typecheckWise(a, ^deep, n, g), unifyWiseType);
 
 	// OK, first time, we do NOT go deep, but just grab the top-level names
 	dslTypeInfer(acc, ast, false) |> ignore;
@@ -20,16 +25,19 @@ typeWise(ast : DslAst) -> DslAst {
 	dslTypeInfer(acc, ast, true);
 }
 
-mergeWiseTypes(acc : DslTypeAcc, left : DslAst, right : DslAst) -> DslAst {
+mergeWiseTypes(acc : DslTypeAcc<WiseTypeAcc>, left : DslAst, right : DslAst) -> DslAst {
 	mergeWaseTypes(acc, left, right);
 }
 
-typecheckWise(acc : DslTypeAcc, deep : bool, node : DslAst, getChildType : (int) -> DslAst) -> DslAst {
+typecheckWise(acc : DslTypeAcc<WiseTypeAcc>, deep : bool, node : DslAst, getChildType : (int) -> DslAst) -> DslAst {
 	switch (node) {
 		DslBool(__): DslString("bool");
 		DslNode(name, args, pos): {
 			if (name == "equal" || name == "not_equal" || name == "less_equal" || name == "less"
-				|| name == "greater_equal" || name == "greater") {
+				|| name == "greater_equal" || name == "greater"
+				|| name == "less_equalu" || name == "lessu"
+				|| name == "greater_equalu" || name == "greateru"
+				) {
 				// Comparisons give bools in Wise
 				left = getChildType(0);
 				right = getChildType(1);
@@ -60,8 +68,10 @@ typecheckWise(acc : DslTypeAcc, deep : bool, node : DslAst, getChildType : (int)
 
 				blockType = DslList(makeList());
 				preBlocks = ^(acc.blocks);
+				acc.blocks := arrayPush(preBlocks, blockType);
 
 				thenType = getChildType(1);
+
 				acc.unifyTypes(acc, thenType, blockType);
 				acc.blocks := preBlocks;
 
@@ -73,23 +83,108 @@ typecheckWise(acc : DslTypeAcc, deep : bool, node : DslAst, getChildType : (int)
 				acc.unifyTypes(acc, right, DslString("bool"));
 				DslString("bool");
 			} else if (name == "while") {
-				// TODO: Handle block types so we can 
+				// Handle block types so we can 
 				// record where "break" and "continue" should refer to 
 				// so we can translate break and continue correctly
+				blockType = DslList(makeList());
+
+				preBlocks = ^(acc.blocks);
+				acc.blocks := arrayPush(preBlocks, blockType);
+
+				blockDepth = length(preBlocks) + 1;
+				preLoops = ^(acc.cookie.loops);
+				acc.cookie.loops := arrayPush(preLoops, blockDepth);
+
 				cond = getChildType(0);
 				body = getChildType(1);
 				acc.unifyTypes(acc, cond, DslString("bool"));
 
+				acc.blocks := preBlocks;
+				acc.cookie.loops := preLoops;
+
 				// The result is always void
-				DslList(makeList());
+				blockType;
 			} else if (name == "break" || name == "continue") {
-				// The result is always void
-				DslList(makeList());
+				preLoops = ^(acc.cookie.loops);
+				if (preLoops == []) {
+					acc.onError(node, name + " only valid inside while");
+				}
+
+				// The result is does not have any info
+				makeDslTypeVar(acc);
+			} else if (name == "tuple") {
+				getChildType(0);
+
+			} else if (name == "tupledot") {
+				res = makeDslTypeVar(acc);
+				val = getChildType(0);
+				acc.unifyTypes(acc, val, DslNode("tupledottype", [args[1], res], pos));
+				res;
+
+			} else if (name == "import") {
+				// Wise:
+				// "import" ws id ":" ws optmutable type $"swap" "=" ws id "." id ";" ws decl $"import_6" // id, type, mutable, module, name, scope
+
+				// Wase:
+				// "import" ws id ":" ws optmutable type $"swap" "=" ws id "." id ";" ws decl $"import_global_6" // id, type, mutable, module, name, scope
+				// "import" ws id ":" ws fntype "=" ws id "." id ";" ws decl $"import_fun_5"; // id type module name scope
+				
+				// id type mutable module name scope
+				gname = getDslString(args[0]);
+				type = getChildType(1);
+
+				if (getDslNode(type).name != "func") {
+					// Global
+					isMutable = getDslInt(args[2]);
+
+					if (isMutable == 0) {
+						// Record that this is NOT mutable
+						acc.constants := insertSet(^(acc.constants), gname);
+					}
+				}
+
+				if (!deep && containsKeyTree(^(acc.env), gname)) {
+					acc.onError(node, "import '" + gname + "' is duplicate");
+				}
+
+				// OK, record the import type
+				acc.env := setTree(^(acc.env), gname, type);
+				getChildType(5);
+
 			} else {
 				// OK, we just reuse typing from Wase
 				typecheckWase(acc, deep, node, getChildType);
 			}
 		}
 		default: typecheckWase(acc, deep, node, getChildType);
+	}
+}
+
+unifyWiseType(acc : DslTypeAcc<WiseTypeAcc>, left : DslAst, right : DslAst) -> bool {
+	switch (left) {
+		DslList(lvalue): {
+			switch (right) {
+				DslNode(rname, rargs, __): {
+					if (rname == "tupledottype") {
+						ttypes = list2array(lvalue);
+						index = getDslInt(rargs[0]);
+						acc.unifyTypes(acc, ttypes[length(ttypes) - index - 1], rargs[1]);
+						true;
+					} else false;
+				}
+				default: false;
+			}
+		}
+		DslNode(lname, largs, __): {
+			switch (right) {
+				DslList(rvalue): unifyWiseType(acc, right, left);
+				DslNode(rname, rargs, __): {
+					println("TODO: Unify " + prettyDsl(left) + " vs " + prettyDsl(right));
+					false;
+				}
+				default: false;
+			}
+		}
+		default: false;
 	}
 }

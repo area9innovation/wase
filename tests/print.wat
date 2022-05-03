@@ -100,23 +100,7 @@
     call 0
     drop)
   (func (;6;) (type 3)
-    (local i32)
-    i32.const 10
-    local.set 0
-    block  ;; label = @1
-      loop  ;; label = @2
-        local.get 0
-        i32.const 10
-        i32.gt_s
-        br_if 1 (;@1;)
-        local.get 0
-        i32.const 1
-        i32.add
-        local.set 0
-        br 0 (;@2;)
-      end
-    end
-    local.get 0
+    i32.const 65
     call 3)
   (memory (;0;) 1)
   (export "memory" (memory 0))

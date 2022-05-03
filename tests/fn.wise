@@ -1,0 +1,43 @@
+include lib/runtime;
+
+foo() -> i32 {
+	42;
+}
+
+bar() -> i32 {
+	666;
+}
+
+add1(v : i32) -> i32 {
+	v + 1;
+}
+
+sub1(v : i32) -> i32 {
+	v - 1;
+}
+
+export _start() -> () {
+	// This is bar
+	b0 = bar;
+	printi32(b0());
+	printByte(10);
+
+	// This is foo
+	f0 = foo;
+	printi32(f0());
+	printByte(10);
+
+	// This is add1
+	a0 = add1;
+	printi32(a0(41));
+	printByte(10);
+
+	// This is sub1
+	s0 = sub1;
+	printi32(s0(43));
+	printByte(10);
+
+	myfn : () -> i32 = if (true) bar else foo;
+	printi32(myfn()); // 666
+	printByte(10);
+}
