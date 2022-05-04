@@ -47,17 +47,14 @@ defineWise() -> DslGrammar {
 				'!' ws exp $"bool_not_1"
 				| "-" ws exp $"negate_1" // Only for floats
 				| exp (
-					postfix
+					"(" ws exps ")" ws $"call_2"
+					| "." ws int $"tupledot_2"
 				)*
 			)
 
 			|> brace $"brace_1"
 			|> "(" ws exp ")" ws
 			|> atom;
-
-		// Give this a name, so it can be extended
-		postfix = "(" ws exps ")" ws $"call_2"
-			| "." ws int $"tupledot_2";
 
 		opttype = ":" ws type | $$"auto" $"type_1";
 

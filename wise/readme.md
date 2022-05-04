@@ -114,3 +114,11 @@ heap objects as tuples.
 - Check short-circuit operations and break/continue
 - Add flag to choose target: If we are targetting Wasi, then add memory and export main
 - Automatic conversion of "main" to _start for Wasi interfacing. See tests/print.wise
+
+# Meta insight
+
+Dynamic AST node is too messy to deal with.
+A strongly typed AST would be better.
+
+Export types from a Gringo file with the postfix ops?
+
