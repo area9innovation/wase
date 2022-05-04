@@ -210,11 +210,11 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 			} else if (name == "block") {
 				type = waseType(args[1]);
 				ins = dslBrace2WaseInstruction(onError, [], d);
-				arrayPush(acc, WaseBlock(dsl2WasmBlockType(onError, type), ins));
+				arrayPush(acc, WaseBlock(dsl2WaseBlockType(onError, type), ins));
 			} else if (name == "loop") {
 				type = waseType(args[1]);
 				ins = dslBrace2WaseInstruction(onError, [], d);
-				arrayPush(acc, WaseLoop(dsl2WasmBlockType(onError, type), ins));
+				arrayPush(acc, WaseLoop(dsl2WaseBlockType(onError, type), ins));
 			} else if (name == "var") {
 				arrayPush(acc, WaseGet(getDslString(args[0])))
 			} else if (name == "let") {
@@ -427,7 +427,7 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 				}
 
 			} else if (name == "ifelse") {
-				blocktype = dsl2WasmBlockType(onError, args[3]);
+				blocktype = dsl2WaseBlockType(onError, args[3]);
 				nacc = dsl2WaseInstruction(onError, acc, args[0]);
 
 				thens = dsl2WaseInstruction(onError, [], args[1]);
@@ -436,7 +436,7 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 				arrayPush(nacc, WaseIfElse(blocktype, thens, elses));
 
 			} else if (name == "if") {
-				blocktype = dsl2WasmBlockType(onError, args[2]);
+				blocktype = dsl2WaseBlockType(onError, args[2]);
 				nacc = dsl2WaseInstruction(onError, acc, args[0]);
 
 				thens = dsl2WaseInstruction(onError, [], args[1]);
@@ -445,7 +445,7 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 
 			} else if (name == "return") {
 				rettype = waseType(args[0]);
-				argtype = dsl2WasmBlockType(onError, rettype);
+				argtype = dsl2WaseBlockType(onError, rettype);
 				nacc = dsl2WaseInstruction(onError, acc, args[0]);
 				arrayPush(nacc, WasmReturn());
 
@@ -511,8 +511,8 @@ dslBrace2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruct
 }
 
 dslWasmOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id : string, pars : [DslAst], types : [DslAst], retType : DslAst) -> WaseInstruction {
-	wtypes = map(types, \t -> dsl2WasmBlockType(onError, t));
-	rtype = dsl2WasmBlockType(onError, retType);
+	wtypes = map(types, \t -> dsl2WaseBlockType(onError, t));
+	rtype = dsl2WaseBlockType(onError, retType);
 
 	memargs = \defalign -> {
 		if (pars != []) {
@@ -838,8 +838,8 @@ dslWasmOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id 
 }
 
 dslWasmVectorOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id : string, pars : [DslAst], types : [DslAst], retType : DslAst) -> WaseInstruction {
-	wtypes = map(types, \t -> dsl2WasmBlockType(onError, t));
-	rtype = dsl2WasmBlockType(onError, retType);
+	wtypes = map(types, \t -> dsl2WaseBlockType(onError, t));
+	rtype = dsl2WaseBlockType(onError, retType);
 
 	memargs = \defalign -> {
 		if (pars != []) {
@@ -1487,7 +1487,7 @@ isEmptyDslType(d : DslAst) -> bool {
 	}
 }
 
-dsl2WasmBlockType(onError : (DslAst, string) -> void, d : DslAst) -> WasmBlockType {
+dsl2WaseBlockType(onError : (DslAst, string) -> void, d : DslAst) -> WaseBlockType {
 	error = \ -> {
 		onError(d, "Error: Could not compile " + summarizeDsl(d) + " to wasm block type");
 		WasmI32Type();
@@ -1508,7 +1508,9 @@ dsl2WasmBlockType(onError : (DslAst, string) -> void, d : DslAst) -> WasmBlockTy
 		DslList(l): {
 			if (isEmptyList(l)) {
 				WasmEmptyType()
-			} else error();
+			} else {
+				WasmFuncType([], reverseA(map(list2array(l), \t -> dsl2WasmValType(onError, t))));
+			}
 		}
 		DslNode(name, __, __): {
 			if (name == "") {
