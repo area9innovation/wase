@@ -201,8 +201,16 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 						switch (type) {
 							DslList(tt): {
 								// OK, a tuple. We have to expand this to a tuple constructor
-								println("TODO: Expand " + id + " : "  + prettyDsl(type) + " to tuple constructor");
-								DslList(makeList());
+								tup = DslNode("tuple", [
+									DslList(
+										mapiList(tt, \i, t -> {
+											DslNode("var", [DslString(id + "." + i2s(i)), t], pos)
+										})
+									),
+									type
+								], pos)
+								// println("TODO: Expand " + id + " : "  + prettyDsl(type) + " to tuple constructor " + prettyDsl(tup));
+								tup;
 							}
 							default: DslNode(name, lowerWiseExpType(largs), pos);
 						}

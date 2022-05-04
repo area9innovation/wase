@@ -63,8 +63,8 @@ defineWise() -> DslGrammar {
 
 		brace = "{" ws expsemi "}" ws;
 
-		atom = "if" !letterOrDigit ws exp exp "else" ws exp $"ifelse_3"
-				| "if" !letterOrDigit ws exp exp $"if_2"
+		atom = "if" !letterOrDigit ws "(" ws exp ")" ws exp "else" ws exp $"ifelse_3"
+				| "if" !letterOrDigit ws "(" ws exp ")" ws  exp $"if_2"
 				| "true" !letterOrDigit $"true_0" ws
 				| "false" !letterOrDigit $"false_0" ws
 				| "return" !letterOrDigit ws (exp | $"nil") $"return_1"

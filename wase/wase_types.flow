@@ -69,11 +69,11 @@ export {
 
 			// Simple wrappers allowing Wase inside
 			WaseCall(fn : WaseInstruction);
-			WaseBlock(blockType : WasmBlockType, instructions : [WaseInstruction]);
-			WaseLoop(blockType : WasmBlockType, instructions : [WaseInstruction]);
+			WaseBlock(blockType : WaseBlockType, instructions : [WaseInstruction]);
+			WaseLoop(blockType : WaseBlockType, instructions : [WaseInstruction]);
 
-			WaseIfElse(blockType : WasmBlockType, then : [WaseInstruction], else_ : [WaseInstruction]);
-			WaseIf(blockType : WasmBlockType, then : [WaseInstruction]);
+			WaseIfElse(blockType : WaseBlockType, then : [WaseInstruction], else_ : [WaseInstruction]);
+			WaseIf(blockType : WaseBlockType, then : [WaseInstruction]);
 
 			// Tables:
 			WaseTableGrow(id : string);
@@ -89,6 +89,9 @@ export {
 
 			// Data:
 			// memory.init, data.drop
+
+	// OK, we convert the func type to an index for the WasmBlockType
+	WaseBlockType ::= WasmBlockType, WasmFuncType;
 
 	WaseEmpty();
 }

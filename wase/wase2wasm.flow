@@ -430,21 +430,21 @@ waseInstruction2wasm(context : WaseContext, i : WaseInstruction) -> WasmInstruct
 			}
 		}
 		WaseBlock(blockType, instructions): {
-			WasmBlock(blockType, map(instructions, \e -> waseInstruction2wasm(context, e)))
+			WasmBlock(waseBlockType(context, blockType), map(instructions, \e -> waseInstruction2wasm(context, e)))
 		}
 		WaseLoop(blockType, instructions): {
-			WasmLoop(blockType, map(instructions, \e -> waseInstruction2wasm(context, e)))
+			WasmLoop(waseBlockType(context, blockType), map(instructions, \e -> waseInstruction2wasm(context, e)))
 		}
 		WaseIfElse(bt, t, el): {
 			WasmIfElse(
-				bt,
+				waseBlockType(context, bt),
 				map(t, \e -> waseInstruction2wasm(context, e)),
 				map(el, \e -> waseInstruction2wasm(context, e)),
 			)
 		}
 		WaseIf(bt, t): {
 			WasmIf(
-				bt,
+				waseBlockType(context, bt),
 				map(t, \e -> waseInstruction2wasm(context, e)),
 			)
 		}
@@ -532,4 +532,11 @@ lookupWaseFnIndex(context : WaseContext, fn : string) -> int {
 			default: -1;
 		}
 	} : -1;
+}
+
+waseBlockType(context : WaseContext, type : WaseBlockType) -> WasmBlockType {
+	switch (type) {
+		WasmBlockType(): type;		
+		WasmFuncType(__, __): WasmTypeIndex(lookupWasmFuncTypeIndex(context, type));
+	}
 }
