@@ -21,13 +21,6 @@ To compare against the corresponding Wase program, use:
 
 	bin\wased tests/fn.wase debug-type=1 >out2.flow
 
-## Polymorphism
-
-TODO: Polymorphism on basic types like i32, i64, f32, f64 and tuples of these
-that are stackable should be specialized. Polymorphism on other types on the 
-heap are always tagged. Maybe this will automatically happen if we represent 
-heap objects as tuples.
-
 # Tuples
 
 Tuples are written like this:
@@ -36,21 +29,23 @@ Tuples are written like this:
 	one : (i32) = (1,);
 	two : (i32, f64) = (1, 3.141);
 
-These are expanded to multiple lets:
+These are expanded to multiple lets in the background:
 
 	zero : () = ();
 	one_0 : i32 = 1;
 	// This is a new construct that initializes multiple lets from a tuple value
 	two_0 : i32, two_1 : f64 = (1, 3.141);
 
-When we reference one of these, it should be expanded to a tuple construction:
+When we reference one of these, it is expanded to a tuple construction:
 
 	one => (one_0)
 	two => (two_0, two_1)
 
-When using ., it should be a call to a function, which takes that number of tuples:
+When using ., it becomes a call to a function, which takes that number of tuples:
 
 	two.0  => dot2(two, 0) => dot2((two_0, two_1), 0) => two_0
+
+although dot on vars is handled to just expand to two_0.
 
 When a function takes a tuple argument, it should expand to multiple arguments:
 
@@ -89,20 +84,32 @@ Returning tuples does not require any changes:
 
 	two_0 : i32, two_1 : f64 = bar();
 
-# Plan
-- Support tuples as arguments in functions and lets: Expand into multiple locals
+TODO:
+- Support nested tuples
+- Support function arguments that are tuples
+- Implement adding the "dot2" and friend functions to the runtime
 
+## Polymorphism
+
+TODO: Polymorphism on basic types like i32, i64, f32, f64 and tuples of these
+that are stackable should be specialized. Polymorphism on other types on the 
+heap are always tagged. Maybe this will automatically happen if we represent 
+heap objects as tuples.
+
+# Plan
 - Typedef
-- Polymorphism with specialization
-- Interface
 - Heap
+- Polymorphism with specialization
 - Polymorphism with generic tagged code
+- Interface
 - Closures - lambda lifting
-- Problem: How to implement memory allocation of map
+- Problem: How to implement memory allocation of "map"
 - Concept: map will check what interfaces are implemented
+- Compile time evaluation
 
 ## TODO
 
+- Write some real programs
 - Convert first-order function types to i32 in all expressions where possible
 - Check short-circuit operations and break/continue
 - Add flag to choose target: If we are targetting Wasi, then add memory and export main
