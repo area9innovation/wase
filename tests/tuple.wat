@@ -104,16 +104,20 @@
     i32.const 1
     f64.const 0x1.920c49ba5e354p+1 (;=3.141;))
   (func (;7;) (type 4)
-    (local f64 i32 f64 i32)
-    call 6
+    (local f64 i32 f64 i32 f64 i32)
+    i32.const 1
+    f64.const 0x1.920c49ba5e354p+1 (;=3.141;)
     local.set 0
     local.set 1
-    local.get 0
+    call 6
     local.set 2
-    local.get 2
-    i32.trunc_f64_s
     local.set 3
-    local.get 3
+    local.get 2
+    local.set 4
+    local.get 4
+    i32.trunc_f64_s
+    local.set 5
+    local.get 5
     call 3)
   (memory (;0;) 1)
   (export "memory" (memory 0))
