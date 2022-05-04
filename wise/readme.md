@@ -85,7 +85,7 @@ Returning tuples does not require any changes:
 	two_0 : i32, two_1 : f64 = bar();
 
 TODO:
-- Support nested tuples
+- Support nested tuples in blocks
 - Support function arguments that are tuples
 - Implement adding the "dot2" and friend functions to the runtime
 

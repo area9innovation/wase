@@ -106,7 +106,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 				switch (varType) {
 					DslList(t): {
 						// OK, a tuple-let
-						DslNode("lettuple", [largs[0], largs[1], DslList(getDslList(largs[2])), largs[3], largs[4], largs[5]], pos);
+						DslNode("lettuple", [largs[0], largs[1], unrollWiseTuple(DslList(getDslList(largs[2]))), largs[3], largs[4], largs[5]], pos);
 					}
 					default: {
 						DslNode(name, largs, pos);
@@ -140,7 +140,10 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 				// Those that do not affect the lowering environment
 
 				largs = map(args, \a -> lowerWise2Wase(env, a));
-				if (name == "true") {
+				if (name == "function") {
+				// function(id, export : bool, args : [idtype(id, type)], [returnTypes], body, scope)
+					DslNode("function", [largs[0], largs[1], largs[2], wiseType(largs[3]), largs[4], largs[5], largs[6]], pos);
+				} else if (name == "true") {
 					DslNode("int", [DslInt(1), DslString("i32")], pos);
 				} else if (name == "false") {
 					DslNode("int", [DslInt(0), DslString("i32")], pos);
@@ -260,7 +263,12 @@ lowerWiseType(d : DslAst) -> DslAst {
 	else if (node.name == "bool") {
 		println("TODO: This bool is not expected");
 		DslString("i32");
-	} else d;
+	} else {
+		switch (d) {
+			DslList(l): unrollWiseTuple(d);
+			default: d;
+		}
+	}
 }
 
 // Type annotations lower them to Wase land
@@ -290,7 +298,7 @@ wiseType(d : DslAst) -> DslAst {
 	switch (d) {
 		DslList(t): {
 			r = DslList(mapList(t, wiseType));
-			r;
+			unrollWiseTuple(r);
 		}
 		DslNode(n, args, __): {
 			type = waseType(d);
@@ -298,4 +306,17 @@ wiseType(d : DslAst) -> DslAst {
 		}
 		default: waseType(d);
 	}
+}
+
+unrollWiseTuple(d : DslList) -> DslList {
+	DslList(reverseList(doUnrollWiseTuple(makeList(), d.value)));
+}
+ 
+doUnrollWiseTuple(acc : List<DslAst>, d : List<DslAst>) -> List<DslAst> {
+	foldList(d, acc, \acc2 : List<DslAst>, v : DslAst -> {
+		switch (v) {
+			DslList(rl): doUnrollWiseTuple(acc2, rl);
+			default: Cons(v, acc2)
+		}
+	})
 }

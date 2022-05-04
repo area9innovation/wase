@@ -7,6 +7,7 @@ mktuple() -> (i32, f64) {
 export _start() -> () {
 	t1 = mktuple();
 	t2 : (i32, f64) = if (true) (0, 0.0) else t1;
+	t3 : (i64, (i32, f64)) = (1w, t1);
 	printi32(t2.0);
 	{}
 }

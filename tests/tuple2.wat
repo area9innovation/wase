@@ -104,7 +104,7 @@
     i32.const 1
     f64.const 0x1.920c49ba5e354p+1 (;=3.141;))
   (func (;7;) (type 4)
-    (local f64 i32 f64 i32)
+    (local f64 i32 f64 i32 f64 i32 i64)
     call 6
     local.set 0
     local.set 1
@@ -118,6 +118,12 @@
     end
     local.set 2
     local.set 3
+    i64.const 1
+    local.get 1
+    local.get 0
+    local.set 4
+    local.set 5
+    local.set 6
     local.get 3
     call 3)
   (memory (;0;) 1)
