@@ -1,1 +1,1 @@
-gringo file=wise/wise.gringo types=1 compile=1
+gringo file=wise/wise.gringo compile=1 types=1 type-prefix=Wi master-type=WiseAst
