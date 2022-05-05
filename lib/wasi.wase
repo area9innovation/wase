@@ -4,9 +4,186 @@
 
 // wasi_snapshot_preview1!fd_write(file_descriptor, *iovs, iovs_len, nwritten) -> status_code
 
+// Copy the argument i32s into {argv} and the null-terminated strings into {argvbuf}.
+// args_get(argv: Pointer, argvbuf: Pointer) -> i32
+import args_get : (i32, i32) -> i32 = wasi_snapshot_preview1.args_get;
+
+/*
+// Copy the number of arguments into {numptr} and the total size into {sizeptr}.
+import args_sizes_get(numptr: i32, sizeptr: i32) -> i32;
+
+// Copy the environment variable i32s into {argv} and the null-terminated strings into {argvbuf}.
+import environ_get(argv: i32, argvbuf: i32) -> i32;
+// Copy the number of environment variables into {numptr} and the total size into {sizeptr}.
+import environ_sizes_get(numptr: i32, sizeptr: i32) -> i32;
+
+/// Provide file advisory information on a file descriptor.
+/// Note: This is similar to `posix_fadvise` in POSIX.
+import fd_advise(fd: i32, offset: i64, length: i64, advice: i32) -> i32;
+/// Force the allocation of space in a file.
+/// Note: This is similar to `posix_fallocate` in POSIX.
+import fd_allocate(fd: i32, offset: i64, length: i64) -> i32;
+/// Close a file descriptor.
+/// Note: This is similar to `close` in POSIX.
+import fd_close(fd: i32) -> i32;
+/// Synchronize the data of a file to disk.
+/// Note: This is similar to `fdatasync` in POSIX.
+import fd_datasync(fd: i32) -> i32;
+/// Get the attributes of a file descriptor.
+/// Note: This returns similar flags to `fsync(fd, F_GETFL)` in POSIX, as well as additional fields.
+import fd_fdstat_get(fd: i32, fdstatptr: i32) -> i32;
+/// Adjust the flags associated with a file descriptor.
+/// Note: This is similar to `fcntl(fd, F_SETFL, flags)` in POSIX.
+import fd_fdstat_set_flags(fd: i32, flags: i32) -> i32;
+/// Adjust the rights associated with a file descriptor.
+/// This can only be used to remove rights, and returns `errno::notcapable` if called in a way that would attempt to add rights
+import fd_fdstat_set_rights(fd: i32, rights_base: i64, rights_inheriting: i64) -> i32; // TODO: Rights.set
+/// Return the attributes of an open file.
+import fd_filestat_get(fd: i32, filestatptr: i32) -> i32;
+/// Adjust the size of an open file. If this increases the file's size, the extra bytes are filled with zeros.
+/// Note: This is similar to `ftruncate` in POSIX.
+import fd_filestat_set_size(fd: i32, size: i64) -> i32;
+/// Adjust the timestamps of an open file or directory.
+/// Note: This is similar to `futimens` in POSIX.
+import fd_filestat_set_times(fd: i32, access: i64, modified: i64, which: i32) -> i32;
+/// Read from a file descriptor, without using and updating the file descriptor's offset.
+/// Note: This is similar to `preadv` in POSIX.
+import fd_pread(fd: i32, iovecptr: i32, length: i32, offset: i64, sizeptr: i32) -> i32;
+/// Return a description of the given preopened file descriptor.
+import fd_prestat_get(fd: i32, prestatptr: i32) -> i32;
+/// Return a description of the given preopened file descriptor.
+import fd_prestat_dir_name(fd: i32, pathptr: i32, length: i32) -> i32;
+/// Write to a file descriptor, without using and updating the file descriptor's offset.
+/// Note: This is similar to `pwritev` in POSIX.
+import fd_pwrite(fd: i32, iovecptr: i32, length: i32, offset: i64, sizeptr: i32) -> i32;
+/// Read from a file descriptor.
+/// Note: This is similar to `readv` in POSIX.
+import fd_read(fd: i32, iovecptr: i32, length: i32, sizeptr: i32) -> i32;
+/// Read directory entries from a directory.
+/// When successful, the contents of the output buffer consist of a sequence of
+/// directory entries. Each directory entry consists of a `dirent` object,
+/// followed by `dirent::d_namlen` bytes holding the name of the directory
+/// entry.
+/// This function fills the output buffer as much as possible, potentially
+/// truncating the last directory entry. This allows the caller to grow its
+/// read buffer size in case it's too small to fit a single large directory
+/// entry, or skip the oversized directory entry.
+import fd_readdir(fd: i32, buf: i32, length: i32, cookie: i64, sizeptr: i32) -> i32;
+/// Atomically replace a file descriptor by renumbering another file descriptor.
+/// Due to the strong focus on thread safety, this environment does not provide
+/// a mechanism to duplicate or renumber a file descriptor to an arbitrary
+/// number, like `dup2()`. This would be prone to race conditions, as an actual
+/// file descriptor with the same number could be allocated by a different
+/// thread at the same time.
+/// This function provides a way to atomically renumber file descriptors, which
+/// would disappear if `dup2()` were to be removed entirely.
+import fd_renumber(fd: i32, to: i32) -> i32;
+/// Move the offset of a file descriptor.
+/// Note: This is similar to `lseek` in POSIX.
+import fd_seek(fd: i32, offset: i64, whence: i32, sizeptr: i32) -> i32;
+/// Synchronize the data and metadata of a file to disk.
+/// Note: This is similar to `fsync` in POSIX.
+import fd_sync(fd: i32) -> i32;
+/// Return the current offset of a file descriptor.
+/// Note: This is similar to `lseek(fd, 0, SEEK_CUR)` in POSIX.
+import fd_tell(fd: i32, sizeptr: i32) -> i32;
+
+*/
+/// Write to a file descriptor.
+// fd_write(fd: i32, iovecptr: Pointer, length: i32, sizeptr: Pointer) -> i32
 // The file descriptor: 0: stdin, 1: stdout, 2: stderr
 // iovs: The memory address to retrieve the data to write, with the address : i32 followed by length : i32
 // iovs_len: How many elements to write from the data retrieval area
-// nwritten: Address where the number of bytes written is stored
+// sizeptr: Address where the number of bytes written is stored
 // Returns errno
+// Note: This is similar to `writev` in POSIX.
 import fd_write : (i32, i32, i32, i32) -> i32 = wasi_snapshot_preview1.fd_write;
+
+/*
+/// Create a directory.
+/// Note: This is similar to `mkdirat` in POSIX.
+/// Concurrently poll for the occurrence of a set of events.
+import path_create_directory(fd: i32, pathptr: i32, length: i32) -> i32;
+/// Return the attributes of a file or directory.
+/// Note: This is similar to `stat` in POSIX.
+import path_filestat_get(fd: i32, flags: i32, pathptr: i32, length: i32, statptr: i32) -> i32;
+/// Adjust the timestamps of a file or directory.
+/// Note: This is similar to `utimensat` in POSIX.
+import path_filestat_set_times(fd: i32, flags: i32, pathptr: i32, length: i32,
+	accessed: i64, modified: i64, tflags: i32) -> i32;
+/// Create a hard link.
+/// Note: This is similar to `linkat` in POSIX.
+import path_link(old_fd: i32, old_flags: i32, old_pathptr: i32, old_length: i32,
+	new_fd: i32, new_pathptr: i32, new_length: i32) -> i32;
+/// Open a file or directory.
+/// The returned file descriptor is not guaranteed to be the lowest-numbered
+/// file descriptor not currently open; it is randomized to prevent
+/// applications from depending on making assumptions about indexes, since this
+/// is error-prone in multi-threaded contexts. The returned file descriptor is
+/// guaranteed to be less than 2**31.
+/// Note: This is similar to `openat` in POSIX.
+import path_open(fd: i32, flags: i32, pathptr: i32, length: i32,
+	oflags: i32, base_rights: i64, inh_rights: i64, fdflags: i32, fdptr: i32) -> i32;
+/// Read the contents of a symbolic link.
+/// Note: This is similar to `readlinkat` in POSIX.
+import path_readlink(fd: i32, pathptr: i32, length: i32,
+	bufptr: i32, buflength: i32, sizeptr: i32) -> i32;
+/// Remove a directory.
+/// Return `errno::notempty` if the directory is not empty.
+/// Note: This is similar to `unlinkat(fd, path, AT_REMOVEDIR)` in POSIX.
+import path_remove_directory(fd: i32, pathptr: i32, length: i32) -> i32;
+/// Rename a file or directory.
+/// Note: This is similar to `renameat` in POSIX.
+import path_rename(fd: i32, old_pathptr: i32, old_length: i32, new_fd: i32, new_path: i32, new_length: i32) -> i32;
+/// Create a symbolic link.
+/// Note: This is similar to `symlinkat` in POSIX.
+import path_symlink(old_pathptr: i32, old_length: i32, fd: i32, new_pathptr: i32, new_length: i32) -> i32;
+/// Unlink a file.
+/// Return `errno::isdir` if the path refers to a directory.
+/// Note: This is similar to `unlinkat(fd, path, 0)` in POSIX.
+import path_unlink_file(fd: i32, pathptr: i32, length: i32) -> i32;
+
+/// Return the resolution of a clock.
+/// Implementations are required to provide a non-zero value for supported clocks. For unsupported clocks,
+/// return `errno::inval`.
+/// Note: This is similar to `clock_getres` in POSIX.
+import clock_res_get(id: i32, retptr: i32) -> i32;
+/// Return the time value of a clock.
+/// Note: This is similar to `clock_gettime` in POSIX.
+import clock_time_get(id: i32, lag: i64, retptr: i32) -> i32;
+
+/// Temporarily yield execution of the calling thread.
+/// Note: This is similar to `sched_yield` in POSIX.
+import sched_yield() -> i32;
+
+/// Terminate the process normally. An exit code of 0 indicates successful
+/// termination of the program. The meanings of other values is dependent on
+/// the environment.
+import proc_exit(code: i32);
+/// Send a signal to the process of the calling thread.
+/// Note: This is similar to `raise` in POSIX.
+import proc_raise(signum: i32) -> i32;
+
+	/// Concurrently poll for the occurrence of a set of events.
+import poll_oneoff(inv: i32, outv: i32, count: i32, sizeptr: i32) -> i32;
+
+/// Write high-quality random data into a buffer.
+/// This function blocks when the implementation is unable to immediately
+/// provide sufficient high-quality random data.
+/// This function may execute slowly, so when large mounts of random data are
+/// required, it's advisable to use this function to seed a pseudo-random
+/// number generator, rather than to provide the random data directly.
+import random_get(bufptr: i32, length: i32) -> i32;
+
+/// Receive a message from a socket.
+/// Note: This is similar to `recv` in POSIX, though it also supports reading
+/// the data into multiple buffers in the manner of `readv`.
+import sock_recv(fd: i32, bufptr: i32, length: i32, flags: i32, sizeptr: i32, flagsptr: i32) -> i32;
+/// Send a message on a socket.
+/// Note: This is similar to `send` in POSIX, though it also supports writing
+/// the data from multiple buffers in the manner of `writev`.
+import sock_send(fd: i32, bufptr: i32, length: i32, flags: i32, sizeptr: i32) -> i32;
+/// Shut down socket send and receive channels.
+/// Note: This is similar to `shutdown` in POSIX.
+import sock_shutdown(fd: i32, flags: i32) -> i32;
+*/
