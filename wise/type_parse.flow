@@ -88,13 +88,42 @@ wiseTypeAction(onError : (string) -> void) -> GringoAction<List<WiseAst>> {
 	);
 }
 
+getWiseAstBool(w : WiseAst) -> bool {
+	switch (w) {
+		WiseAstBool(v): v;
+		default: false;
+	}
+}
+
+getWiseAstInt(w : WiseAst) -> int {
+	switch (w) {
+		WiseAstInt(v): v;
+		default: 0;
+	}
+}
+
+getWiseAstDouble(w : WiseAst) -> double {
+	switch (w) {
+		WiseAstDouble(v): v;
+		default: 0.0;
+	}
+}
+
 getWiseAstString(w : WiseAst) -> string {
 	switch (w) {
-		WiseAstString(s): s;
+		WiseAstString(v): v;
 		default: "";
 	}
 }
 
+getWiseAstList(w : WiseAst) -> List<WiseAst> {
+	switch (w) {
+		WiseAstList(l): l;
+		default: makeList();
+	}
+}
+
+/*
 splitWiseAstAction(v : string) -> Pair<string, int> {
 	parts = strSplit(v, "_");
 	n = length(parts);
@@ -104,4 +133,4 @@ splitWiseAstAction(v : string) -> Pair<string, int> {
 		Pair(name, arity)
 	} else Pair(v, 0);
 }
-
+*/

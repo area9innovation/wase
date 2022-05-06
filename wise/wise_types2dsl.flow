@@ -1,0 +1,562 @@
+import wise/wise_types;
+import runtime;
+import tools/dsl/dsl_util;
+
+export {
+	// wiseAst2DslAst(w : WiseAst) -> DslAst;
+	dslAst2WiseAst(d : DslAst) -> WiseAst;
+}
+
+/* wiseAst2DslAst(w : WiseAst) -> DslAst {
+	DslBool(false);
+}
+*/
+
+dslAst2WiseAst(d : DslAst) -> WiseAst {
+	switch (d) {
+		DslBool(value): WiseAstBool(value);
+		DslInt(value): WiseAstInt(value);
+		DslDouble(value): WiseAstDouble(value);
+		DslString(value): WiseAstString(value);
+		DslList(value): WiseAstList(mapList(value, dslAst2WiseAst));
+		DslNode(name, args, pos): {
+			if (name == "add") {
+				WiAdd(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "and") {
+				WiAnd(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "basictype") {
+				WiBasictype(getDslString(args[0]))
+			} else if (name == "bool") {
+				WiBool(getDslBool(args[0]))
+			} else if (name == "bool_and") {
+				WiBoolAnd(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "bool_not") {
+				WiBoolNot(dslAst2WiExp(args[0]))
+			} else if (name == "bool_or") {
+				WiBoolOr(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "brace") {
+				WiBrace((\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[0]))
+			} else if (name == "break") {
+				WiBreak()
+			} else if (name == "call") {
+				WiCall(dslAst2WiExp(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[1]))
+			} else if (name == "continue") {
+				WiContinue()
+			} else if (name == "div") {
+				WiDiv(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "double") {
+				WiDouble(dslAst2WiDouble(args[0]))
+			} else if (name == "equal") {
+				WiEqual(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "fntype") {
+				WiFntype((\t -> map(list2array(getDslList(t)), dslAst2WiType))(args[0]), dslAst2WiType(args[1]))
+			} else if (name == "function") {
+				WiFunction(getDslString(args[0]), dslAst2WiOptexport(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WiIdtype))(args[2]), dslAst2WiType(args[3]), dslAst2WiExp(args[4]), dslAst2WiDecl(args[5]))
+			} else if (name == "global") {
+				WiGlobal(getDslString(args[0]), dslAst2WiOptexport(args[1]), dslAst2WiType(args[2]), getDslInt(args[3]), dslAst2WiExp(args[4]), dslAst2WiDecl(args[5]))
+			} else if (name == "greater") {
+				WiGreater(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "greater_equal") {
+				WiGreaterEqual(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "greater_equalu") {
+				WiGreaterEqualu(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "greateru") {
+				WiGreateru(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "hex32") {
+				WiHex32(getDslString(args[0]))
+			} else if (name == "hex64") {
+				WiHex64(getDslString(args[0]))
+			} else if (name == "hexf32") {
+				WiHexf32(getDslString(args[0]))
+			} else if (name == "hexf64") {
+				WiHexf64(getDslString(args[0]))
+			} else if (name == "i64") {
+				WiI64(getDslString(args[0]))
+			} else if (name == "idtype") {
+				WiIdtype(getDslString(args[0]), dslAst2WiType(args[1]))
+			} else if (name == "if") {
+				WiIf(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "ifelse") {
+				WiIfelse(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]), dslAst2WiExp(args[2]))
+			} else if (name == "import") {
+				WiImport(getDslString(args[0]), dslAst2WiType(args[1]), getDslInt(args[2]), getDslString(args[3]), getDslString(args[4]), dslAst2WiDecl(args[5]))
+			} else if (name == "int") {
+				WiInt(dslAst2WiInt(args[0]))
+			} else if (name == "is_null") {
+				WiIsNull(dslAst2WiExp(args[0]))
+			} else if (name == "less") {
+				WiLess(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "less_equal") {
+				WiLessEqual(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "less_equalu") {
+				WiLessEqualu(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "lessu") {
+				WiLessu(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "let") {
+				WiLet(getDslString(args[0]), getDslInt(args[1]), dslAst2WiType(args[2]), dslAst2WiExp(args[3]), dslAst2WiBrace(args[4]))
+			} else if (name == "mod") {
+				WiMod(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "mul") {
+				WiMul(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "negate") {
+				WiNegate(dslAst2WiExp(args[0]))
+			} else if (name == "not_equal") {
+				WiNotEqual(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "optexport") {
+				WiOptexport(getDslString(args[0]))
+			} else if (name == "or") {
+				WiOr(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "return") {
+				WiReturn((\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[0]))
+			} else if (name == "set") {
+				WiSet(getDslString(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "sub") {
+				WiSub(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "tuple") {
+				WiTuple((\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[0]))
+			} else if (name == "tupledot") {
+				WiTupledot(dslAst2WiExp(args[0]), dslAst2WiInt(args[1]))
+			} else if (name == "tupletype") {
+				WiTupletype((\t -> map(list2array(getDslList(t)), dslAst2WiType))(args[0]))
+			} else if (name == "typeannotation") {
+				WiTypeannotation(dslAst2WiExp(args[0]), dslAst2WiType(args[1]))
+			} else if (name == "var") {
+				WiVar(getDslString(args[0]))
+			} else if (name == "wase_empty") {
+				WiWaseEmpty()
+			} else if (name == "wasm_op") {
+				WiWasmOp(getDslString(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WiWarg))(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[2]))
+			} else if (name == "while") {
+				WiWhile(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else if (name == "wise_include") {
+				WiWiseInclude(getDslString(args[0]), dslAst2WiDecl(args[1]))
+			} else if (name == "xor") {
+				WiXor(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+			} else { println("ERROR: Could not convert " + name); WiseAstBool(false) }
+
+		}
+	}
+}
+
+dslAst2WiAtom(d : DslAst) -> WiAtom {
+	node = getDslNode(d);
+	name = node.name;
+	args = node.args;
+	if (name == "bool") {
+		WiBool(getDslBool(args[0]))
+	} else if (name == "break") {
+		WiBreak()
+	} else if (name == "continue") {
+		WiContinue()
+	} else if (name == "double") {
+		WiDouble(dslAst2WiDouble(args[0]))
+	} else if (name == "hex32") {
+		WiHex32(getDslString(args[0]))
+	} else if (name == "hex64") {
+		WiHex64(getDslString(args[0]))
+	} else if (name == "hexf32") {
+		WiHexf32(getDslString(args[0]))
+	} else if (name == "hexf64") {
+		WiHexf64(getDslString(args[0]))
+	} else if (name == "i64") {
+		WiI64(getDslString(args[0]))
+	} else if (name == "if") {
+		WiIf(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "ifelse") {
+		WiIfelse(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]), dslAst2WiExp(args[2]))
+	} else if (name == "int") {
+		WiInt(dslAst2WiInt(args[0]))
+	} else if (name == "return") {
+		WiReturn((\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[0]))
+	} else if (name == "set") {
+		WiSet(getDslString(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "tuple") {
+		WiTuple((\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[0]))
+	} else if (name == "var") {
+		WiVar(getDslString(args[0]))
+	} else if (name == "while") {
+		WiWhile(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else { println("ERROR: Could not convert " + name); WiBool(false) }
+
+}
+dslAst2WiDecl(d : DslAst) -> WiDecl {
+	node = getDslNode(d);
+	name = node.name;
+	args = node.args;
+	if (name == "function") {
+		WiFunction(getDslString(args[0]), dslAst2WiOptexport(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WiIdtype))(args[2]), dslAst2WiType(args[3]), dslAst2WiExp(args[4]), dslAst2WiDecl(args[5]))
+	} else if (name == "global") {
+		WiGlobal(getDslString(args[0]), dslAst2WiOptexport(args[1]), dslAst2WiType(args[2]), getDslInt(args[3]), dslAst2WiExp(args[4]), dslAst2WiDecl(args[5]))
+	} else if (name == "import") {
+		WiImport(getDslString(args[0]), dslAst2WiType(args[1]), getDslInt(args[2]), getDslString(args[3]), getDslString(args[4]), dslAst2WiDecl(args[5]))
+	} else if (name == "wase_empty") {
+		WiWaseEmpty()
+	} else if (name == "wise_include") {
+		WiWiseInclude(getDslString(args[0]), dslAst2WiDecl(args[1]))
+	} else { println("ERROR: Could not convert " + name); WiFunction("", WiOptexport(""), [], WiTupletype([]), WiBool(false), WiWaseEmpty()) }
+
+}
+dslAst2WiExp(d : DslAst) -> WiExp {
+	node = getDslNode(d);
+	name = node.name;
+	args = node.args;
+	if (name == "add") {
+		WiAdd(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "and") {
+		WiAnd(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "bool_and") {
+		WiBoolAnd(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "bool_not") {
+		WiBoolNot(dslAst2WiExp(args[0]))
+	} else if (name == "bool_or") {
+		WiBoolOr(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "brace") {
+		WiBrace((\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[0]))
+	} else if (name == "call") {
+		WiCall(dslAst2WiExp(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[1]))
+	} else if (name == "div") {
+		WiDiv(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "equal") {
+		WiEqual(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "greater") {
+		WiGreater(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "greater_equal") {
+		WiGreaterEqual(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "greater_equalu") {
+		WiGreaterEqualu(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "greateru") {
+		WiGreateru(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "is_null") {
+		WiIsNull(dslAst2WiExp(args[0]))
+	} else if (name == "less") {
+		WiLess(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "less_equal") {
+		WiLessEqual(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "less_equalu") {
+		WiLessEqualu(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "lessu") {
+		WiLessu(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "let") {
+		WiLet(getDslString(args[0]), getDslInt(args[1]), dslAst2WiType(args[2]), dslAst2WiExp(args[3]), dslAst2WiBrace(args[4]))
+	} else if (name == "mod") {
+		WiMod(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "mul") {
+		WiMul(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "negate") {
+		WiNegate(dslAst2WiExp(args[0]))
+	} else if (name == "not_equal") {
+		WiNotEqual(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "or") {
+		WiOr(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "sub") {
+		WiSub(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else if (name == "tupledot") {
+		WiTupledot(dslAst2WiExp(args[0]), dslAst2WiInt(args[1]))
+	} else if (name == "typeannotation") {
+		WiTypeannotation(dslAst2WiExp(args[0]), dslAst2WiType(args[1]))
+	} else if (name == "wasm_op") {
+		WiWasmOp(getDslString(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WiWarg))(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[2]))
+	} else if (name == "xor") {
+		WiXor(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+	} else { println("ERROR: Could not convert " + name); WiAdd(WiBool(false), WiBool(false)) }
+
+}
+dslAst2WiType(d : DslAst) -> WiType {
+	node = getDslNode(d);
+	name = node.name;
+	args = node.args;
+	if (name == "basictype") {
+		WiBasictype(getDslString(args[0]))
+	} else if (name == "fntype") {
+		WiFntype((\t -> map(list2array(getDslList(t)), dslAst2WiType))(args[0]), dslAst2WiType(args[1]))
+	} else if (name == "tupletype") {
+		WiTupletype((\t -> map(list2array(getDslList(t)), dslAst2WiType))(args[0]))
+	} else { println("ERROR: Could not convert " + name); WiFntype([], WiTupletype([])) }
+
+}
+dslAst2WiWarg(d : DslAst) -> WiWarg {
+	node = getDslNode(d);
+	name = node.name;
+	args = node.args;
+	if (name == "int") {
+		WiInt(dslAst2WiInt(args[0]))
+	} else if (name == "var") {
+		WiVar(getDslString(args[0]))
+	} else { println("ERROR: Could not convert " + name); WiTupletype([]) }
+
+}
+dslAst2WiAdd(d : DslAst) -> WiAdd {
+	node = getDslNode(d);
+	args = node.args;
+	WiAdd(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiAnd(d : DslAst) -> WiAnd {
+	node = getDslNode(d);
+	args = node.args;
+	WiAnd(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiBasictype(d : DslAst) -> WiBasictype {
+	node = getDslNode(d);
+	args = node.args;
+	WiBasictype(getDslString(args[0]))
+}
+dslAst2WiBool(d : DslAst) -> WiBool {
+	node = getDslNode(d);
+	args = node.args;
+	WiBool(getDslBool(args[0]))
+}
+dslAst2WiBoolAnd(d : DslAst) -> WiBoolAnd {
+	node = getDslNode(d);
+	args = node.args;
+	WiBoolAnd(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiBoolNot(d : DslAst) -> WiBoolNot {
+	node = getDslNode(d);
+	args = node.args;
+	WiBoolNot(dslAst2WiExp(args[0]))
+}
+dslAst2WiBoolOr(d : DslAst) -> WiBoolOr {
+	node = getDslNode(d);
+	args = node.args;
+	WiBoolOr(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiBrace(d : DslAst) -> WiBrace {
+	node = getDslNode(d);
+	args = node.args;
+	WiBrace((\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[0]))
+}
+dslAst2WiBreak(d : DslAst) -> WiBreak {
+	WiBreak()
+}
+dslAst2WiCall(d : DslAst) -> WiCall {
+	node = getDslNode(d);
+	args = node.args;
+	WiCall(dslAst2WiExp(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[1]))
+}
+dslAst2WiContinue(d : DslAst) -> WiContinue {
+	WiContinue()
+}
+dslAst2WiDiv(d : DslAst) -> WiDiv {
+	node = getDslNode(d);
+	args = node.args;
+	WiDiv(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiDouble(d : DslAst) -> WiDouble {
+	node = getDslNode(d);
+	args = node.args;
+	WiDouble(dslAst2WiDouble(args[0]))
+}
+dslAst2WiEqual(d : DslAst) -> WiEqual {
+	node = getDslNode(d);
+	args = node.args;
+	WiEqual(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiFntype(d : DslAst) -> WiFntype {
+	node = getDslNode(d);
+	args = node.args;
+	WiFntype((\t -> map(list2array(getDslList(t)), dslAst2WiType))(args[0]), dslAst2WiType(args[1]))
+}
+dslAst2WiFunction(d : DslAst) -> WiFunction {
+	node = getDslNode(d);
+	args = node.args;
+	WiFunction(getDslString(args[0]), dslAst2WiOptexport(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WiIdtype))(args[2]), dslAst2WiType(args[3]), dslAst2WiExp(args[4]), dslAst2WiDecl(args[5]))
+}
+dslAst2WiGlobal(d : DslAst) -> WiGlobal {
+	node = getDslNode(d);
+	args = node.args;
+	WiGlobal(getDslString(args[0]), dslAst2WiOptexport(args[1]), dslAst2WiType(args[2]), getDslInt(args[3]), dslAst2WiExp(args[4]), dslAst2WiDecl(args[5]))
+}
+dslAst2WiGreater(d : DslAst) -> WiGreater {
+	node = getDslNode(d);
+	args = node.args;
+	WiGreater(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiGreaterEqual(d : DslAst) -> WiGreaterEqual {
+	node = getDslNode(d);
+	args = node.args;
+	WiGreaterEqual(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiGreaterEqualu(d : DslAst) -> WiGreaterEqualu {
+	node = getDslNode(d);
+	args = node.args;
+	WiGreaterEqualu(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiGreateru(d : DslAst) -> WiGreateru {
+	node = getDslNode(d);
+	args = node.args;
+	WiGreateru(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiHex32(d : DslAst) -> WiHex32 {
+	node = getDslNode(d);
+	args = node.args;
+	WiHex32(getDslString(args[0]))
+}
+dslAst2WiHex64(d : DslAst) -> WiHex64 {
+	node = getDslNode(d);
+	args = node.args;
+	WiHex64(getDslString(args[0]))
+}
+dslAst2WiHexf32(d : DslAst) -> WiHexf32 {
+	node = getDslNode(d);
+	args = node.args;
+	WiHexf32(getDslString(args[0]))
+}
+dslAst2WiHexf64(d : DslAst) -> WiHexf64 {
+	node = getDslNode(d);
+	args = node.args;
+	WiHexf64(getDslString(args[0]))
+}
+dslAst2WiI64(d : DslAst) -> WiI64 {
+	node = getDslNode(d);
+	args = node.args;
+	WiI64(getDslString(args[0]))
+}
+dslAst2WiIdtype(d : DslAst) -> WiIdtype {
+	node = getDslNode(d);
+	args = node.args;
+	WiIdtype(getDslString(args[0]), dslAst2WiType(args[1]))
+}
+dslAst2WiIf(d : DslAst) -> WiIf {
+	node = getDslNode(d);
+	args = node.args;
+	WiIf(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiIfelse(d : DslAst) -> WiIfelse {
+	node = getDslNode(d);
+	args = node.args;
+	WiIfelse(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]), dslAst2WiExp(args[2]))
+}
+dslAst2WiImport(d : DslAst) -> WiImport {
+	node = getDslNode(d);
+	args = node.args;
+	WiImport(getDslString(args[0]), dslAst2WiType(args[1]), getDslInt(args[2]), getDslString(args[3]), getDslString(args[4]), dslAst2WiDecl(args[5]))
+}
+dslAst2WiInt(d : DslAst) -> WiInt {
+	node = getDslNode(d);
+	args = node.args;
+	WiInt(dslAst2WiInt(args[0]))
+}
+dslAst2WiIsNull(d : DslAst) -> WiIsNull {
+	node = getDslNode(d);
+	args = node.args;
+	WiIsNull(dslAst2WiExp(args[0]))
+}
+dslAst2WiLess(d : DslAst) -> WiLess {
+	node = getDslNode(d);
+	args = node.args;
+	WiLess(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiLessEqual(d : DslAst) -> WiLessEqual {
+	node = getDslNode(d);
+	args = node.args;
+	WiLessEqual(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiLessEqualu(d : DslAst) -> WiLessEqualu {
+	node = getDslNode(d);
+	args = node.args;
+	WiLessEqualu(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiLessu(d : DslAst) -> WiLessu {
+	node = getDslNode(d);
+	args = node.args;
+	WiLessu(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiLet(d : DslAst) -> WiLet {
+	node = getDslNode(d);
+	args = node.args;
+	WiLet(getDslString(args[0]), getDslInt(args[1]), dslAst2WiType(args[2]), dslAst2WiExp(args[3]), dslAst2WiBrace(args[4]))
+}
+dslAst2WiMod(d : DslAst) -> WiMod {
+	node = getDslNode(d);
+	args = node.args;
+	WiMod(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiMul(d : DslAst) -> WiMul {
+	node = getDslNode(d);
+	args = node.args;
+	WiMul(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiNegate(d : DslAst) -> WiNegate {
+	node = getDslNode(d);
+	args = node.args;
+	WiNegate(dslAst2WiExp(args[0]))
+}
+dslAst2WiNotEqual(d : DslAst) -> WiNotEqual {
+	node = getDslNode(d);
+	args = node.args;
+	WiNotEqual(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiOptexport(d : DslAst) -> WiOptexport {
+	node = getDslNode(d);
+	args = node.args;
+	WiOptexport(getDslString(args[0]))
+}
+dslAst2WiOr(d : DslAst) -> WiOr {
+	node = getDslNode(d);
+	args = node.args;
+	WiOr(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiReturn(d : DslAst) -> WiReturn {
+	node = getDslNode(d);
+	args = node.args;
+	WiReturn((\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[0]))
+}
+dslAst2WiSet(d : DslAst) -> WiSet {
+	node = getDslNode(d);
+	args = node.args;
+	WiSet(getDslString(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiSub(d : DslAst) -> WiSub {
+	node = getDslNode(d);
+	args = node.args;
+	WiSub(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiTuple(d : DslAst) -> WiTuple {
+	node = getDslNode(d);
+	args = node.args;
+	WiTuple((\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[0]))
+}
+dslAst2WiTupledot(d : DslAst) -> WiTupledot {
+	node = getDslNode(d);
+	args = node.args;
+	WiTupledot(dslAst2WiExp(args[0]), dslAst2WiInt(args[1]))
+}
+dslAst2WiTupletype(d : DslAst) -> WiTupletype {
+	node = getDslNode(d);
+	args = node.args;
+	WiTupletype((\t -> map(list2array(getDslList(t)), dslAst2WiType))(args[0]))
+}
+dslAst2WiTypeannotation(d : DslAst) -> WiTypeannotation {
+	node = getDslNode(d);
+	args = node.args;
+	WiTypeannotation(dslAst2WiExp(args[0]), dslAst2WiType(args[1]))
+}
+dslAst2WiVar(d : DslAst) -> WiVar {
+	node = getDslNode(d);
+	args = node.args;
+	WiVar(getDslString(args[0]))
+}
+dslAst2WiWaseEmpty(d : DslAst) -> WiWaseEmpty {
+	WiWaseEmpty()
+}
+dslAst2WiWasmOp(d : DslAst) -> WiWasmOp {
+	node = getDslNode(d);
+	args = node.args;
+	WiWasmOp(getDslString(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WiWarg))(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[2]))
+}
+dslAst2WiWhile(d : DslAst) -> WiWhile {
+	node = getDslNode(d);
+	args = node.args;
+	WiWhile(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+dslAst2WiWiseInclude(d : DslAst) -> WiWiseInclude {
+	node = getDslNode(d);
+	args = node.args;
+	WiWiseInclude(getDslString(args[0]), dslAst2WiDecl(args[1]))
+}
+dslAst2WiXor(d : DslAst) -> WiXor {
+	node = getDslNode(d);
+	args = node.args;
+	WiXor(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
+}
+

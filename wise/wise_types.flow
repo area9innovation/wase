@@ -3,7 +3,7 @@ import ds/list;
 
 export {
 	// This is a monster type used when parsing
-	WiseAst ::= WiseAstList, WiseAstBool, WiseAstInt, WiseAstDouble, WiseAstString, WiAtom, WiDecl, WiExp, WiOptexport, WiType, WiWarg, WiAdd, WiAnd, WiBasictype, WiBool, WiBoolAnd, WiBoolNot, WiBoolOr, WiBrace, WiBreak, WiCall, WiContinue, WiDiv, WiDouble, WiEqual, WiFntype, WiFunction, WiGlobal, WiGreater, WiGreaterEqual, WiGreaterEqualu, WiGreateru, WiHex32, WiHex64, WiHexf32, WiHexf64, WiI64, WiIdtype, WiIf, WiIfelse, WiImport, WiInt, WiIsNull, WiLess, WiLessEqual, WiLessEqualu, WiLessu, WiLet, WiMod, WiMul, WiNegate, WiNotEqual, WiOr, WiReturn, WiSet, WiSub, WiTuple, WiTupledot, WiTupletype, WiTypeannotation, WiVar, WiWaseEmpty, WiWasmOp, WiWhile, WiWiseInclude, WiXor;
+	WiseAst ::= WiseAstList, WiseAstBool, WiseAstInt, WiseAstDouble, WiseAstString, WiAtom, WiDecl, WiExp, WiType, WiWarg, WiAdd, WiAnd, WiBasictype, WiBool, WiBoolAnd, WiBoolNot, WiBoolOr, WiBrace, WiBreak, WiCall, WiContinue, WiDiv, WiDouble, WiEqual, WiFntype, WiFunction, WiGlobal, WiGreater, WiGreaterEqual, WiGreaterEqualu, WiGreateru, WiHex32, WiHex64, WiHexf32, WiHexf64, WiI64, WiIdtype, WiIf, WiIfelse, WiImport, WiInt, WiIsNull, WiLess, WiLessEqual, WiLessEqualu, WiLessu, WiLet, WiMod, WiMul, WiNegate, WiNotEqual, WiOptexport, WiOr, WiReturn, WiSet, WiSub, WiTuple, WiTupledot, WiTupletype, WiTypeannotation, WiVar, WiWaseEmpty, WiWasmOp, WiWhile, WiWiseInclude, WiXor;
 
 	WiseAstList(value : List<WiseAst>);
 	WiseAstBool(value : bool);
@@ -14,7 +14,6 @@ export {
 	WiAtom ::= WiBool, WiBreak, WiContinue, WiDouble, WiHex32, WiHex64, WiHexf32, WiHexf64, WiI64, WiIf, WiIfelse, WiInt, WiReturn, WiSet, WiTuple, WiVar, WiWhile;
 	WiDecl ::= WiFunction, WiGlobal, WiImport, WiWaseEmpty, WiWiseInclude;
 	WiExp ::= WiAdd, WiAnd, WiAtom, WiBoolAnd, WiBoolNot, WiBoolOr, WiBrace, WiCall, WiDiv, WiEqual, WiGreater, WiGreaterEqual, WiGreaterEqualu, WiGreateru, WiIsNull, WiLess, WiLessEqual, WiLessEqualu, WiLessu, WiLet, WiMod, WiMul, WiNegate, WiNotEqual, WiOr, WiSub, WiTupledot, WiTypeannotation, WiWasmOp, WiXor;
-	WiOptexport(v : string);
 	WiType ::= WiBasictype, WiFntype, WiTupletype;
 	WiWarg ::= WiInt, WiVar, WiType;
 	WiAdd(exp1 : WiExp, exp2 : WiExp);
@@ -58,6 +57,7 @@ export {
 	WiMul(exp1 : WiExp, exp2 : WiExp);
 	WiNegate(exp : WiExp);
 	WiNotEqual(exp1 : WiExp, exp2 : WiExp);
+	WiOptexport(v : string);
 	WiOr(exp1 : WiExp, exp2 : WiExp);
 	WiReturn(exps : [WiExp]);
 	WiSet(id : string, exp : WiExp);
