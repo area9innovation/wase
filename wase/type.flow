@@ -108,7 +108,6 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 					// OK, safe the environment so we do not pollute it
 					safeEnv = ^(acc.env);
 
-
 					if (countList(rets) == 1) {
 						acc.blocks := [list2array(rets)[0]];
 					} else {
@@ -128,10 +127,11 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 						argname;
 					});
 					// Remember and set the types of arguments
-					prevTypes : [Maybe<DslAst>] = mapi(list2array(getDslList(fargtypes)), \i, fargtype : DslAst -> {
+					prevTypes : [Maybe<DslAst>] = mapi(reverseA(list2array(getDslList(fargtypes))), \i, fargtype : DslAst -> {
 						id = fargnames[i];
 						etype = lookupTree(^(acc.env), id);
 						acc.env := setTree(^(acc.env), id, fargtype);
+						// println(id + " :" + prettyDsl(fargtype));
 						etype;
 					});
 
