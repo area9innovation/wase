@@ -1,6 +1,11 @@
 import wise/parse;
 import tools/dsl/dsl_include;
 
+import wise/wise_parser;
+import wise/wise_types2dsl;
+import text/gringo/gringo_typed_action;
+
+
 import wise/type;
 import wise/lower;
 import wase/compile;
@@ -9,6 +14,15 @@ import wase/pretty_wase;
 compileWise2File(includes, filename : string, code : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
 		println("\nCompiling '" + filename + "'");
+
+		// Do a typed parse/conversion
+		if (false) {
+			ast = gringoTypedParse(code, dslAction, parse_wise, DslList(makeList()), onError);
+			t = dslAst2WiseAst(ast);
+			println("Parsing worked");
+			println(t);
+		}
+
 		program = parseWise(filename, code);
 		include = DslInclude(includes, [".wise"], "wise_include", "wase_empty", \path, file, content -> {
 			parseWise(path, content);

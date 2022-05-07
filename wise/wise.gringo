@@ -7,7 +7,7 @@ global = optexport id $"swap"
 		"=" ws exp ";" ws decl $"global_6"; // (id, export : bool, type, mutable : bool, exp, body, scope)
 
 // function(id, export : bool, args : [idtype(id, type)], [returnTypes], body, scope)
-function = optexport id $"swap" "(" ws lambdaargs ")" ws "->" ws type exp decl $"function_6"; // The "" makes right-recursion disappear
+function = optexport id $"swap" "(" ws lambdaargs ")" ws "->" ws type exp decl $"function_6";
 	lambdaargs = $"nil" id ":" ws type $"idtype_2" $"cons" ("," ws id ":" ws type $"idtype_2" $"cons")*
 		| $"nil";
 
@@ -50,7 +50,7 @@ exp =
 	|> "(" ws exp ")" ws
 	|> atom;
 
-opttype = ":" ws type | $$"auto" $"type_1";
+opttype = ":" ws type | $$"auto" $"basictype_1";
 
 brace = "{" ws expsemi "}" ws;
 
@@ -78,7 +78,7 @@ atom = "if" !letterOrDigit ws "(" ws exp ")" ws exp "else" ws exp $"ifelse_3"
 
 wasmop = $wasmid ws "<" ws wargs ">" ws "(" ws exps ")" ws $"wasm_op_3";
 	wargs = $"nil" warg $"cons"("," ws warg $"cons")* | $"nil";
-	warg = type | id  $"var_1" | int $"int_1";
+	warg = type | id $"var_1" | int $"int_1";
 
 	wasmid = 'a'-'z' wasmidpart* ("." wasmidpart+)?;
 	wasmidpart = 'a'-'z' | '0'-'9' | "_";
