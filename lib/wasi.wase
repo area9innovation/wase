@@ -192,7 +192,7 @@ import sched_yield : () -> i32 = wasi_snapshot_preview1.sched_yield;
 // termination of the program. The meanings of other values is dependent on
 // the environment.
 // proc_exit(code: i32);
-import proc_exit : (i32) = wasi_snapshot_preview1.proc_exit;
+import proc_exit : (i32) -> () = wasi_snapshot_preview1.proc_exit;
 // Send a signal to the process of the calling thread.
 // Note: This is similar to `raise` in POSIX.
 // proc_raise(signum: i32) -> i32;
