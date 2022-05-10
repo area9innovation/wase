@@ -19,6 +19,12 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 		if (false) {
 			ast = gringoTypedParse(code, dslAction, parse_wise, DslList(makeList()), onError);
 			t = dslAst2WiseAst(ast);
+			ast2 = wiseAst2DslAst(t);
+			if (ast != ast2) {
+				println("Conversion did not work!");
+				println(prettyDsl(ast));
+				println(prettyDsl(ast2));
+			}
 			println("Parsing worked");
 			println(t);
 		}
