@@ -181,3 +181,54 @@ Rewrite typing and compilation from Wase with interfaces
 
 
 
+
+
+# As structs
+
+Virgil just uses structs/classes for interfaces. Let us try that.
+
+	ISet<?>(
+		isEmpty : () -> bool,
+		contains : (e : ?) -> bool,
+		insert : (e : ?) -> ISet<?>,
+		union : (ISet<?>) -> ISet<?>,
+		remove : (e : ?) -> ISet<?>,
+	);
+
+	ArrayISet(xs : [?]) -> ISet<?> {
+		ISet(
+			isEmpty() -> bool { xs == [] },
+			contains(e : ?)  -> bool { contains(xs, e) },
+			insert(e : ?) -> ISet<[?]> { ArrayISet(arrayPush(xs, e)) },
+			union(b : ISet<?>) -> ISet<?> { fold(xs, b, \acc, e -> b.insert(e)) },
+			remove : (e : ?) -> ISet<?> { ArrayISet(remove(xs, e)) },
+		)
+	}
+
+	TreeISet(t : Tree<?, bool>) -> ISet<?> {
+		ISet(
+			isEmpty() -> bool { isEmptyTree(t) },
+			contains(e : ?) -> bool { containsKeyTree(t, e) },
+			insert(e : ?) -> ISet<?> { TreeISet(setTreeKey(t, e, true)) },
+			remove(e : ?) -> ISet<?> { TreeISet(removeFromTree(^this, e)) },
+			union(b : ISet<?>) -> ISet<?> { foldTree(t, b, \e, __, acc -> b.insert(e)) },
+		)
+	}
+
+	// Extend a set with all even integers
+	EvenUnionISet(base : ISet<int>, removed : ISet<int>) -> ISet<int> {
+		ISet(
+			isEmpty() -> bool { false };
+			contains(e : int) -> bool { e % 2 == 0 || base.contains(e)  && !removed.contains(e)) };
+			 // What to return here?
+			insert(e : int) -> ISet<int> { 
+				EvenUnionISet(if (e % 2 == 0) base else base.insert(e), removed.remove(e))
+			};
+			union(b : ISet<int>) -> ISet<int> { EvenUnionISet(base.union(b), removed) }; // TODO: Trouble with removed: Requires set difference
+			remove(e : ?) -> ISet<?> { EvenUnionISet(base, removed.insert(e)) }
+		)
+	}
+
+This works, and the code is decent, but it comes with excessive memory overhead since
+we allocate a new struct, even though it is the same as the previous one.
+
