@@ -1,0 +1,5 @@
+include lib/wasm4;
+
+export update() -> () {
+	rect(10, 10, 32, 32)
+}

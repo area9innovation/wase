@@ -1,0 +1,44 @@
+// https://wasm4.org/docs/reference/functions
+
+// Copies pixels to the framebuffer.
+// blit (spritePtr, x, y, width, height, flags)
+// spritePtr: Pointer to raw pixel data stored in either 1BPP or 2BPP format.
+// x: X position in the destination framebuffer.
+// y: Y position in the destination framebuffer.
+// width: Width of the sprite.
+// height: Height of the sprite.
+// flags: Flags that modify behavior
+import blit : (i32, i32, i32, i32, i32, i32) -> () = env.blit;
+
+// Copies a subregion within a larger sprite atlas to the framebuffer. Same as blit, but with 3 additional parameters.
+// blitSub (spritePtr, x, y, width, height, srcX, srcY, stride, flags)
+// srcX: Source X position of the sprite region.
+// srcY: Source Y position of the sprite region.
+// stride: Total width of the overall sprite atlas. This is typically larger than width.
+import blit_sub : (i32, i32, i32, i32, i32, i32, i32, i32, i32) -> () = env.blitSub;
+
+// Draws a line between two points.
+// line (x1, y1, x2, y2)
+import line : (i32, i32, i32, i32) -> () = env.line;
+
+// Draws a horizontal line between (x, y) and (x + len - 1, y).
+// hline(x, y, len)
+import hline : (i32, i32, i32) -> () = env.hline;
+
+// Draws a vertical line between (x, y) and (x, y + len - 1).
+// vline(x, y, len)
+import vline : (i32, i32, i32) -> () = env.vline;
+
+// Draws an oval (or circle).
+// oval (x, y, width, height)
+import oval : (i32, i32, i32, i32) -> () = env.oval;
+
+// Draws a rectangle.
+// rect (x, y, width, height)
+import rect : (i32, i32, i32, i32) -> () = env.rect;
+
+// Draws text using the built-in system font. The string may contain new-line (\n) characters.
+// The font is 8x8 pixels per character.
+// text (str, x, y)
+import text : (i32, i32, i32) -> () = env.text;
+
