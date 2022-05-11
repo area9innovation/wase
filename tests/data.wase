@@ -1,0 +1,4 @@
+export memory 1;
+
+data foo = "foo";
+data bar = "bar";
