@@ -42,3 +42,25 @@ import rect : (i32, i32, i32, i32) -> () = env.rect;
 // text (str, x, y)
 import text : (i32, i32, i32) -> () = env.text;
 
+
+// https://wasm4.org/docs/reference/memory
+
+PALETTE : mutable i32 = 0x04;
+DRAW_COLORS : mutable i32 = 0x14;
+
+GAMEPAD1 : i32 = 0x16;
+GAMEPAD2 : i32 = 0x17;
+GAMEPAD3 : i32 = 0x18;
+GAMEPAD4 : i32 = 0x19;
+MOUSE_X : i32 = 0x1a;
+MOUSE_Y : i32 = 0x1c;
+MOUSE_BUTTONS : i32 = 0x1e;
+SYSTEM_FLAGS : i32 = 0x1f;
+FRAMEBUFFER : i32 = 0xa0;
+
+BUTTON_1 : i32 = 1;
+BUTTON_2 : i32 = 2;
+BUTTON_LEFT : i32 = 16;
+BUTTON_RIGHT : i32 = 32;
+BUTTON_UP : i32 = 64;
+BUTTON_DOWN : i32 = 128;
