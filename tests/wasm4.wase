@@ -2,8 +2,8 @@ include lib/wasm4;
 
 import memory 1 = env.memory;
 
+// Temporary offset until data is work correctly
 data square = 0 offset 0xa0b0;
-
 data moveText = "Move the square!" offset 0x25a0;
 
 x : mutable i32 = 76;
@@ -11,24 +11,19 @@ y : mutable i32 = 76;
 
 handleInput() -> () {
 	gamepad : i32 = load<>(GAMEPAD1);
-	var dx : i32 = 0;
-	var dy : i32 = 0;
 
 	if (gamepad & BUTTON_LEFT) {
-		dx := -1;
+		x := x - 1;
 	};
 	if (gamepad & BUTTON_RIGHT) {
-		dx := 1;
+		x := x + 1;
 	};
 	if (gamepad & BUTTON_UP) {
-		dy := -1;
+		y := y - 1;
 	};
 	if (gamepad & BUTTON_DOWN) {
-		dy := 1;
+		y := y + 1;
 	};
-
-	x := x + dx;
-	y := y + dy;
 }
 
 export update() -> () {

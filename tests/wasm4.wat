@@ -14,50 +14,46 @@
   (import "env" "rect" (func $env.rect (type $t2)))
   (import "env" "text" (func $env.text (type $t3)))
   (func $f8 (type $t4)
-    (local $l0 i32) (local $l1 i32) (local $l2 i32)
+    (local $l0 i32)
     global.get $g2
     i32.load
     local.set $l0
-    i32.const 0
-    local.set $l1
-    i32.const 0
-    local.set $l2
     local.get $l0
     global.get $g13
     i32.and
     if $I0
-      i32.const -1
-      local.set $l1
+      global.get $g17
+      i32.const 1
+      i32.sub
+      global.set $g17
     end
     local.get $l0
     global.get $g14
     i32.and
     if $I1
+      global.get $g17
       i32.const 1
-      local.set $l1
+      i32.add
+      global.set $g17
     end
     local.get $l0
     global.get $g15
     i32.and
     if $I2
-      i32.const -1
-      local.set $l2
+      global.get $g18
+      i32.const 1
+      i32.sub
+      global.set $g18
     end
     local.get $l0
     global.get $g16
     i32.and
     if $I3
+      global.get $g18
       i32.const 1
-      local.set $l2
-    end
-    global.get $g17
-    local.get $l1
-    i32.add
-    global.set $g17
-    global.get $g18
-    local.get $l2
-    i32.add
-    global.set $g18)
+      i32.add
+      global.set $g18
+    end)
   (func $update (type $t4)
     call $f8
     global.get $g1
