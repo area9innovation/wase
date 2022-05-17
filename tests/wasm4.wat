@@ -1,97 +1,97 @@
 (module
-  (type $t0 (func (param i32 i32 i32 i32 i32 i32)))
-  (type $t1 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32)))
-  (type $t2 (func (param i32 i32 i32 i32)))
-  (type $t3 (func (param i32 i32 i32)))
-  (type $t4 (func))
-  (import "env" "memory" (memory $env.memory 1))
-  (import "env" "blit" (func $env.blit (type $t0)))
-  (import "env" "blitSub" (func $env.blitSub (type $t1)))
-  (import "env" "line" (func $env.line (type $t2)))
-  (import "env" "hline" (func $env.hline (type $t3)))
-  (import "env" "vline" (func $env.vline (type $t3)))
-  (import "env" "oval" (func $env.oval (type $t2)))
-  (import "env" "rect" (func $env.rect (type $t2)))
-  (import "env" "text" (func $env.text (type $t3)))
-  (func $f8 (type $t4)
-    (local $l0 i32)
-    global.get $g2
+  (type (;0;) (func (param i32 i32 i32 i32 i32 i32)))
+  (type (;1;) (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32)))
+  (type (;2;) (func (param i32 i32 i32 i32)))
+  (type (;3;) (func (param i32 i32 i32)))
+  (type (;4;) (func))
+  (import "env" "memory" (memory (;0;) 1))
+  (import "env" "blit" (func (;0;) (type 0)))
+  (import "env" "blitSub" (func (;1;) (type 1)))
+  (import "env" "line" (func (;2;) (type 2)))
+  (import "env" "hline" (func (;3;) (type 3)))
+  (import "env" "vline" (func (;4;) (type 3)))
+  (import "env" "oval" (func (;5;) (type 2)))
+  (import "env" "rect" (func (;6;) (type 2)))
+  (import "env" "text" (func (;7;) (type 3)))
+  (func (;8;) (type 4)
+    (local i32)
+    global.get 2
     i32.load
-    local.set $l0
-    local.get $l0
-    global.get $g13
+    local.set 0
+    local.get 0
+    global.get 13
     i32.and
-    if $I0
-      global.get $g17
+    if  ;; label = @1
+      global.get 17
       i32.const 1
       i32.sub
-      global.set $g17
+      global.set 17
     end
-    local.get $l0
-    global.get $g14
+    local.get 0
+    global.get 14
     i32.and
-    if $I1
-      global.get $g17
+    if  ;; label = @1
+      global.get 17
       i32.const 1
       i32.add
-      global.set $g17
+      global.set 17
     end
-    local.get $l0
-    global.get $g15
+    local.get 0
+    global.get 15
     i32.and
-    if $I2
-      global.get $g18
+    if  ;; label = @1
+      global.get 18
       i32.const 1
       i32.sub
-      global.set $g18
+      global.set 18
     end
-    local.get $l0
-    global.get $g16
+    local.get 0
+    global.get 16
     i32.and
-    if $I3
-      global.get $g18
+    if  ;; label = @1
+      global.get 18
       i32.const 1
       i32.add
-      global.set $g18
+      global.set 18
     end)
-  (func $update (type $t4)
-    call $f8
-    global.get $g1
+  (func (;9;) (type 4)
+    call 8
+    global.get 1
     i32.const 2
     i32.store
     i32.const 9632
     i32.const 24
     i32.const 50
-    call $env.text
-    global.get $g1
+    call 7
+    global.get 1
     i32.const 3
     i32.store
     i32.const 41136
-    global.get $g17
-    global.get $g18
+    global.get 17
+    global.get 18
     i32.const 8
     i32.const 8
     i32.const 0
-    call $env.blit)
-  (global $g0 (mut i32) (i32.const 4))
-  (global $g1 (mut i32) (i32.const 20))
-  (global $g2 i32 (i32.const 22))
-  (global $g3 i32 (i32.const 23))
-  (global $g4 i32 (i32.const 24))
-  (global $g5 i32 (i32.const 25))
-  (global $g6 i32 (i32.const 26))
-  (global $g7 i32 (i32.const 28))
-  (global $g8 i32 (i32.const 30))
-  (global $g9 i32 (i32.const 31))
-  (global $g10 i32 (i32.const 160))
-  (global $g11 i32 (i32.const 1))
-  (global $g12 i32 (i32.const 2))
-  (global $g13 i32 (i32.const 16))
-  (global $g14 i32 (i32.const 32))
-  (global $g15 i32 (i32.const 64))
-  (global $g16 i32 (i32.const 128))
-  (global $g17 (mut i32) (i32.const 76))
-  (global $g18 (mut i32) (i32.const 76))
-  (export "update" (func $update))
-  (data $d0 (i32.const 41136) "")
-  (data $d1 (i32.const 9632) "Move the square!"))
+    call 0)
+  (global (;0;) (mut i32) (i32.const 4))
+  (global (;1;) (mut i32) (i32.const 20))
+  (global (;2;) i32 (i32.const 22))
+  (global (;3;) i32 (i32.const 23))
+  (global (;4;) i32 (i32.const 24))
+  (global (;5;) i32 (i32.const 25))
+  (global (;6;) i32 (i32.const 26))
+  (global (;7;) i32 (i32.const 28))
+  (global (;8;) i32 (i32.const 30))
+  (global (;9;) i32 (i32.const 31))
+  (global (;10;) i32 (i32.const 160))
+  (global (;11;) i32 (i32.const 1))
+  (global (;12;) i32 (i32.const 2))
+  (global (;13;) i32 (i32.const 16))
+  (global (;14;) i32 (i32.const 32))
+  (global (;15;) i32 (i32.const 64))
+  (global (;16;) i32 (i32.const 128))
+  (global (;17;) (mut i32) (i32.const 76))
+  (global (;18;) (mut i32) (i32.const 76))
+  (export "update" (func 9))
+  (data (;0;) (i32.const 41136) "")
+  (data (;1;) (i32.const 9632) "Move the square!"))
