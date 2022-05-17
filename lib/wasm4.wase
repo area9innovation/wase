@@ -1,53 +1,13 @@
-// https://wasm4.org/docs/reference/functions
-
-// Copies pixels to the framebuffer.
-// blit (spritePtr, x, y, width, height, flags)
-// spritePtr: Pointer to raw pixel data stored in either 1BPP or 2BPP format.
-// x: X position in the destination framebuffer.
-// y: Y position in the destination framebuffer.
-// width: Width of the sprite.
-// height: Height of the sprite.
-// flags: Flags that modify behavior
-import blit : (i32, i32, i32, i32, i32, i32) -> () = env.blit;
-
-// Copies a subregion within a larger sprite atlas to the framebuffer. Same as blit, but with 3 additional parameters.
-// blitSub (spritePtr, x, y, width, height, srcX, srcY, stride, flags)
-// srcX: Source X position of the sprite region.
-// srcY: Source Y position of the sprite region.
-// stride: Total width of the overall sprite atlas. This is typically larger than width.
-import blit_sub : (i32, i32, i32, i32, i32, i32, i32, i32, i32) -> () = env.blitSub;
-
-// Draws a line between two points.
-// line (x1, y1, x2, y2)
-import line : (i32, i32, i32, i32) -> () = env.line;
-
-// Draws a horizontal line between (x, y) and (x + len - 1, y).
-// hline(x, y, len)
-import hline : (i32, i32, i32) -> () = env.hline;
-
-// Draws a vertical line between (x, y) and (x, y + len - 1).
-// vline(x, y, len)
-import vline : (i32, i32, i32) -> () = env.vline;
-
-// Draws an oval (or circle).
-// oval (x, y, width, height)
-import oval : (i32, i32, i32, i32) -> () = env.oval;
-
-// Draws a rectangle.
-// rect (x, y, width, height)
-import rect : (i32, i32, i32, i32) -> () = env.rect;
-
-// Draws text using the built-in system font. The string may contain new-line (\n) characters.
-// The font is 8x8 pixels per character.
-// text (str, x, y)
-import text : (i32, i32, i32) -> () = env.text;
-
-
 // https://wasm4.org/docs/reference/memory
+
+// ┌───────────────────────────────────────────────────────────────────────────┐
+// │                                                                           │
+// │ Memory Addresses                                                          │
+// │                                                                           │
+// └───────────────────────────────────────────────────────────────────────────┘
 
 PALETTE : mutable i32 = 0x04;
 DRAW_COLORS : mutable i32 = 0x14;
-
 GAMEPAD1 : i32 = 0x16;
 GAMEPAD2 : i32 = 0x17;
 GAMEPAD3 : i32 = 0x18;
@@ -64,3 +24,112 @@ BUTTON_LEFT : i32 = 16;
 BUTTON_RIGHT : i32 = 32;
 BUTTON_UP : i32 = 64;
 BUTTON_DOWN : i32 = 128;
+
+MOUSE_LEFT : i32 = 1;
+MOUSE_RIGHT : i32 = 2;
+MOUSE_MIDDLE : i32 = 4;
+
+// https://wasm4.org/docs/reference/functions
+
+// ┌───────────────────────────────────────────────────────────────────────────┐
+// │                                                                           │
+// │ Drawing Functions                                                         │
+// │                                                                           │
+// └───────────────────────────────────────────────────────────────────────────┘
+
+// Copies pixels to the framebuffer.
+// blit(spritePtr, x, y, width, height, flags)
+// 	spritePtr: Pointer to raw pixel data stored in either 1BPP or 2BPP format.
+// 	x: X position in the destination framebuffer.
+// 	y: Y position in the destination framebuffer.
+// 	width: Width of the sprite.
+// 	height: Height of the sprite.
+// 	flags: Flags that modify behavior
+import blit : (i32, i32, i32, i32, i32, i32) -> () = env.blit;
+
+// Copies a subregion within a larger sprite atlas to the framebuffer. Same as blit, but with 3 additional parameters.
+// blitSub(spritePtr, x, y, width, height, srcX, srcY, stride, flags)
+// 	srcX: Source X position of the sprite region.
+// 	srcY: Source Y position of the sprite region.
+// 	stride: Total width of the overall sprite atlas. This is typically larger than width.
+import blit_sub : (i32, i32, i32, i32, i32, i32, i32, i32, i32) -> () = env.blitSub;
+
+BLIT_2BPP : i32 = 1;
+BLIT_1BPP : i32 = 0;
+BLIT_FLIP_X : i32 = 2;
+BLIT_FLIP_Y : i32 = 4;
+BLIT_ROTATE : i32 = 8;
+
+// Draws a line between two points.
+// line(x1, y1, x2, y2)
+import line : (i32, i32, i32, i32) -> () = env.line;
+
+// Draws a horizontal line between (x, y) and (x + len - 1, y).
+// hline(x, y, len)
+import hline : (i32, i32, i32) -> () = env.hline;
+
+// Draws a vertical line between (x, y) and (x, y + len - 1).
+// vline(x, y, len)
+import vline : (i32, i32, i32) -> () = env.vline;
+
+// Draws an oval (or circle).
+// oval(x, y, width, height)
+import oval : (i32, i32, i32, i32) -> () = env.oval;
+
+// Draws a rectangle.
+// rect(x, y, width, height)
+import rect : (i32, i32, i32, i32) -> () = env.rect;
+
+// Draws text using the built-in system font. The string may contain new-line (\n) characters.
+// The font is 8x8 pixels per character.
+// text(str, x, y)
+import text : (i32, i32, i32) -> () = env.text;
+
+// ┌───────────────────────────────────────────────────────────────────────────┐
+// │                                                                           │
+// │ Sound Functions                                                           │
+// │                                                                           │
+// └───────────────────────────────────────────────────────────────────────────┘
+
+// Plays a sound tone.
+// tone(frequency, duration, volume, flags)
+// 	frequency: Wave frequency in hertz.
+// 	duration: Duration of the tone in frames (1/60th of a second), up to 255 frames.
+// 	volume: Volume of the sustain and attack durations, between 0 and 100.
+// 	flags: Flags that modify behavior
+import tone : (i32, i32, i32, i32) -> () = env.tone;
+
+TONE_PULSE1 : i32 = 0;
+TONE_PULSE2 : i32 = 1;
+TONE_TRIANGLE : i32 = 2;
+TONE_NOISE : i32 = 3;
+TONE_MODE1 : i32 = 0;
+TONE_MODE2 : i32 = 4;
+TONE_MODE3 : i32 = 8;
+TONE_MODE4 : i32 = 12;
+
+// ┌───────────────────────────────────────────────────────────────────────────┐
+// │                                                                           │
+// │ Storage Functions                                                         │
+// │                                                                           │
+// └───────────────────────────────────────────────────────────────────────────┘
+
+// Reads up to size bytes from persistent storage into the pointer destPtr.
+// Returns the number of bytes read, which may be less than size.
+// diskr(destPtr, size)
+import diskr : (i32, i32) -> () = env.diskr;
+
+// Writes up to size bytes from the pointer srcPtr into persistent storage.
+// Any previously saved data on the disk is replaced.
+// Returns the number of bytes written, which may be less than size.
+// diskw(srcPtr, size)
+import diskw : (i32, i32) -> () = env.diskw;
+
+// Prints a message to the debug console.
+// trace(str)
+import trace : (i32) -> () = env.trace;
+
+// Prints a message to the debug console.
+// C/C++ only, works like printf
+// tracef(fmt, stackPtr)
+import tracef : (i32, i32) -> () = env.tracef;
