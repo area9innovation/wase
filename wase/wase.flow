@@ -2,6 +2,7 @@ import wase/parse;
 import tools/dsl/dsl_include;
 import wase/type;
 import wase/compile;
+import wase/dce;
 import wase/pretty_wase;
 import formats/wasm/wasm_encode;
 
@@ -20,9 +21,14 @@ compileWase2File(includes, filename : string, code : string) -> Promise<int, str
 			println(prettyDsl(typed));
 		}
 
-		wase = dsl2wase(\node, error -> {
+		wase0 = dsl2wase(\node, error -> {
 			println(filename + ": " + error)
 		}, typed);
+
+		// Dead code optimization
+		dce = getUrlParameterDef("dce", "1");
+		wase = if (dce == "0") wase0 else performDCE(wase0, dce);
+
 		if (isUrlParameterTrue("debug-wase")) {
 			println("\nAs wase:");
 			println(prettyWase(wase));
@@ -105,4 +111,8 @@ printWaseHelp() -> void {
 	println("  test=1         Compiles all test cases in the tests/ folder");
 	println("  debug-type=1   Output the resulting typed AST");
 	println("  debug-wase=1   Output the internal intermediate WASE representation");
+	println("  dce=1          Perform a dead code optimization (if on by default)");
+	println("  dce=0          Skip a dead code optimization");
+	println("  dce=id1,id2,.. Perform a dead code optimization with a list of given ids preserved");
+	println("  dce-verbose=1  Show dead toplevels");
 }
