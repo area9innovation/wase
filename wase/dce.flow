@@ -1,0 +1,181 @@
+import ds/set;
+import net/url_parameter;
+import wase/wase_types;
+
+export {
+	// Dead code optimization: remove toplevel functions, not reacheable from the leafs (default is '_start')
+	performDCE(code : Wase, dce_param : string) -> Wase;
+}
+
+AccessibleAcc(
+	accessible : Set<string>,
+	visited : Set<string>
+);
+
+performDCE(w : Wase, dce_param : string) -> Wase {
+	toplevels = waseToplevels(w, makeTree());
+	if (dce_param == "1" && !containsKeyTree(toplevels, "_start")) {
+		// In case we don't have a default leaf id '_start' - give up.
+		w;
+	} else {
+		leafs = if (dce_param == "1") ["_start"] else map(strSplit(dce_param, ","), trim);
+		accessible_ids = fold(leafs, AccessibleAcc(buildSet(leafs), makeSet()), \acc, id ->
+			switch (lookupTree(toplevels, id)) {
+				Some(w1): accessibleWaseIds(w1, toplevels, acc);
+				None(): {
+					fail("Id: " + id + " is not found during collecting accessible Ids");
+					acc;
+				}
+			}
+		).accessible;
+		dead = differenceSets(buildSet(getTreeKeys(toplevels)), accessible_ids);
+		if (isUrlParameterTrue("dce-verbose")) {
+			println("Dead toplevels: " + strGlue(set2array(dead), ", "));
+		}
+		waseRemoveToplevels(w, dead);
+	}
+}
+
+// Collect Wase toplevels
+waseToplevels(w : Wase, acc : Tree<string, Wase>) -> Tree<string, Wase> {
+	switch (w) {
+		WaseImportFunction(id, module, name, type, scope):
+			waseToplevels(scope, acc);
+		WaseImportGlobal(id, module, name, type, isMutable, scope):
+			waseToplevels(scope, acc);
+		WaseImportMemory(module, name, minimumPages, maximumPages, scope):
+			waseToplevels(scope, acc);
+		WaseImportTable(id, module, name, refType, minimumPages, maximumPages, scope):
+			waseToplevels(scope, acc);
+		WaseMemory(minimumPages, maximumPages, exportId, scope):
+			waseToplevels(scope, acc);
+		WaseGlobal(id, exportId, type, isMutable, init, scope):
+			waseToplevels(scope, setTree(acc, id, w));
+		WaseFunction(id, exportId, start, type, args, code, scope):
+			waseToplevels(scope, setTree(acc, id, w));
+		WaseData(id, offset, bytes, scope):
+			waseToplevels(scope, setTree(acc, id, w));
+		WaseEmpty(): acc;
+	}
+}
+
+waseId(w : Wase) -> string {
+	switch (w) {
+		WaseImportFunction(id,__,__,__,__): id;
+		WaseImportGlobal(id,__,__,__,__,__): id;
+		WaseImportMemory(__,__,__,__,__): "";
+		WaseImportTable(id,__,__,__,__,__,__): id;
+		WaseMemory(__,__,__,__): "";
+		WaseGlobal(id,__,__,__,__,__): id;
+		WaseFunction(id,__,__,__,__,__,__): id;
+		WaseData(id,__,__,__): id;
+		WaseEmpty(): "";
+	}
+}
+
+// Collect all ids, accessible from a give Wase item
+accessibleWaseIds(w : Wase, toplevels : Tree<string, Wase>, acc0 : AccessibleAcc) -> AccessibleAcc {
+	w_id = waseId(w);
+	if (containsSet(acc0.visited, w_id)) acc0 else {
+		acc = AccessibleAcc(acc0 with visited = insertSet(acc0.visited, w_id));
+		switch (w) {
+			WaseImportFunction(id, module, name, type, scope):
+				accessibleWaseIds(scope, toplevels, acc);
+			WaseImportGlobal(id, module, name, type, isMutable, scope):
+				accessibleWaseIds(scope, toplevels, acc);
+			WaseImportMemory(module, name, minimumPages, maximumPages, scope):
+				accessibleWaseIds(scope, toplevels, acc);
+			WaseImportTable(id, module, name, refType, minimumPages, maximumPages, scope):
+				accessibleWaseIds(scope, toplevels, acc);
+			WaseMemory(minimumPages, maximumPages, exportId, scope):
+				accessibleWaseIds(scope, toplevels, acc);
+			WaseGlobal(id, exportId, type, isMutable, init, scope):
+				accessibleWaseIds(scope, toplevels, acc);
+			WaseFunction(id, exportId, start, type, args, code, scope):
+				accessibleWaseIds(scope, toplevels, accessibleWaseInstructionsIds(acc, toplevels, code.instructions));
+			WaseData(id, offset, bytes, scope):
+				accessibleWaseIds(scope, toplevels, accessibleWaseInstructionsIds(acc, toplevels, offset.instructions));
+			WaseEmpty(): acc;
+		}
+	}
+}
+
+accessibleWaseInstructionsIds(acc : AccessibleAcc, toplevels : Tree<string, Wase>, instructions : [WaseInstruction]) -> AccessibleAcc {
+	fold(instructions, acc, \ac, i -> accessibleWaseInstructionIds(ac, toplevels, i));
+}
+
+accessibleWaseInstructionIds(acc : AccessibleAcc, toplevels : Tree<string, Wase>, i : WaseInstruction) -> AccessibleAcc {
+	resolve = \id -> {
+		acc1 = AccessibleAcc(acc with accessible = insertSet(acc.accessible, id));
+		switch (lookupTree(toplevels, id)) {
+			Some(w): accessibleWaseIds(w, toplevels, acc1);
+			None(): acc1;
+		}
+	}
+	switch (i) {
+		WasmInstruction(): acc;
+		WaseGet(id): resolve(id);
+		WaseSet(id): resolve(id)
+		WaseTee(id): resolve(id);
+		WaseLet(id, type): acc;
+		WaseCall(fn): accessibleWaseInstructionIds(acc, toplevels, fn);
+		WaseBlock(__, instructions): accessibleWaseInstructionsIds(acc, toplevels, instructions);
+		WaseLoop(__, instructions): accessibleWaseInstructionsIds(acc, toplevels, instructions);
+		WaseIfElse(__, then, else_): accessibleWaseInstructionsIds(acc, toplevels, concat(then, else_));
+		WaseIf(__, then): accessibleWaseInstructionsIds(acc, toplevels, then);
+		WaseRefFunc(id):   resolve(id);
+		WaseTableGrow(id): resolve(id);
+		WaseTableSize(id): resolve(id);
+		WaseTableCopy(id1, id2): acc;
+		WaseTableFill(id): resolve(id);
+		WaseCallIndirect(__, ti): resolve(ti);
+		WaseFunctionIndex(id): resolve(id);
+	}
+}
+
+// Remove a given toplevels from a given Wase item.
+// Do not touch imports and memory
+waseRemoveToplevels(w : Wase, to_remove : Set<string>) -> Wase {
+	switch (w) {
+		WaseImportFunction(id, module, name, type, scope): {
+			WaseImportFunction(w with scope = waseRemoveToplevels(scope, to_remove));
+		}
+		WaseImportGlobal(id, module, name, type, isMutable, scope): {
+			WaseImportGlobal(w with scope = waseRemoveToplevels(scope, to_remove));
+		}
+		WaseImportMemory(module, name, minimumPages, maximumPages, scope): {
+			WaseImportMemory(w with scope = waseRemoveToplevels(scope, to_remove));
+		}
+		WaseImportTable(id, module, name, refType, minimumPages, maximumPages, scope): {
+			WaseImportTable(w with scope = waseRemoveToplevels(scope, to_remove));
+		}
+		WaseMemory(minimumPages, maximumPages, exportId, scope): {
+			WaseMemory(w with scope = waseRemoveToplevels(scope, to_remove));
+		}
+		WaseGlobal(id, exportId, type, isMutable, init, scope): {
+			scope1 = waseRemoveToplevels(scope, to_remove);
+			if (containsSet(to_remove, id)) {
+				scope1;
+			} else {
+				WaseGlobal(w with scope = scope1);
+			}
+		}
+		WaseFunction(id, exportId, start, type, args, code, scope): {
+			scope1 = waseRemoveToplevels(scope, to_remove);
+			if (containsSet(to_remove, id)) {
+				scope1;
+			} else {
+				WaseFunction(w with scope = scope1);
+			}
+		}
+		WaseData(id, offset, bytes, scope): {
+			scope1 = waseRemoveToplevels(scope, to_remove);
+			if (containsSet(to_remove, id)) {
+				scope1;
+			} else {
+				WaseData(w with scope = scope1);
+			}
+		}
+		WaseEmpty(): w;
+	}
+}
