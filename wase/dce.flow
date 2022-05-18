@@ -141,12 +141,11 @@ accessibleWaseInstructionIds(acc : AccessibleAcc, toplevels : Tree<string, Wase>
 }
 
 // Remove a given toplevels from a given Wase item.
-// Do not touch imports and memory
+// Do not touch memory
 waseRemoveToplevels(w : Wase, to_remove : Set<string>) -> Wase {
 	switch (w) {
 		// Imported section
 		WaseImportGlobal(id, module, name, type, isMutable, scope): {
-			//WaseImportGlobal(w with scope = waseRemoveToplevels(scope, to_remove));
 			scope1 = waseRemoveToplevels(scope, to_remove);
 			if (containsSet(to_remove, id)) {
 				scope1;
@@ -155,7 +154,6 @@ waseRemoveToplevels(w : Wase, to_remove : Set<string>) -> Wase {
 			}
 		}
 		WaseImportFunction(id, module, name, type, scope): {
-			//WaseImportFunction(w with scope = waseRemoveToplevels(scope, to_remove));
 			scope1 = waseRemoveToplevels(scope, to_remove);
 			if (containsSet(to_remove, id)) {
 				scope1;
@@ -164,7 +162,6 @@ waseRemoveToplevels(w : Wase, to_remove : Set<string>) -> Wase {
 			}
 		}
 		WaseImportTable(id, module, name, refType, minimumPages, maximumPages, scope): {
-			//WaseImportTable(w with scope = waseRemoveToplevels(scope, to_remove));
 			scope1 = waseRemoveToplevels(scope, to_remove);
 			if (containsSet(to_remove, id)) {
 				scope1;
