@@ -338,7 +338,10 @@ compileWase(context : WaseContext, w : Wase) -> void {
 				instr = offset.instructions[0];
 				address = switch (instr : WaseInstruction) {
 					WasmI32Const(n): instr;
-					default: WasmI32Const(0)
+					default: {
+						println("Data offset can only be an integer constant");
+						WasmI32Const(0)
+					}
 				}
 				context.get := setTree(^(context.get), id, address);
 			}
