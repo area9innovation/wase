@@ -335,6 +335,12 @@ compileWase(context : WaseContext, w : Wase) -> void {
 				off = waseExpr2wasm(context, offset);
 				// TODO: Bind the name to the address
 				context.data := arrayPush(^(context.data), WasmData0(off, bytes));
+				instr = offset.instructions[0];
+				address = switch (instr : WaseInstruction) {
+					WasmI32Const(n): instr;
+					default: WasmI32Const(0)
+				}
+				context.get := setTree(^(context.get), id, address);
 			}
 			compileWase(context, scope)
 		}
