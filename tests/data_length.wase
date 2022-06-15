@@ -1,0 +1,11 @@
+export memory 1;
+
+data foo = "foo" offset 32;
+data bar, size = "bar" offset 64;
+
+export _start() -> () {
+	foo;
+	bar;
+	size;
+	{}
+}

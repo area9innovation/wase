@@ -54,7 +54,7 @@ waseToplevels(w : Wase, acc : Tree<string, Wase>) -> Tree<string, Wase> {
 			waseToplevels(scope, setTree(acc, id, w));
 		WaseFunction(id, exportId, start, type, args, code, scope):
 			waseToplevels(scope, setTree(acc, id, w));
-		WaseData(id, offset, bytes, scope):
+		WaseData(id, size, offset, bytes, scope):
 			waseToplevels(scope, setTree(acc, id, w));
 		WaseMemory(minimumPages, maximumPages, exportId, scope):
 			waseToplevels(scope, acc);
@@ -72,7 +72,7 @@ waseId(w : Wase) -> string {
 		WaseMemory(__,__,__,__): "";
 		WaseGlobal(id,__,__,__,__,__): id;
 		WaseFunction(id,__,__,__,__,__,__): id;
-		WaseData(id,__,__,__): id;
+		WaseData(id,__,__,__,__): id;
 		WaseEmpty(): "";
 	}
 }
@@ -98,7 +98,7 @@ accessibleWaseIds(w : Wase, toplevels : Tree<string, Wase>, acc0 : AccessibleAcc
 				accessibleWaseIds(scope, toplevels, acc);
 			WaseFunction(id, exportId, start, type, args, code, scope):
 				accessibleWaseIds(scope, toplevels, accessibleWaseInstructionsIds(acc, toplevels, code.instructions));
-			WaseData(id, offset, bytes, scope):
+			WaseData(id, size, offset, bytes, scope):
 				accessibleWaseIds(scope, toplevels, accessibleWaseInstructionsIds(acc, toplevels, offset.instructions));
 			WaseMemory(minimumPages, maximumPages, exportId, scope):
 				accessibleWaseIds(scope, toplevels, acc);
@@ -190,7 +190,7 @@ waseRemoveToplevels(w : Wase, to_remove : Set<string>) -> Wase {
 				WaseFunction(w with scope = scope1);
 			}
 		}
-		WaseData(id, offset, bytes, scope): {
+		WaseData(id, size, offset, bytes, scope): {
 			scope1 = waseRemoveToplevels(scope, to_remove);
 			if (containsSet(to_remove, id)) {
 				scope1;

@@ -45,7 +45,7 @@ export {
 
 	// Store binary data in a module, which can be initialized into memory.
 	// The id will be bound to the address of the data
-	WaseData(id : string, offset : WaseExpr, bytes : [int], scope : Wase);
+	WaseData(id : string, size : string, offset : WaseExpr, bytes : [int], scope : Wase);
 
 	WaseExpr(instructions : [WaseInstruction]);
 		WaseInstruction ::= WasmInstruction, WaseGet, WaseSet, WaseTee, WaseLet, WaseCall, 
