@@ -167,7 +167,7 @@ reorderWase(acc : WaseReorder, w : Wase) -> WaseReorder {
 		WaseMemory(minimumPages, maximumPages, exportid, scope): im(scope);
 		WaseGlobal(id, exportid, type, isMutable, init, scope): re(scope);
 		WaseFunction(id, exportid, start, type, args, code, scope): re(scope);
-		WaseData(id, offset, bytes, scope): im(scope);
+		WaseData(id, size, offset, bytes, scope): im(scope);
 		WaseEmpty(): acc;
 	}
 }
@@ -200,7 +200,7 @@ replaceWaseScope(w : Wase, newScope : Wase) -> Wase {
 		WaseMemory(minimumPages, maximumPages, exportid, scope): WaseMemory(w with scope = newScope);
 		WaseGlobal(id, exportid, type, isMutable, init, scope): WaseGlobal(w with scope = newScope);
 		WaseFunction(id, exportid, start, type, args, code, scope): WaseFunction(w with scope= newScope);
-		WaseData(id, offset, bytes, scope): WaseData(w with scope = newScope);
+		WaseData(id, size, offset, bytes, scope): WaseData(w with scope = newScope);
 		WaseEmpty(): w;
 	}
 }
@@ -330,10 +330,9 @@ compileWase(context : WaseContext, w : Wase) -> void {
 
 			compileWase(context, scope)
 		}
-		WaseData(id, offset, bytes, scope): {
+		WaseData(id, size, offset, bytes, scope): {
 			if (^(context.deep)) {
 				off = waseExpr2wasm(context, offset);
-				// TODO: Bind the name to the address
 				context.data := arrayPush(^(context.data), WasmData0(off, bytes));
 				instr = offset.instructions[0];
 				address = switch (instr : WaseInstruction) {
@@ -344,6 +343,7 @@ compileWase(context : WaseContext, w : Wase) -> void {
 					}
 				}
 				context.get := setTree(^(context.get), id, address);
+				context.get := setTree(^(context.get), size, WasmI32Const(length(bytes)));
 			}
 			compileWase(context, scope)
 		}

@@ -219,12 +219,18 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 				getChildType(3);
 			} else if (name == "data") {
 				getChildType(0);
-				getChildType(1);
 				fname = getDslString(args[0]);
 				acc.env := setTree(^(acc.env), fname, DslString("i32"));
 
+				gname = getDslString(args[1]);
+				if (gname != "") {
+					getChildType(1);
+					acc.env := setTree(^(acc.env), gname, DslString("i32"));
+				}
+
 				getChildType(2);
 				getChildType(3);
+				getChildType(4);
 
 			} else if (name == "wase_empty") {
 				DslList(makeList());
