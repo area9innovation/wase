@@ -1,0 +1,211 @@
+import wase/wase_types;
+import text/blueprint;
+import string_utils;
+
+export {
+	prettyWaseAst(w : WaseAst) -> string;
+}
+
+prettyWaseAst(w : WaseAst) -> string {
+	pretty_bin = \a0, a1, op -> "(" + prettyWaseAst(a0) + " " + op + " " + prettyWaseAst(a1) + ")";
+	switch (w) {
+		WaseAstBool(value): b2s(value);
+		WaseAstInt(value): i2s(value);
+		WaseAstDouble(value): d2s(value);
+		WaseAstString(value): value;
+		WaseAstList(value): 
+			//DslList(mapList(value, waseAst2DslAst));
+			superglue(list2array(value), prettyWaseAst, " ");
+		WeAdd(a0, a1): pretty_bin(a0, a1, "+");
+		WeAnd(a0, a1): pretty_bin(a0, a1, "&&");
+		WeBlock(as): "block " + prettyWaseAst(as);
+			//DslNode("block", [waseAst2DslAst(a0)], 0);
+		WeBrace(as):
+			"{\n" + strIndent(superglue(as, prettyWaseAst, ";\n")) + "\n}";
+			//DslNode("brace", [DslList(fold(a0, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc)))], 0);
+		WeCall(f, as): 
+			prettyWaseAst(f) + "(" + strIndent(superglue(as, prettyWaseAst, ", ")) + ")";
+			//DslNode("call", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+		WeData(id, size, data, offset, next): { 
+			//DslNode("data", [DslString(a0), waseAst2DslAst(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
+			size_s = if (size.id == "") "" else " ," + size.id;
+			offset_s = prettyWaseAst(offset);
+			"data " + id + size_s + " = " +
+			superglue(data, prettyWaseAst, ", ") + 
+			(if (offset_s == "0") "" else " offset " + offset_s) + ";\n" + prettyWaseAst(next);
+		}
+		WeDiv(a0, a1): pretty_bin(a0, a1, "/");
+		WeDouble(a0): d2s(a0);
+		WeEqual(a0, a1): pretty_bin(a0, a1, "==");
+		WeFntype(types, typelist): 
+			//DslNode("fntype", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			// fntype = "(" ws types ")" ws "->" ws typelist $"fntype_2";
+			"(" + prettyWaseAst(types) + ") -> " + prettyWaseAst(typelist);
+		WeFunction(id, _export, args, type, ex, next): {
+			//DslNode("function", [DslString(a0), waseAst2DslAst(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
+
+			export_s = prettyWaseAst(_export);
+			(if (export_s == "0") "" else export_s + " ") + id +
+			"(" + superglue(args, prettyWaseAst, ", ") + ") -> " + prettyWaseAst(type) + "\n" + 
+			prettyWaseAst(ex) + "\n" + prettyWaseAst(next);
+		}
+		WeGlobal(id, _export, type, _mutable, ex, next): {
+			//DslNode("global", [DslString(a0), waseAst2DslAst(a1), waseAst2DslAst(a2), DslInt(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
+			export_s = prettyWaseAst(_export);
+			(if (export_s == "0") "" else export_s + " ") + id + 
+			(if (_mutable == 1) "mutable " else "") + ": " + prettyWaseAst(type) + " = " + prettyWaseAst(ex) + "\n" + 
+			prettyWaseAst(next);
+		}
+		WeGreater(a0, a1): 
+			//DslNode("greater", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			pretty_bin(a0, a1, ">");
+		WeGreaterEqual(a0, a1): 
+			//DslNode("greater_equal", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			pretty_bin(a0, a1, ">=");
+		WeHex32(h): 
+			//DslNode("hex32", [DslString(a0)], 0);
+			"0x" + h;
+		WeHex64(h): 
+			//DslNode("hex64", [DslString(a0)], 0);
+			"0xw" + h;
+		WeHexf32(h): 
+			//DslNode("hexf32", [DslString(a0)], 0);
+			"0xn" + h;
+		WeHexf64(h): 
+			//DslNode("hexf64", [DslString(a0)], 0);
+			"0xh" + h;
+		WeI64(i): 
+			//DslNode("i64", [DslString(a0)], 0);
+			i + "w";
+		WeIdtype(id, type): 
+			//DslNode("idtype", [DslString(a0), waseAst2DslAst(a1)], 0);
+			id + " : " + prettyWaseAst(type);
+		WeIf(cond, ex): 
+			//DslNode("if", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			"if " + prettyWaseAst(cond) + prettyWaseAst(ex);
+		WeIfelse(cond, pos, neg): 
+			//DslNode("ifelse", [waseAst2DslAst(a0), waseAst2DslAst(a1), waseAst2DslAst(a2)], 0);
+			"if " + prettyWaseAst(cond) + prettyWaseAst(pos) + " else " + prettyWaseAst(neg);
+		WeImportFun(id1, fntype, id2, id3, next): 
+			//DslNode("import_fun", [DslString(a0), waseAst2DslAst(a1), DslString(a2), DslString(a3), waseAst2DslAst(a4)], 0);
+			// "import" ws id ":" ws fntype "=" ws id "." id ";" ws decl $"import_fun_5";
+			"import " + id1 + " : " + prettyWaseAst(fntype) + " = " + id2 + "." + id3 + ";\n" + prettyWaseAst(next);
+
+		WeImportGlobal(id1, type, mut, id2, id3, next): 
+			//DslNode("import_global", [DslString(a0), waseAst2DslAst(a1), DslInt(a2), DslString(a3), DslString(a4), waseAst2DslAst(a5)], 0);
+			"import " + id1 + " : " + (if (mut == 1) "mutable " else "") +
+			prettyWaseAst(type) + " = " + id2 + "." + id3 + ";\n" + prettyWaseAst(next);
+		WeImportMemory(i0, i1, id1, id2, next): 
+			//DslNode("import_memory", [DslInt(a0), DslInt(a1), DslString(a2), DslString(a3), waseAst2DslAst(a4)], 0);
+			//"import" ws "memory" ws int (int | $"nil") "=" ws id "." id ";" ws decl $"import_memory_5"
+			"import memory " + i2s(i0) + (if (i1 == 0) "" else i2s(i1) + " ") + " = " +
+			id1 + "." + id2 + ";\n" + prettyWaseAst(next);
+		WeImportTable(id1, reftype, i0, i1, id2, id3, next): 
+			//DslNode("import_table", [DslString(a0), waseAst2DslAst(a1), DslInt(a2), DslInt(a3), DslString(a4), DslString(a5), waseAst2DslAst(a6)], 0);
+			// "import" ws id ":" ws "table" ws "<" ws reftype ">" ws "(" ws int int_def ")" ws "=" ws id "." id ";" ws decl $"import_table_7"
+			"import " + id1 + " : table <" + prettyWaseAst(reftype) + ">(" + i2s(i0) + 
+			(if (i1 == 0) "" else " " + i2s(i1)) + ">" +
+			" = " + id2 + "." + id3 + ";\n" + prettyWaseAst(next);
+		WeInt(i): i2s(i);
+		WeIsNull(ex): 
+			//DslNode("is_null", [waseAst2DslAst(a0)], 0);
+			// exp "is" ws "null" ws $"is_null_1"
+			prettyWaseAst(ex) + " is null";
+		WeLess(a0, a1): 
+			//DslNode("less", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			pretty_bin(a0, a1, "<");
+		WeLessEqual(a0, a1): 
+			//DslNode("less_equal", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			pretty_bin(a0, a1, "<=");
+		WeLet(id, i, type, ex, next): {
+			//DslNode("let", [DslString(a0), DslInt(a1), waseAst2DslAst(a2), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
+			// WeLet(id : string, i : int, opttype : WeType, exp : WeExp, brace : WeBrace);
+			// id $$"0" $"s2i" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
+			type_s = prettyWaseAst(type);
+			(if (i == 1) "var " else "") + id + (if (type_s == "auto") "" else " : " + type_s) + " = " + prettyWaseAst(ex) + ";\n" + prettyWaseAst(next);
+		}
+		WeLettuple(id, i, type, ex, next): 
+			//DslNode("lettuple", [DslString(a0), DslInt(a1), waseAst2DslAst(a2), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
+			id + " : " + prettyWaseAst(type) + " = " + prettyWaseAst(ex) + ";\n" + prettyWaseAst(next);
+		WeLoop(e): 
+			//DslNode("loop", [waseAst2DslAst(a0)], 0);
+			"loop " + prettyWaseAst(e);
+		WeMemory(_export, i0, i1, next): {
+			//DslNode("memory", [waseAst2DslAst(a0), DslInt(a1), DslInt(a2), waseAst2DslAst(a3)], 0);
+			//  optexport "memory" ws int int_def ";" ws decl $"memory_4";
+			export_s = prettyWaseAst(_export);
+			(if (export_s == "0") "" else export_s + " ") + "memory " + i2s(i0) + 
+			(if (i1 == 0) "" else " " + i2s(i1)) + ";\n" + prettyWaseAst(next);
+		}
+		WeMod(a0, a1): 
+			//DslNode("mod", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			pretty_bin(a0, a1, "%");
+		WeMul(a0, a1): 
+			//DslNode("mul", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			pretty_bin(a0, a1, "*");
+		WeNegate(a0): 
+			//DslNode("negate", [waseAst2DslAst(a0)], 0);
+			"-" + prettyWaseAst(a0);
+		WeNotEqual(a0, a1): 
+			//DslNode("not_equal", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			pretty_bin(a0, a1, "!=");
+		WeOr(a0, a1): 
+			//DslNode("or", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			pretty_bin(a0, a1, "||");
+		WeReturn(a0): 
+			//DslNode("return", [waseAst2DslAst(a0)], 0);
+			"return " + prettyWaseAst(a0);
+		WeSet(id, v): 
+			//DslNode("set", [DslString(a0), waseAst2DslAst(a1)], 0);
+			id + " := " + prettyWaseAst(v);
+		WeString(s): 
+			//DslNode("string", [DslString(a0)], 0);
+			"\"" + escapeStr(s) + "\"";
+		WeSub(a0, a1): 
+			//DslNode("sub", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			pretty_bin(a0, a1, "-");
+		WeTee(id, v): 
+			//DslNode("tee", [DslString(a0), waseAst2DslAst(a1)], 0);
+			id + " ::= " + prettyWaseAst(v);
+		WeType(tp): 
+			//DslNode("type", [DslString(a0)], 0);
+			tp;
+		WeTypeannotation(ex, ts): 
+			//DslNode("typeannotation", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			//  exp ':' ws typelist $"typeannotation_2"
+			prettyWaseAst(ex) + " : (" + prettyWaseAst(ts) + ")";
+
+		WeTypes(ts): 
+			//DslNode("types", [DslList(fold(a0, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc)))], 0);
+			superglue(ts, prettyWaseAst, ", ");
+		WeVar(id): 
+			//DslNode("var", [DslString(a0)], 0);
+			id;
+		WeWaseEmpty(): 
+			//DslNode("wase_empty", [], 0);
+			"end";
+		WeWaseInclude(inc, next): 
+			//DslNode("wase_include", [DslString(a0), waseAst2DslAst(a1)], 0);
+			// "include" !letterOrDigit ws $(letterOrDigit+ ("/" letterOrDigit+)+) ws ";" ws decl $"wase_include_2";
+			"include " + inc + ";\n" + prettyWaseAst(next);
+		WeWasmOp(op, was, as): 
+			//DslNode("wasm_op", [DslString(a0), DslList(fold(a1, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a2)], 0);
+			// wasmop = $wasmid ws "<" ws wargs ">" ws "(" ws exps ")" ws $"wasm_op_3";
+			//	wargs = $"nil" warg $"cons"("," ws warg $"cons")* | $"nil";
+			//	warg = type | id $"string_1" | int $"int_1";
+			//
+			//	wasmid = 'a'-'z' wasmidpart* ("." wasmidpart+)?;
+			//	wasmidpart = 'a'-'z' | '0'-'9' | "_";
+
+			op + "<" + superglue(was, prettyWaseAst, ", ") + ">(" + superglue(as, prettyWaseAst, ", ") + ")";
+		WeXor(a0, a1): 
+			//DslNode("xor", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			pretty_bin(a0, a1, "^");
+		WeArray(exps): {
+			"[" + superglue(exps, prettyWaseAst, ", ") + "]";
+		}
+		WeZreturn(): {
+			"return";
+		}
+	}
+}
