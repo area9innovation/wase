@@ -1,97 +1,77 @@
-
-import formats/wasm/wasm_types;
+// Automatically generated from Gringo grammar
+import ds/list;
 
 export {
-	// This is an wrapper for Wasm to make it easier to produce a valid WASM module
-	Wase ::=  WaseImportFunction, WaseImportGlobal, WaseImportMemory, WaseImportTable,
-		WaseMemory, WaseGlobal, WaseFunction, WaseData, WaseEmpty;
+	// This is a monster type used when parsing
+	WaseAst ::= WaseAstList, WaseAstBool, WaseAstInt, WaseAstDouble, WaseAstString, WeAtom, WeDataOffset, WeDataValue, WeDecl, WeExp, WeImport, WeInstruction, WeOptexport, WeWarg, WeAdd, WeAnd, WeArray, WeBlock, WeBrace, WeCall, WeData, WeDiv, WeDouble, WeEqual, WeFntype, WeFunction, WeGlobal, WeGreater, WeGreaterEqual, WeHex32, WeHex64, WeHexf32, WeHexf64, WeI64, WeIdtype, WeIf, WeIfelse, WeImportFun, WeImportGlobal, WeImportMemory, WeImportTable, WeInt, WeIsNull, WeLess, WeLessEqual, WeLet, WeLettuple, WeLoop, WeMemory, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeReturn, WeSet, WeString, WeSub, WeTee, WeType, WeTypeannotation, WeTypes, WeVar, WeWaseEmpty, WeWaseInclude, WeWasmOp, WeXor, WeZreturn;
 
-	// This imported function will be bound to the id in the compilation environment
-	// and can be referenced using WaseGet(id)
-	WaseImportFunction(id : string, module : string, name : string, type : WasmFuncType,
-		scope : Wase);
+	WaseAstList(value : List<WaseAst>);
+	WaseAstBool(value : bool);
+	WaseAstInt(value : int);
+	WaseAstDouble(value : double);
+	WaseAstString(value : string);
 
-	// This imported global will be bound to the id in the compilation environment
-	// and can be referenced using WaseGet(id)
-	WaseImportGlobal(id : string, module : string, name : string, type : WasmValType, isMutable : bool,
-		scope : Wase);
-
-	// Import memory from the host
-	WaseImportMemory(module : string, name : string, minimumPages : int, maximumPages : int,
-		scope : Wase);
-
-	// Import a table from the host. The table can be referenced using WaseGet(id)
-	WaseImportTable(id : string, module : string, name : string, refType : WasmRefType, minimumPages : int, maximumPages : int,
-		scope : Wase);
-
-	// Declare our top-level memory. If exportid != "", we export this memory with that name
-	// If maximumPages == 0, it is unbounded
-	WaseMemory(minimumPages : int, maximumPages : int,
-		exportid : string,
-		scope : Wase);
-
-	// Declare a global. If exportid != "", we export this global with that name
-	// The index of this global will be bound to the id in the compilation environment
-	WaseGlobal(id : string, exportid : string, type : WasmValType, isMutable : bool, 
-		init : WaseExpr, scope : Wase);
-
-	// Declare a function. If exportId != "", we export this function with that name
-	// The index of this function will be bound to the id in the compilation environment.
-	// If start is true, this function will be "main" and called as the first
-	WaseFunction(id : string, exportid : string, start : bool, type : WasmFuncType, 
-		args : [WaseLocal], code : WaseExpr, scope : Wase);
-		// Should we extract these instead?
-		WaseLocal(name : string, type : WasmValType);
-
-	// Store binary data in a module, which can be initialized into memory.
-	// The id will be bound to the address of the data
-	WaseData(id : string, size : string, offset : WaseExpr, bytes : [int], scope : Wase);
-
-	WaseExpr(instructions : [WaseInstruction]);
-		WaseInstruction ::= WasmInstruction, WaseGet, WaseSet, WaseTee, WaseLet, WaseCall, 
-			WaseBlock, WaseLoop, WaseIfElse, WaseIf, WaseRefFunc,
-			WaseTableGrow, WaseTableSize, WaseTableCopy, WaseTableFill,
-			WaseCallIndirect, WaseFunctionIndex;
-
-			// Lookup in our compilation environment 
-			// Resolves locals, globals, ref func, tables ids into the corresponding "get" instruction
-			WaseGet(id : string);
-			// Resolves local, global, table ids into the corresponding "get" instruction
-			WaseSet(id : string);
-			// Resolves local ids to local.tee instruction
-			WaseTee(id : string);
-
-			// Introduce a new local variable
-			WaseLet(id : string, type : WasmValType);
-
-			// Reference to a given function
-			WaseRefFunc(id : string);
-
-			// Simple wrappers allowing Wase inside
-			WaseCall(fn : WaseInstruction);
-			WaseBlock(blockType : WaseBlockType, instructions : [WaseInstruction]);
-			WaseLoop(blockType : WaseBlockType, instructions : [WaseInstruction]);
-
-			WaseIfElse(blockType : WaseBlockType, then : [WaseInstruction], else_ : [WaseInstruction]);
-			WaseIf(blockType : WaseBlockType, then : [WaseInstruction]);
-
-			// Tables:
-			WaseTableGrow(id : string);
-			WaseTableSize(id : string);
-			WaseTableCopy(id1 : string, id2 : string);
-			WaseTableFill(id : string);
-
-			// Call indirect
-			WaseCallIndirect(funcType : WasmFuncType, tableId : string);
-
-			// Construct a function index as well as store in an elements table for call_indirect for this function
-			WaseFunctionIndex(id : string);
-
-			// Data:
-			// memory.init, data.drop
-
-	// OK, we convert the func type to an index for the WasmBlockType
-	WaseBlockType ::= WasmBlockType, WasmFuncType;
-
-	WaseEmpty();
+	WeAtom ::= WeArray, WeDouble, WeHex32, WeHex64, WeHexf32, WeHexf64, WeI64, WeIf, WeIfelse, WeInt, WeSet, WeTee, WeVar, WeInstruction;
+	WeDataOffset ::= WeInt, WeExp;
+	WeDataValue ::= WeDouble, WeInt, WeString;
+	WeDecl ::= WeData, WeFunction, WeGlobal, WeImport, WeMemory, WeWaseEmpty, WeWaseInclude;
+	WeExp ::= WeAdd, WeAnd, WeAtom, WeBrace, WeCall, WeDiv, WeEqual, WeGreater, WeGreaterEqual, WeIsNull, WeLess, WeLessEqual, WeLet, WeLettuple, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeSub, WeTypeannotation, WeWasmOp, WeXor;
+	WeImport ::= WeImportFun, WeImportGlobal, WeImportMemory, WeImportTable;
+	WeInstruction ::= WeBlock, WeLoop, WeReturn, WeZreturn;
+	WeOptexport ::= WeInt, WeString;
+	WeWarg ::= WeInt, WeString, WeType;
+	WeAdd(exp1 : WeExp, exp2 : WeExp);
+	WeAnd(exp1 : WeExp, exp2 : WeExp);
+	WeArray(exps : [WeExp]);
+	WeBlock(brace : WeBrace);
+	WeBrace(expsemi : [WeExp]);
+	WeCall(exp : WeExp, exps : [WeExp]);
+	WeData(id : string, data_size : WeString, data_list : [WeDataValue], data_offset : WeDataOffset, decl : WeDecl);
+	WeDiv(exp1 : WeExp, exp2 : WeExp);
+	WeDouble(double_0 : double);
+	WeEqual(exp1 : WeExp, exp2 : WeExp);
+	WeFntype(types : WeTypes, typelist : WeTypes);
+	WeFunction(id : string, optexport : WeOptexport, lambdaargs : [WeIdtype], typelist : WeTypes, exp : WeExp, decl : WeDecl);
+	WeGlobal(id : string, optexport : WeOptexport, type : WeType, optmutable : int, exp : WeExp, decl : WeDecl);
+	WeGreater(exp1 : WeExp, exp2 : WeExp);
+	WeGreaterEqual(exp1 : WeExp, exp2 : WeExp);
+	WeHex32(s : string);
+	WeHex64(s : string);
+	WeHexf32(s : string);
+	WeHexf64(s : string);
+	WeI64(s : string);
+	WeIdtype(id : string, type : WeType);
+	WeIf(exp1 : WeExp, exp2 : WeExp);
+	WeIfelse(exp1 : WeExp, exp2 : WeExp, exp3 : WeExp);
+	WeImportFun(id1 : string, fntype : WeFntype, id2 : string, id3 : string, decl : WeDecl);
+	WeImportGlobal(id1 : string, type : WeType, optmutable : int, id2 : string, id3 : string, decl : WeDecl);
+	WeImportMemory(int_0 : int, int_def : int, id1 : string, id2 : string, decl : WeDecl);
+	WeImportTable(id1 : string, reftype : WeType, int_0 : int, int_def : int, id2 : string, id3 : string, decl : WeDecl);
+	WeInt(int_0 : int);
+	WeIsNull(exp : WeExp);
+	WeLess(exp1 : WeExp, exp2 : WeExp);
+	WeLessEqual(exp1 : WeExp, exp2 : WeExp);
+	WeLet(id : string, i : int, opttype : WeType, exp : WeExp, brace : WeBrace);
+	WeLettuple(id : string, i : int, typelist : WeTypes, exp : WeExp, brace : WeBrace);
+	WeLoop(brace : WeBrace);
+	WeMemory(optexport : WeOptexport, int_0 : int, int_def : int, decl : WeDecl);
+	WeMod(exp1 : WeExp, exp2 : WeExp);
+	WeMul(exp1 : WeExp, exp2 : WeExp);
+	WeNegate(exp : WeExp);
+	WeNotEqual(exp1 : WeExp, exp2 : WeExp);
+	WeOr(exp1 : WeExp, exp2 : WeExp);
+	WeReturn(exp : WeExp);
+	WeSet(id : string, exp : WeExp);
+	WeString(id : string);
+	WeSub(exp1 : WeExp, exp2 : WeExp);
+	WeTee(id : string, exp : WeExp);
+	WeType(s : string);
+	WeTypeannotation(exp : WeExp, typelist : WeTypes);
+	WeTypes(types : [WeType]);
+	WeVar(id : string);
+	WeWaseEmpty();
+	WeWaseInclude(s : string, decl : WeDecl);
+	WeWasmOp(s : string, wargs : [WeWarg], exps : [WeExp]);
+	WeXor(exp1 : WeExp, exp2 : WeExp);
+	WeZreturn();
 }
