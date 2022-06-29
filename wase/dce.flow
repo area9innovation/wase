@@ -1,6 +1,6 @@
 import ds/set;
 import net/url_parameter;
-import wase/wase_types;
+import wase/wase_ast;
 
 export {
 	// Dead code optimization: remove toplevel functions, not reacheable from the leafs (default is '_start')
