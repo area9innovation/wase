@@ -8,36 +8,20 @@ import wase/dce;
 import wase/pretty_wase;
 import wase/pretty_wase_ast;
 import formats/wasm/wasm_encode;
-import formats/json/any2json;
 
 compileWase2File(includes, filename : string, code : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
 		println("\nCompiling '" + filename + "'");
-		program0 = parseWase(filename, code);
-
-		// parseWeDecl(code : string, onError : (string) -> void) -> WeDecl;
-		// waseAst2DslAst(w : WaseAst) -> DslAst;
-
-		prog1 = parseWeDecl(getFileContent(filename), \err -> println("Error: " + err));
-
-		program1 = waseAst2DslAst(prog1);
-
-		/*if (program != program1 && isUrlParameterTrue("test-generated-ast")) {
-			println("programms differ:\n" +
+		program = parseWase(filename, code);
+		if (isUrlParameterTrue("test-generated-ast")) {
+			prog1 = parseWeDecl(getFileContent(filename), \err -> println("Error: " + err));
+			program1 = waseAst2DslAst(prog1);
+			println("programms:\n" +
 				prettyWaseAst(prog1) + "\n" +
-				"\n------- PROGRAM -------------\n" + 
-				//json2stringFormatted(any2json(program)) + 
-				prettyDsl(program) +
-				"\n------- PROGRAM 1 ------------\n" + 
-				//json2stringFormatted(any2json(program1)) + 
-				prettyDsl(program1) +
-				"\n--------------------\n"
+				"\n------- DSL PROGRAM -------------\n" +
+				prettyDsl(program1) + "\n\n"
 			);
-			fail("FAIL");
-		}*/
-
-		program = if (isUrlParameterTrue("test-generated-ast")) program1 else program0;
-
+		}
 		include = DslInclude(includes, [".wase"], "wase_include", "wase_empty", \path, file, content -> {
 			parseWase(path, content);
 		}, ref makeSet());
