@@ -47,11 +47,11 @@ weDecl2wase(onError : (WaseAst, string) -> void, decl : WeDecl) -> Wase {
 			});
 			WaseData(id, size, weExp2waseExpr(onError, offset), bytes, weDecl2wase(onError, next));
 		}
-		WeFunction(id, _export, args, rettype, expr, next): {
+		WeFunction(id, _export, args, rettypes, expr, next): {
 			WaseFunction(id, _export, id == "main", 
 				WasmFuncType(
 					map(args, \arg -> weType2WaseType(onError, arg.type)),
-					map(rettype.types, \tp -> weType2WaseType(onError, tp))
+					map(rettypes, \tp -> weType2WaseType(onError, tp))
 				), 
 				map(args, \arg -> WaseLocal(arg.id, weType2WaseType(onError, arg.type))),
 				weExp2waseExpr(onError, expr), 
@@ -72,19 +72,34 @@ weDecl2wase(onError : (WaseAst, string) -> void, decl : WeDecl) -> Wase {
 				weDecl2wase(onError, next)
 			); 
 		}
-		WeImportGlobal(id, type, _mutable, id2, id3, next): {
-			WaseEmpty();
+		WeImportGlobal(id, type, is_mutable, module, name, next): {
+			WaseImportGlobal(id, module, name, 
+				weType2WaseType(onError, type), 
+				is_mutable == 1, 
+				weDecl2wase(onError, next)
+			);
 		}
-		WeImportMemory(i0, idef, i1, i2, next): {
-			WaseEmpty();
+		WeImportMemory(minPages, maxPages, module, name, next): {
+			WaseImportMemory(module, name, minPages, maxPages, 
+				weDecl2wase(onError, next)
+			);
 		}
-		WeImportTable(id, reftype, i0, idef, i1, i2, next): {
-			WaseEmpty();
+		WeImportTable(id, rt, minPages, maxPages, module, name, next): {
+			reftype = if (rt.s == "func") WasmFuncRef()
+			else if (rt.s == "extern") WasmExternRef()
+			else {
+				onError(decl, "Only support func or extern in import table");
+				WasmFuncRef();
+			};
+			WaseImportTable(id, module, name, reftype, minPages, maxPages, 
+				weDecl2wase(onError, next)
+			);
 		}
-		WeMemory(_export, i0, idef, next): {
-			WaseEmpty();
+		WeMemory(_export, min_pages, max_pages, next): {
+			WaseMemory(min_pages, max_pages, _export, weDecl2wase(onError, next));
 		}
 		WeWaseInclude(inc, next): {
+			// TODO: implement include in Wase
 			WaseEmpty();
 		}
 		WeWaseEmpty(): WaseEmpty();
@@ -114,11 +129,9 @@ weType2WaseType(onError : (WaseAst, string) -> void, t : WeType) -> WasmValType 
 	}
 }
 
-// WeFntype(types : WeTypes, typelist : WeTypes);
-
 weFnType2WasmFuncType(onError : (WaseAst, string) -> void, fntype : WeFnType) -> WasmFuncType {
 	WasmFuncType(
-		map(fntype.types.types, \t -> weType2WaseType(onError, t)),
-		map(fntype.type_list.types, \t -> weType2WaseType(onError, t)),
+		map(fntype.types, \t -> weType2WaseType(onError, t)),
+		map(fntype.typeList, \t -> weType2WaseType(onError, t)),
 	);
 }

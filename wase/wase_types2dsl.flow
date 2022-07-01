@@ -7,8 +7,8 @@ export {
 	waseAst2DslAst(w : WaseAst) -> DslAst;
 	dslAst2WaseAst(d : DslAst) -> WaseAst;
 	dslAst2WeAtom(d : DslAst) -> WeAtom;
-	dslAst2WeDataOffset(d : DslAst) -> WeDataOffset;
-	dslAst2WeDataValue(d : DslAst) -> WeDataValue;
+	dslAst2WeDataoffset(d : DslAst) -> WeDataoffset;
+	dslAst2WeDatavalue(d : DslAst) -> WeDatavalue;
 	dslAst2WeDecl(d : DslAst) -> WeDecl;
 	dslAst2WeExp(d : DslAst) -> WeExp;
 	dslAst2WeImport(d : DslAst) -> WeImport;
@@ -33,8 +33,8 @@ waseAst2DslAst(wal : WaseAst) -> DslAst {
 		WeDiv(a0, a1): DslNode("div", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 		WeDouble(a0): DslNode("double", [DslDouble(a0)], 0);
 		WeEqual(a0, a1): DslNode("equal", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
-		WeFnType(a0, a1): DslNode("fn_type", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
-		WeFunction(a0, a1, a2, a3, a4, a5): DslNode("function", [DslString(a0), DslString(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
+		WeFnType(a0, a1): DslNode("fn_type", [DslList(fold(a0, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), DslList(fold(a1, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc)))], 0);
+		WeFunction(a0, a1, a2, a3, a4, a5): DslNode("function", [DslString(a0), DslString(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), DslList(fold(a3, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
 		WeGlobal(a0, a1, a2, a3, a4, a5): DslNode("global", [DslString(a0), DslString(a1), waseAst2DslAst(a2), DslInt(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
 		WeGreater(a0, a1): DslNode("greater", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 		WeGreaterEqual(a0, a1): DslNode("greater_equal", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
@@ -55,7 +55,7 @@ waseAst2DslAst(wal : WaseAst) -> DslAst {
 		WeLess(a0, a1): DslNode("less", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 		WeLessEqual(a0, a1): DslNode("less_equal", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 		WeLet(a0, a1, a2, a3, a4): DslNode("let", [DslString(a0), DslInt(a1), waseAst2DslAst(a2), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
-		WeLettuple(a0, a1, a2, a3, a4): DslNode("lettuple", [DslString(a0), DslInt(a1), waseAst2DslAst(a2), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
+		WeLettuple(a0, a1, a2, a3, a4): DslNode("lettuple", [DslString(a0), DslInt(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
 		WeLoop(a0): DslNode("loop", [waseAst2DslAst(a0)], 0);
 		WeMemory(a0, a1, a2, a3): DslNode("memory", [DslString(a0), DslInt(a1), DslInt(a2), waseAst2DslAst(a3)], 0);
 		WeMod(a0, a1): DslNode("mod", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
@@ -69,8 +69,7 @@ waseAst2DslAst(wal : WaseAst) -> DslAst {
 		WeSub(a0, a1): DslNode("sub", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 		WeTee(a0, a1): DslNode("tee", [DslString(a0), waseAst2DslAst(a1)], 0);
 		WeType(a0): DslNode("type", [DslString(a0)], 0);
-		WeTypeannotation(a0, a1): DslNode("typeannotation", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
-		WeTypes(a0): DslNode("types", [DslList(fold(a0, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc)))], 0);
+		WeTypeAnnotation(a0, a1): DslNode("type_annotation", [waseAst2DslAst(a0), DslList(fold(a1, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc)))], 0);
 		WeVar(a0): DslNode("var", [DslString(a0)], 0);
 		WeWaseEmpty(): DslNode("wase_empty", [], 0);
 		WeWaseInclude(a0, a1): DslNode("wase_include", [DslString(a0), waseAst2DslAst(a1)], 0);
@@ -102,7 +101,7 @@ dslAst2WaseAst(d : DslAst) -> WaseAst {
 			} else if (name == "call") {
 				WeCall(dslAst2WeExp(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WeExp))(args[1]))
 			} else if (name == "data") {
-				WeData(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeDataValue))(args[2]), dslAst2WeDataOffset(args[3]), dslAst2WeDecl(args[4]))
+				WeData(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeDatavalue))(args[2]), dslAst2WeDataoffset(args[3]), dslAst2WeDecl(args[4]))
 			} else if (name == "div") {
 				WeDiv(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
 			} else if (name == "double") {
@@ -110,9 +109,9 @@ dslAst2WaseAst(d : DslAst) -> WaseAst {
 			} else if (name == "equal") {
 				WeEqual(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
 			} else if (name == "fn_type") {
-				WeFnType(dslAst2WeTypes(args[0]), dslAst2WeTypes(args[1]))
+				WeFnType((\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[1]))
 			} else if (name == "function") {
-				WeFunction(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeIdtype))(args[2]), dslAst2WeTypes(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
+				WeFunction(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeIdtype))(args[2]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
 			} else if (name == "global") {
 				WeGlobal(getDslString(args[0]), getDslString(args[1]), dslAst2WeType(args[2]), getDslInt(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
 			} else if (name == "greater") {
@@ -154,7 +153,7 @@ dslAst2WaseAst(d : DslAst) -> WaseAst {
 			} else if (name == "let") {
 				WeLet(getDslString(args[0]), getDslInt(args[1]), dslAst2WeType(args[2]), dslAst2WeExp(args[3]), dslAst2WeBrace(args[4]))
 			} else if (name == "lettuple") {
-				WeLettuple(getDslString(args[0]), getDslInt(args[1]), dslAst2WeTypes(args[2]), dslAst2WeExp(args[3]), dslAst2WeBrace(args[4]))
+				WeLettuple(getDslString(args[0]), getDslInt(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[2]), dslAst2WeExp(args[3]), dslAst2WeBrace(args[4]))
 			} else if (name == "loop") {
 				WeLoop(dslAst2WeBrace(args[0]))
 			} else if (name == "memory") {
@@ -181,10 +180,8 @@ dslAst2WaseAst(d : DslAst) -> WaseAst {
 				WeTee(getDslString(args[0]), dslAst2WeExp(args[1]))
 			} else if (name == "type") {
 				WeType(getDslString(args[0]))
-			} else if (name == "typeannotation") {
-				WeTypeannotation(dslAst2WeExp(args[0]), dslAst2WeTypes(args[1]))
-			} else if (name == "types") {
-				WeTypes((\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[0]))
+			} else if (name == "type_annotation") {
+				WeTypeAnnotation(dslAst2WeExp(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[1]))
 			} else if (name == "var") {
 				WeVar(getDslString(args[0]))
 			} else if (name == "wase_empty") {
@@ -244,7 +241,7 @@ dslAst2WeAtom(d : DslAst) -> WeAtom {
 	} else { println("ERROR: Could not convert " + name + " in WeAtom"); WeArray([]) }
 
 }
-dslAst2WeDataOffset(d : DslAst) -> WeDataOffset {
+dslAst2WeDataoffset(d : DslAst) -> WeDataoffset {
 	node = getDslNode(d);
 	name = node.name;
 	args = node.args;
@@ -295,7 +292,7 @@ dslAst2WeDataOffset(d : DslAst) -> WeDataOffset {
 	} else if (name == "let") {
 		WeLet(getDslString(args[0]), getDslInt(args[1]), dslAst2WeType(args[2]), dslAst2WeExp(args[3]), dslAst2WeBrace(args[4]))
 	} else if (name == "lettuple") {
-		WeLettuple(getDslString(args[0]), getDslInt(args[1]), dslAst2WeTypes(args[2]), dslAst2WeExp(args[3]), dslAst2WeBrace(args[4]))
+		WeLettuple(getDslString(args[0]), getDslInt(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[2]), dslAst2WeExp(args[3]), dslAst2WeBrace(args[4]))
 	} else if (name == "loop") {
 		WeLoop(dslAst2WeBrace(args[0]))
 	} else if (name == "mod") {
@@ -316,8 +313,8 @@ dslAst2WeDataOffset(d : DslAst) -> WeDataOffset {
 		WeSub(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
 	} else if (name == "tee") {
 		WeTee(getDslString(args[0]), dslAst2WeExp(args[1]))
-	} else if (name == "typeannotation") {
-		WeTypeannotation(dslAst2WeExp(args[0]), dslAst2WeTypes(args[1]))
+	} else if (name == "type_annotation") {
+		WeTypeAnnotation(dslAst2WeExp(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[1]))
 	} else if (name == "var") {
 		WeVar(getDslString(args[0]))
 	} else if (name == "wasm_op") {
@@ -326,10 +323,10 @@ dslAst2WeDataOffset(d : DslAst) -> WeDataOffset {
 		WeXor(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
 	} else if (name == "zreturn") {
 		WeZreturn()
-	} else { println("ERROR: Could not convert " + name + " in WeDataOffset"); WeInt(0) }
+	} else { println("ERROR: Could not convert " + name + " in WeDataoffset"); WeInt(0) }
 
 }
-dslAst2WeDataValue(d : DslAst) -> WeDataValue {
+dslAst2WeDatavalue(d : DslAst) -> WeDatavalue {
 	node = getDslNode(d);
 	name = node.name;
 	args = node.args;
@@ -339,7 +336,7 @@ dslAst2WeDataValue(d : DslAst) -> WeDataValue {
 		WeInt(getDslInt(args[0]))
 	} else if (name == "string") {
 		WeString(getDslString(args[0]))
-	} else { println("ERROR: Could not convert " + name + " in WeDataValue"); WeDouble(0.0) }
+	} else { println("ERROR: Could not convert " + name + " in WeDatavalue"); WeDouble(0.0) }
 
 }
 dslAst2WeDecl(d : DslAst) -> WeDecl {
@@ -347,9 +344,9 @@ dslAst2WeDecl(d : DslAst) -> WeDecl {
 	name = node.name;
 	args = node.args;
 	if (name == "data") {
-		WeData(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeDataValue))(args[2]), dslAst2WeDataOffset(args[3]), dslAst2WeDecl(args[4]))
+		WeData(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeDatavalue))(args[2]), dslAst2WeDataoffset(args[3]), dslAst2WeDecl(args[4]))
 	} else if (name == "function") {
-		WeFunction(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeIdtype))(args[2]), dslAst2WeTypes(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
+		WeFunction(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeIdtype))(args[2]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
 	} else if (name == "global") {
 		WeGlobal(getDslString(args[0]), getDslString(args[1]), dslAst2WeType(args[2]), getDslInt(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
 	} else if (name == "import_fun") {
@@ -420,7 +417,7 @@ dslAst2WeExp(d : DslAst) -> WeExp {
 	} else if (name == "let") {
 		WeLet(getDslString(args[0]), getDslInt(args[1]), dslAst2WeType(args[2]), dslAst2WeExp(args[3]), dslAst2WeBrace(args[4]))
 	} else if (name == "lettuple") {
-		WeLettuple(getDslString(args[0]), getDslInt(args[1]), dslAst2WeTypes(args[2]), dslAst2WeExp(args[3]), dslAst2WeBrace(args[4]))
+		WeLettuple(getDslString(args[0]), getDslInt(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[2]), dslAst2WeExp(args[3]), dslAst2WeBrace(args[4]))
 	} else if (name == "loop") {
 		WeLoop(dslAst2WeBrace(args[0]))
 	} else if (name == "mod") {
@@ -441,8 +438,8 @@ dslAst2WeExp(d : DslAst) -> WeExp {
 		WeSub(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
 	} else if (name == "tee") {
 		WeTee(getDslString(args[0]), dslAst2WeExp(args[1]))
-	} else if (name == "typeannotation") {
-		WeTypeannotation(dslAst2WeExp(args[0]), dslAst2WeTypes(args[1]))
+	} else if (name == "type_annotation") {
+		WeTypeAnnotation(dslAst2WeExp(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[1]))
 	} else if (name == "var") {
 		WeVar(getDslString(args[0]))
 	} else if (name == "wasm_op") {
@@ -466,7 +463,7 @@ dslAst2WeImport(d : DslAst) -> WeImport {
 		WeImportMemory(getDslInt(args[0]), getDslInt(args[1]), getDslString(args[2]), getDslString(args[3]), dslAst2WeDecl(args[4]))
 	} else if (name == "import_table") {
 		WeImportTable(getDslString(args[0]), dslAst2WeType(args[1]), getDslInt(args[2]), getDslInt(args[3]), getDslString(args[4]), getDslString(args[5]), dslAst2WeDecl(args[6]))
-	} else { println("ERROR: Could not convert " + name + " in WeImport"); WeImportGlobal("", WeType(""), 0, "", "", WeWaseEmpty()) }
+	} else { println("ERROR: Could not convert " + name + " in WeImport"); WeImportFun("", WeFnType([], []), "", "", WeWaseEmpty()) }
 
 }
 dslAst2WeInstruction(d : DslAst) -> WeInstruction {
@@ -530,7 +527,7 @@ dslAst2WeCall(d : DslAst) -> WeCall {
 dslAst2WeData(d : DslAst) -> WeData {
 	node = getDslNode(d);
 	args = node.args;
-	WeData(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeDataValue))(args[2]), dslAst2WeDataOffset(args[3]), dslAst2WeDecl(args[4]))
+	WeData(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeDatavalue))(args[2]), dslAst2WeDataoffset(args[3]), dslAst2WeDecl(args[4]))
 }
 dslAst2WeDiv(d : DslAst) -> WeDiv {
 	node = getDslNode(d);
@@ -550,12 +547,12 @@ dslAst2WeEqual(d : DslAst) -> WeEqual {
 dslAst2WeFnType(d : DslAst) -> WeFnType {
 	node = getDslNode(d);
 	args = node.args;
-	WeFnType(dslAst2WeTypes(args[0]), dslAst2WeTypes(args[1]))
+	WeFnType((\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[1]))
 }
 dslAst2WeFunction(d : DslAst) -> WeFunction {
 	node = getDslNode(d);
 	args = node.args;
-	WeFunction(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeIdtype))(args[2]), dslAst2WeTypes(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
+	WeFunction(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeIdtype))(args[2]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
 }
 dslAst2WeGlobal(d : DslAst) -> WeGlobal {
 	node = getDslNode(d);
@@ -660,7 +657,7 @@ dslAst2WeLet(d : DslAst) -> WeLet {
 dslAst2WeLettuple(d : DslAst) -> WeLettuple {
 	node = getDslNode(d);
 	args = node.args;
-	WeLettuple(getDslString(args[0]), getDslInt(args[1]), dslAst2WeTypes(args[2]), dslAst2WeExp(args[3]), dslAst2WeBrace(args[4]))
+	WeLettuple(getDslString(args[0]), getDslInt(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[2]), dslAst2WeExp(args[3]), dslAst2WeBrace(args[4]))
 }
 dslAst2WeLoop(d : DslAst) -> WeLoop {
 	node = getDslNode(d);
@@ -727,15 +724,10 @@ dslAst2WeType(d : DslAst) -> WeType {
 	args = node.args;
 	WeType(getDslString(args[0]))
 }
-dslAst2WeTypeannotation(d : DslAst) -> WeTypeannotation {
+dslAst2WeTypeAnnotation(d : DslAst) -> WeTypeAnnotation {
 	node = getDslNode(d);
 	args = node.args;
-	WeTypeannotation(dslAst2WeExp(args[0]), dslAst2WeTypes(args[1]))
-}
-dslAst2WeTypes(d : DslAst) -> WeTypes {
-	node = getDslNode(d);
-	args = node.args;
-	WeTypes((\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[0]))
+	WeTypeAnnotation(dslAst2WeExp(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WeType))(args[1]))
 }
 dslAst2WeVar(d : DslAst) -> WeVar {
 	node = getDslNode(d);

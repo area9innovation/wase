@@ -40,12 +40,12 @@ prettyWaseAst(w : WaseAst) -> string {
 		WeFnType(types, typelist): 
 			//DslNode("fntype", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 			// fntype = "(" ws types ")" ws "->" ws typelist $"fntype_2";
-			"(" + prettyWaseAst(types) + ") -> " + prettyWaseAst(typelist);
+			"(" + superglue(types, prettyWaseAst, ", ") + ") -> " + superglue(typelist, prettyWaseAst, ", ");
 		WeFunction(id, _export, args, type, ex, next): {
 			//DslNode("function", [DslString(a0), waseAst2DslAst(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
 
 			(if (_export == "0") "" else _export + " ") + id +
-			"(" + superglue(args, prettyWaseAst, ", ") + ") -> " + prettyWaseAst(type) + "\n" + 
+			"(" + superglue(args, prettyWaseAst, ", ") + ") -> " + superglue(type, prettyWaseAst, ", ") + "\n" + 
 			prettyWaseAst(ex) + "\n" + prettyWaseAst(next);
 		}
 		WeGlobal(id, _export, type, _mutable, ex, next): {
@@ -124,7 +124,7 @@ prettyWaseAst(w : WaseAst) -> string {
 		}
 		WeLettuple(id, i, type, ex, next): 
 			//DslNode("lettuple", [DslString(a0), DslInt(a1), waseAst2DslAst(a2), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
-			id + " : " + prettyWaseAst(type) + " = " + prettyWaseAst(ex) + ";\n" + prettyWaseAst(next);
+			id + " : " + superglue(type, prettyWaseAst, ", ") + " = " + prettyWaseAst(ex) + ";\n" + prettyWaseAst(next);
 		WeLoop(e): 
 			//DslNode("loop", [waseAst2DslAst(a0)], 0);
 			"loop " + prettyWaseAst(e);
@@ -167,14 +167,10 @@ prettyWaseAst(w : WaseAst) -> string {
 		WeType(tp): 
 			//DslNode("type", [DslString(a0)], 0);
 			tp;
-		WeTypeannotation(ex, ts): 
+		WeTypeAnnotation(ex, ts): 
 			//DslNode("typeannotation", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 			//  exp ':' ws typelist $"typeannotation_2"
-			prettyWaseAst(ex) + " : (" + prettyWaseAst(ts) + ")";
-
-		WeTypes(ts): 
-			//DslNode("types", [DslList(fold(a0, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc)))], 0);
-			superglue(ts, prettyWaseAst, ", ");
+			prettyWaseAst(ex) + " : (" + superglue(ts, prettyWaseAst, ", ") + ")";
 		WeVar(id): 
 			//DslNode("var", [DslString(a0)], 0);
 			id;
