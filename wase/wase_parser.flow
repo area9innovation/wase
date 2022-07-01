@@ -1190,7 +1190,7 @@ parse_atom(acc : DParseAcc<?>) -> bool {
 														pushDCheckpoint(acc);
 														if (if ((matchString(acc, "[") && ((parse_ws(acc) && ((parse_exps(acc) && ((matchString(acc, "]") && parse_ws(acc))))))))) {
 															{
-																addVerbatim(acc, "array_1");
+																addVerbatim(acc, "tuple_1");
 																discardDCheckpoint(acc)
 															}
 														} else {

@@ -3,7 +3,7 @@ import ds/list;
 
 export {
 	// This is a monster type used when parsing
-	WaseAst ::= WaseAstList, WaseAstBool, WaseAstInt, WaseAstDouble, WaseAstString, WeAtom, WeDataoffset, WeDatavalue, WeDecl, WeExp, WeImport, WeInstruction, WeWarg, WeAdd, WeAnd, WeArray, WeBlock, WeBrace, WeCall, WeData, WeDiv, WeDouble, WeEqual, WeFnType, WeFunction, WeGlobal, WeGreater, WeGreaterEqual, WeHex32, WeHex64, WeHexf32, WeHexf64, WeI64, WeIdtype, WeIf, WeIfelse, WeImportFun, WeImportGlobal, WeImportMemory, WeImportTable, WeInt, WeIsNull, WeLess, WeLessEqual, WeLet, WeLettuple, WeLoop, WeMemory, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeReturn, WeSet, WeString, WeSub, WeTee, WeType, WeTypeAnnotation, WeVar, WeWaseEmpty, WeWaseInclude, WeWasmOp, WeXor, WeZreturn;
+	WaseAst ::= WaseAstList, WaseAstBool, WaseAstInt, WaseAstDouble, WaseAstString, WeAtom, WeDataoffset, WeDatavalue, WeDecl, WeExp, WeImport, WeInstruction, WeWarg, WeAdd, WeAnd, WeBlock, WeBrace, WeCall, WeData, WeDiv, WeDouble, WeEqual, WeFnType, WeFunction, WeGlobal, WeGreater, WeGreaterEqual, WeHex32, WeHex64, WeHexf32, WeHexf64, WeI64, WeIdtype, WeIf, WeIfelse, WeImportFun, WeImportGlobal, WeImportMemory, WeImportTable, WeInt, WeIsNull, WeLess, WeLessEqual, WeLet, WeLettuple, WeLoop, WeMemory, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeReturn, WeSet, WeString, WeSub, WeTee, WeTuple, WeType, WeTypeAnnotation, WeVar, WeWaseEmpty, WeWaseInclude, WeWasmOp, WeXor, WeZreturn;
 
 	WaseAstList(value : List<WaseAst>);
 	WaseAstBool(value : bool);
@@ -11,7 +11,7 @@ export {
 	WaseAstDouble(value : double);
 	WaseAstString(value : string);
 
-	WeAtom ::= WeArray, WeDouble, WeHex32, WeHex64, WeHexf32, WeHexf64, WeI64, WeIf, WeIfelse, WeInt, WeSet, WeTee, WeVar, WeInstruction;
+	WeAtom ::= WeDouble, WeHex32, WeHex64, WeHexf32, WeHexf64, WeI64, WeIf, WeIfelse, WeInt, WeSet, WeTee, WeTuple, WeVar, WeInstruction;
 	WeDataoffset ::= WeInt, WeExp;
 	WeDatavalue ::= WeDouble, WeInt, WeString;
 	WeDecl ::= WeData, WeFunction, WeGlobal, WeImport, WeMemory, WeWaseEmpty, WeWaseInclude;
@@ -21,7 +21,6 @@ export {
 	WeWarg ::= WeInt, WeString, WeType;
 	WeAdd(exp1 : WeExp, exp2 : WeExp);
 	WeAnd(exp1 : WeExp, exp2 : WeExp);
-	WeArray(exps : [WeExp]);
 	WeBlock(brexps : [WeExp]);
 	WeBrace(brexps : [WeExp]);
 	WeCall(exp : WeExp, exps : [WeExp]);
@@ -64,6 +63,7 @@ export {
 	WeString(id : string);
 	WeSub(exp1 : WeExp, exp2 : WeExp);
 	WeTee(id : string, exp : WeExp);
+	WeTuple(exps : [WeExp]);
 	WeType(s : string);
 	WeTypeAnnotation(exp : WeExp, typeList : [WeType]);
 	WeVar(id : string);

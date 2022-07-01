@@ -84,7 +84,7 @@ atom = "if" !letterOrDigit ws exp exp "else" ws exp $"ifelse_3"
 		| id ":=" ws exp $"set_2"
 		| id "::=" ws exp $"tee_2"
 		| id $"var_1"
-		| '[' ws exps ']' ws $"array_1" // list
+		| '[' ws exps ']' ws $"tuple_1" // list
 //				| string $"string_1"
 		| "0x" $(hexdigit+) ("w" $"hex64_1" | "n" $"hexf32_1" | "h" $"hexf64_1" | $"hex32_1") ws
 		| $('0'-'9'+) "w" ws $"i64_1"

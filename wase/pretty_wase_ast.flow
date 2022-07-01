@@ -200,7 +200,7 @@ prettyWaseAst(w : WaseAst) -> string {
 		WeXor(a0, a1): 
 			//DslNode("xor", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 			pretty_bin(a0, a1, "^");
-		WeArray(exps): {
+		WeTuple(exps): {
 			"[" + superglue(exps, prettyWaseAst, ", ") + "]";
 		}
 		WeZreturn(): {
