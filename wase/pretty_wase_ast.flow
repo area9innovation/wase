@@ -24,7 +24,7 @@ prettyWaseAst(w : WaseAst) -> string {
 			"{\n" + strIndent(superglue(as, prettyWaseAst, ";\n")) + "\n}";
 			//DslNode("brace", [DslList(fold(a0, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc)))], 0);
 		WeCall(f, as): 
-			prettyWaseAst(f) + "(" + strIndent(superglue(as, prettyWaseAst, ", ")) + ")";
+			prettyWaseAst(f) + "(" + superglue(as, prettyWaseAst, ", ") + ")";
 			//DslNode("call", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 		WeData(id, size, data, offset, next): { 
 			//DslNode("data", [DslString(a0), waseAst2DslAst(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
@@ -41,16 +41,18 @@ prettyWaseAst(w : WaseAst) -> string {
 			//DslNode("fntype", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 			// fntype = "(" ws types ")" ws "->" ws typelist $"fntype_2";
 			"(" + superglue(types, prettyWaseAst, ", ") + ") -> " + superglue(typelist, prettyWaseAst, ", ");
-		WeFunction(id, _export, args, type, ex, next): {
+		WeFunction(id, _export, args, types, ex, next): {
 			//DslNode("function", [DslString(a0), waseAst2DslAst(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
-
-			(if (_export == "0") "" else _export + " ") + id +
-			"(" + superglue(args, prettyWaseAst, ", ") + ") -> " + superglue(type, prettyWaseAst, ", ") + "\n" + 
+			rettype_s = 
+				if (length(types) == 1) prettyWaseAst(types[0]) 
+				else "(" + superglue(types, prettyWaseAst, ", ") + ")";
+			(if (_export == "0") "" else if (_export == "1") "export " else "export " + _export + " ") + id +
+			"(" + superglue(args, prettyWaseAst, ", ") + ") -> " + rettype_s + "\n" + 
 			prettyWaseAst(ex) + "\n" + prettyWaseAst(next);
 		}
 		WeGlobal(id, _export, type, _mutable, ex, next): {
 			//DslNode("global", [DslString(a0), waseAst2DslAst(a1), waseAst2DslAst(a2), DslInt(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
-			(if (_export == "0") "" else _export + " ") + id + 
+			(if (_export == "0") "" else if (_export == "1") "export " else "export " + _export + " ") + id + 
 			(if (_mutable == 1) "mutable " else "") + ": " + prettyWaseAst(type) + " = " + prettyWaseAst(ex) + "\n" + 
 			prettyWaseAst(next);
 		}
@@ -122,20 +124,20 @@ prettyWaseAst(w : WaseAst) -> string {
 			type_s = prettyWaseAst(type);
 			(if (i == 1) "var " else "") + id + (if (type_s == "auto") "" else " : " + type_s) + " = " + prettyWaseAst(ex) + ";\n" + 
 			//prettyWaseAst(next);
-			strIndent(superglue(next, prettyWaseAst, ";\n"));
+			superglue(next, prettyWaseAst, ";\n");
 		}
 		WeLettuple(id, i, type, ex, next): 
 			//DslNode("lettuple", [DslString(a0), DslInt(a1), waseAst2DslAst(a2), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
 			id + " : " + superglue(type, prettyWaseAst, ", ") + " = " + prettyWaseAst(ex) + ";\n" + 
 			//prettyWaseAst(next);
-			strIndent(superglue(next, prettyWaseAst, ";\n"));
+			superglue(next, prettyWaseAst, ";\n");
 		WeLoop(es): 
 			//DslNode("loop", [waseAst2DslAst(a0)], 0);
 			"loop {\n" + strIndent(superglue(es, prettyWaseAst, ";\n")) + "\n}";
 		WeMemory(_export, i0, i1, next): {
 			//DslNode("memory", [waseAst2DslAst(a0), DslInt(a1), DslInt(a2), waseAst2DslAst(a3)], 0);
 			//  optexport "memory" ws int int_def ";" ws decl $"memory_4";
-			(if (_export == "0") "" else _export + " ") + "memory " + i2s(i0) + 
+			(if (_export == "0") "" else if (_export == "1") "export " else "export " + _export + " ") + "memory " + i2s(i0) + 
 			(if (i1 == 0) "" else " " + i2s(i1)) + ";\n" + prettyWaseAst(next);
 		}
 		WeMod(a0, a1): 

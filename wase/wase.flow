@@ -9,46 +9,58 @@ import wase/pretty_wase;
 import wase/pretty_wase_ast;
 import formats/wasm/wasm_encode;
 
-compileWase2File(includes, filename : string, code : string) -> Promise<int, string> {
+
+compileDslProgram2wasm(includes : [string], program : DslAst, filename : string) -> WasmModule {
+	include = DslInclude(includes, [".wase"], "wase_include", "wase_empty", \path, file, content -> {
+		parseWase(path, content);
+	}, ref makeSet());
+	extended = processDslIncludes(include, program);
+	typed = typeWase(extended);
+
+	if (isUrlParameterTrue("debug-type")) {
+		println("Typed '" + filename + "'':");
+		println(prettyDsl(typed));
+	}
+
+	wase0 = dsl2wase(\node, error -> {
+		println(filename + ": " + error)
+	}, typed);
+
+	// Dead code optimization
+	dce = getUrlParameterDef("dce", "1");
+	wase = if (dce == "0") wase0 else performDCE(wase0, dce);
+
+	if (isUrlParameterTrue("debug-wase")) {
+		println("\nAs wase:");
+		println(prettyWase(wase));
+	}
+
+	wase2wasm(wase);
+}
+
+
+compileWase2File(includes : [string], filename : string, code : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
 		println("\nCompiling '" + filename + "'");
 		program = parseWase(filename, code);
+		wasm = compileDslProgram2wasm(includes, program, filename);
 		if (isUrlParameterTrue("test-generated-ast")) {
-			prog1 = parseWeDecl(getFileContent(filename), \err -> println("Error: " + err));
+			prog1 = parseWeDecl(code, \err -> println("Error: " + err));
 			program1 = waseAst2DslAst(prog1);
-			println("programms:\n" +
-				prettyWaseAst(prog1) + "\n" +
-				"\n------- DSL PROGRAM -------------\n" +
-				prettyDsl(program1) + "\n\n"
-			);
+			wasm1 = compileDslProgram2wasm(includes, program1, filename);
+			if (program == program1) {
+				println("programms COINCIDE");
+			} else {
+				println("programms:\n" +
+					prettyWaseAst(prog1) + "\n" +
+					"\n------- DSL PROGRAM -------------\n" +
+					prettyDsl(program) + "\n\n"
+					"\n------- DSL PROGRAM1 -------------\n" +
+					prettyDsl(program1) + "\n\n"
+				);
+			}
 		}
-		include = DslInclude(includes, [".wase"], "wase_include", "wase_empty", \path, file, content -> {
-			parseWase(path, content);
-		}, ref makeSet());
-		extended = processDslIncludes(include, program);
-		typed = typeWase(extended);
-
-		if (isUrlParameterTrue("debug-type")) {
-			println("Typed '" + filename + "'':");
-			println(prettyDsl(typed));
-		}
-
-		wase0 = dsl2wase(\node, error -> {
-			println(filename + ": " + error)
-		}, typed);
-
-		// Dead code optimization
-		dce = getUrlParameterDef("dce", "1");
-		wase = if (dce == "0") wase0 else performDCE(wase0, dce);
-
-		if (isUrlParameterTrue("debug-wase")) {
-			println("\nAs wase:");
-			println(prettyWase(wase));
-		}
-
-		wasm = wase2wasm(wase);
 		bytes = wasmModule2bytes(wasm);
-
 		filebase = changeFileExt(filename, "");
 		ok = setFileContentBytes(filebase + ".wasm", 
 			fold(bytes, "", \acc, byte -> {

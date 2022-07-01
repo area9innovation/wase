@@ -110,9 +110,20 @@ weExp2waseExpr(onError : (WaseAst, string) -> void, e : WeExp) -> WaseExpr {
 	WaseExpr(weExp2waseInstruction(onError, e, []));
 }
 
-weExp2waseInstruction(onError : (WaseAst, string) -> void, e : WeExp, acc : [WaseInstruction]) -> [WaseInstruction] {
-	/*switch (e) {
-		WeAdd(e1, e2):
+weExp2waseInstruction(onError : (WaseAst, string) -> void, expr : WeExp, acc : [WaseInstruction]) -> [WaseInstruction] {
+/*	switch (expr) {
+		WeAdd(e1, e2): {
+			restype = dsl2WasmValType(onError, args[2]);
+			nacc = fold(subrange(args, 0, 2), acc, \a, aa -> dsl2WaseInstruction(onError, a, aa));
+			if (restype == WasmI32Type()) arrayPush(nacc, WasmI32Add())
+			else if (restype == WasmI64Type()) arrayPush(nacc, WasmI64Add())
+			else if (restype == WasmF32Type()) arrayPush(nacc, WasmF32Add())
+			else if (restype == WasmF64Type()) arrayPush(nacc, WasmF64Add())
+			else {
+				onError(d, "Can not add type " + toString(restype));
+				nacc;
+			}
+		}
 		WeAnd(e1, e2):
 		WeArray(es):
 		WeDouble(d):
@@ -121,17 +132,36 @@ weExp2waseInstruction(onError : (WaseAst, string) -> void, e : WeExp, acc : [Was
 		WeHexf32(s)
 		WeHexf64,(s)
 		WeI64(s)
-		WeIf(c, pos);
+		WeIf(c, pos):
 		WeIfelse(c, pos, neg): 
 		WeInt(i):
-		WeSet(v, e);
-		WeTee(v, e);
-		WeVar(v);
-		WeBlock(brace):
-		WeLoop(brace), WeReturn, WeZreturn;
-	 
-		WeBrace, WeCall, WeDiv, WeEqual, WeGreater, WeGreaterEqual, WeIsNull, WeLess, WeLessEqual, WeLet, WeLettuple, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeSub, WeTypeAnnotation, WeWasmOp, WeXor;
-	
+		WeSet(v, e):
+		WeTee(v, e):
+		WeVar(v):
+		WeBlock(es):
+		WeLoop(es):
+		WeReturn(e): 
+		WeZreturn():
+		WeBrace(es):
+		WeCall(fn, args):
+		WeDiv(e1, e2):
+		WeEqual(e1, e2):
+		WeGreater(e1, e2):
+		WeGreaterEqual(e1, e2):
+		WeIsNull(e):
+		WeLess(e1, e2):
+		WeLessEqual(e1, e2):
+		WeLet(v, e):
+		WeLettuple(v, i, types, e, next): 
+		WeMod(e1, e2):
+		WeMul(e1, e2):
+		WeNegate(e):
+		WeNotEqual(e1, e2):
+		WeOr(e1, e2):
+		WeSub(e1, e2):
+		WeTypeAnnotation(e, types):
+		WeWasmOp(op, wargs, es):
+		WeXor(e1, e2);
 	}*/
 	[]
 }

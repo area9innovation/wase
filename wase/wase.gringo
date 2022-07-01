@@ -119,7 +119,7 @@ type = $("i32" | "i64" | "f32" | "f64" | "v128" | "func" | "extern" | "auto") $"
 
 reftype = $("func" | "extern") $"type_1" ws;
 
-typeList = "(" ws $"nil" type $"cons" ("," ws type $"cons")* | $"nil" ")" ws | ($"nil" type $"cons");
+typeList = ("(" ws ($"nil" type $"cons" ("," ws type $"cons")* | $"nil") ")" ws) | ($"nil" type $"cons");
 
 fn_type = "(" ws ($"nil" type $"cons" ("," ws type $"cons")* | $"nil") ")" ws "->" ws typeList $"fn_type_2";
 

@@ -1776,8 +1776,10 @@ parse_typeList(acc : DParseAcc<?>) -> bool {
 		pushDCheckpoint(acc);
 		if (if ((matchString(acc, "(") && parse_ws(acc))) {
 			{
+				pushDCheckpoint(acc);
+				pushDCheckpoint(acc);
 				addVerbatim(acc, "nil");
-				if (parse_type(acc)) {
+				if (((if (if (parse_type(acc)) {
 					{
 						addVerbatim(acc, "cons");
 						parseStar(acc, \ -> {
@@ -1797,6 +1799,17 @@ parse_typeList(acc : DParseAcc<?>) -> bool {
 					}
 				} else {
 					restoreDCheckpoint(acc)
+				}) {
+					discardDCheckpoint(acc)
+				} else {
+					{
+						addVerbatim(acc, "nil");
+						discardDCheckpoint(acc)
+					}
+				}) && ((matchString(acc, ")") && parse_ws(acc))))) {
+					discardDCheckpoint(acc)
+				} else {
+					restoreDCheckpoint(acc)
 				}
 			}
 		} else {
@@ -1807,29 +1820,17 @@ parse_typeList(acc : DParseAcc<?>) -> bool {
 			{
 				pushDCheckpoint(acc);
 				addVerbatim(acc, "nil");
-				if (if ((matchString(acc, ")") && parse_ws(acc))) {
-					discardDCheckpoint(acc)
+				if (if (parse_type(acc)) {
+					{
+						addVerbatim(acc, "cons");
+						discardDCheckpoint(acc)
+					}
 				} else {
 					restoreDCheckpoint(acc)
 				}) {
 					discardDCheckpoint(acc)
 				} else {
-					{
-						pushDCheckpoint(acc);
-						addVerbatim(acc, "nil");
-						if (if (parse_type(acc)) {
-							{
-								addVerbatim(acc, "cons");
-								discardDCheckpoint(acc)
-							}
-						} else {
-							restoreDCheckpoint(acc)
-						}) {
-							discardDCheckpoint(acc)
-						} else {
-							restoreDCheckpoint(acc)
-						}
-					}
+					restoreDCheckpoint(acc)
 				}
 			}
 		}
