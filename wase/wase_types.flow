@@ -22,8 +22,8 @@ export {
 	WeAdd(exp1 : WeExp, exp2 : WeExp);
 	WeAnd(exp1 : WeExp, exp2 : WeExp);
 	WeArray(exps : [WeExp]);
-	WeBlock(brace : WeBrace);
-	WeBrace(expsemi : [WeExp]);
+	WeBlock(brexps : [WeExp]);
+	WeBrace(brexps : [WeExp]);
 	WeCall(exp : WeExp, exps : [WeExp]);
 	WeData(id : string, dataSize : string, dataList : [WeDatavalue], dataOffset : WeDataoffset, decl : WeDecl);
 	WeDiv(exp1 : WeExp, exp2 : WeExp);
@@ -50,9 +50,9 @@ export {
 	WeIsNull(exp : WeExp);
 	WeLess(exp1 : WeExp, exp2 : WeExp);
 	WeLessEqual(exp1 : WeExp, exp2 : WeExp);
-	WeLet(id : string, i : int, opttype : WeType, exp : WeExp, brace : WeBrace);
-	WeLettuple(id : string, i : int, typeList : [WeType], exp : WeExp, brace : WeBrace);
-	WeLoop(brace : WeBrace);
+	WeLet(id : string, i : int, opttype : WeType, exp : WeExp, expsemi : [WeExp]);
+	WeLettuple(id : string, i : int, typeList : [WeType], exp : WeExp, expsemi : [WeExp]);
+	WeLoop(brexps : [WeExp]);
 	WeMemory(optexport : string, int_0 : int, int_def : int, decl : WeDecl);
 	WeMod(exp1 : WeExp, exp2 : WeExp);
 	WeMul(exp1 : WeExp, exp2 : WeExp);

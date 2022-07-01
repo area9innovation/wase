@@ -38,9 +38,9 @@ data = "data" ws
 include = "include" !letterOrDigit ws $(letterOrDigit+ ("/" letterOrDigit+)+) ws ";" ws decl $"wase_include_2";
 
 exp =
-	("var" !letterOrDigit ws $$"1" $"s2i" id $"swap" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
-		| id $$"0" $"s2i" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
-		| id $$"0" $"s2i" ":" ws typeList "=" ws exp ";" ws expsemi $"brace_1" $"lettuple_5"
+	("var" !letterOrDigit ws $$"1" $"s2i" id $"swap" opttype "=" ws exp ";" ws expsemi $"let_5"
+		| id $$"0" $"s2i" opttype "=" ws exp ";" ws expsemi $"let_5"
+		| id $$"0" $"s2i" ":" ws typeList "=" ws exp ";" ws expsemi $"lettuple_5"
 	)
 	|> exp "|" ws exp $"or_2"
 	|> exp "&" ws exp $"and_2"
@@ -65,7 +65,7 @@ exp =
 	)
 
 
-	|> brace $"brace_1"
+	|> brexps $"brace_1"
 	|> "(" ws exp ")" ws
 	|> atom;
 
@@ -74,7 +74,7 @@ exp =
 
 opttype = ":" ws type | $$"auto" $"type_1";
 
-brace = "{" ws expsemi "}" ws;
+brexps = "{" ws expsemi "}" ws;
 
 atom = "if" !letterOrDigit ws exp exp "else" ws exp $"ifelse_3"
 		| "if" !letterOrDigit ws exp exp $"if_2"
@@ -94,8 +94,8 @@ atom = "if" !letterOrDigit ws exp exp "else" ws exp $"ifelse_3"
 		;
 
 instruction =
-	"block" !letterOrDigit ws brace $"block_1"
-	| "loop" !letterOrDigit ws brace $"loop_1"
+	"block" !letterOrDigit ws brexps $"block_1"
+	| "loop" !letterOrDigit ws brexps $"loop_1"
 	| "return" !letterOrDigit ws exp $"return_1"
 	| "return" $"zreturn_0"
 	;

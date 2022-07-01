@@ -18,7 +18,7 @@ prettyWaseAst(w : WaseAst) -> string {
 			superglue(list2array(value), prettyWaseAst, " ");
 		WeAdd(a0, a1): pretty_bin(a0, a1, "+");
 		WeAnd(a0, a1): pretty_bin(a0, a1, "&&");
-		WeBlock(as): "block " + prettyWaseAst(as);
+		WeBlock(as): "block {\n" + strIndent(superglue(as, prettyWaseAst, ";\n")) + "\n}";
 			//DslNode("block", [waseAst2DslAst(a0)], 0);
 		WeBrace(as):
 			"{\n" + strIndent(superglue(as, prettyWaseAst, ";\n")) + "\n}";
@@ -120,14 +120,18 @@ prettyWaseAst(w : WaseAst) -> string {
 			// WeLet(id : string, i : int, opttype : WeType, exp : WeExp, brace : WeBrace);
 			// id $$"0" $"s2i" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
 			type_s = prettyWaseAst(type);
-			(if (i == 1) "var " else "") + id + (if (type_s == "auto") "" else " : " + type_s) + " = " + prettyWaseAst(ex) + ";\n" + prettyWaseAst(next);
+			(if (i == 1) "var " else "") + id + (if (type_s == "auto") "" else " : " + type_s) + " = " + prettyWaseAst(ex) + ";\n" + 
+			//prettyWaseAst(next);
+			strIndent(superglue(next, prettyWaseAst, ";\n"));
 		}
 		WeLettuple(id, i, type, ex, next): 
 			//DslNode("lettuple", [DslString(a0), DslInt(a1), waseAst2DslAst(a2), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
-			id + " : " + superglue(type, prettyWaseAst, ", ") + " = " + prettyWaseAst(ex) + ";\n" + prettyWaseAst(next);
-		WeLoop(e): 
+			id + " : " + superglue(type, prettyWaseAst, ", ") + " = " + prettyWaseAst(ex) + ";\n" + 
+			//prettyWaseAst(next);
+			strIndent(superglue(next, prettyWaseAst, ";\n"));
+		WeLoop(es): 
 			//DslNode("loop", [waseAst2DslAst(a0)], 0);
-			"loop " + prettyWaseAst(e);
+			"loop {\n" + strIndent(superglue(es, prettyWaseAst, ";\n")) + "\n}";
 		WeMemory(_export, i0, i1, next): {
 			//DslNode("memory", [waseAst2DslAst(a0), DslInt(a1), DslInt(a2), waseAst2DslAst(a3)], 0);
 			//  optexport "memory" ws int int_def ";" ws decl $"memory_4";

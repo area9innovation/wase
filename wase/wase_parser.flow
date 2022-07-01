@@ -497,7 +497,6 @@ parse_exp(acc : DParseAcc<?>) -> bool {
 								addVerbatim(acc, "swap");
 								if ((parse_opttype(acc) && ((matchString(acc, "=") && ((parse_ws(acc) && ((parse_exp(acc) && ((matchString(acc, ";") && ((parse_ws(acc) && parse_expsemi(acc))))))))))))) {
 									{
-										addVerbatim(acc, "brace_1");
 										addVerbatim(acc, "let_5");
 										discardDCheckpoint(acc)
 									}
@@ -526,7 +525,6 @@ parse_exp(acc : DParseAcc<?>) -> bool {
 						addVerbatim(acc, "s2i");
 						if ((parse_opttype(acc) && ((matchString(acc, "=") && ((parse_ws(acc) && ((parse_exp(acc) && ((matchString(acc, ";") && ((parse_ws(acc) && parse_expsemi(acc))))))))))))) {
 							{
-								addVerbatim(acc, "brace_1");
 								addVerbatim(acc, "let_5");
 								discardDCheckpoint(acc)
 							}
@@ -547,7 +545,6 @@ parse_exp(acc : DParseAcc<?>) -> bool {
 								addVerbatim(acc, "s2i");
 								if ((matchString(acc, ":") && ((parse_ws(acc) && ((parse_typeList(acc) && ((matchString(acc, "=") && ((parse_ws(acc) && ((parse_exp(acc) && ((matchString(acc, ";") && ((parse_ws(acc) && parse_expsemi(acc))))))))))))))))) {
 									{
-										addVerbatim(acc, "brace_1");
 										addVerbatim(acc, "lettuple_5");
 										discardDCheckpoint(acc)
 									}
@@ -975,7 +972,7 @@ parse_exp11(acc : DParseAcc<?>) -> bool {
 	{
 		pushDCheckpoint(acc);
 		pushDCheckpoint(acc);
-		if ((if (parse_brace(acc)) {
+		if ((if (parse_brexps(acc)) {
 			{
 				addVerbatim(acc, "brace_1");
 				discardDCheckpoint(acc)
@@ -1031,7 +1028,7 @@ parse_opttype(acc : DParseAcc<?>) -> bool {
 	}
 }
 
-parse_brace(acc : DParseAcc<?>) -> bool {
+parse_brexps(acc : DParseAcc<?>) -> bool {
 	{
 		pushDCheckpoint(acc);
 		if ((matchString(acc, "{") && ((parse_ws(acc) && ((parse_expsemi(acc) && ((matchString(acc, "}") && parse_ws(acc))))))))) {
@@ -1346,7 +1343,7 @@ parse_instruction(acc : DParseAcc<?>) -> bool {
 						restoreDCheckpoint(acc);
 						true
 					}
-				}) && ((parse_ws(acc) && parse_brace(acc))))) {
+				}) && ((parse_ws(acc) && parse_brexps(acc))))) {
 					{
 						addVerbatim(acc, "block_1");
 						discardDCheckpoint(acc)
@@ -1372,7 +1369,7 @@ parse_instruction(acc : DParseAcc<?>) -> bool {
 								restoreDCheckpoint(acc);
 								true
 							}
-						}) && ((parse_ws(acc) && parse_brace(acc))))) {
+						}) && ((parse_ws(acc) && parse_brexps(acc))))) {
 							{
 								addVerbatim(acc, "loop_1");
 								discardDCheckpoint(acc)

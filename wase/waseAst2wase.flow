@@ -111,6 +111,28 @@ weExp2waseExpr(onError : (WaseAst, string) -> void, e : WeExp) -> WaseExpr {
 }
 
 weExp2waseInstruction(onError : (WaseAst, string) -> void, e : WeExp, acc : [WaseInstruction]) -> [WaseInstruction] {
+	/*switch (e) {
+		WeAdd(e1, e2):
+		WeAnd(e1, e2):
+		WeArray(es):
+		WeDouble(d):
+		WeHex32(s):
+		WeHex64(s)
+		WeHexf32(s)
+		WeHexf64,(s)
+		WeI64(s)
+		WeIf(c, pos);
+		WeIfelse(c, pos, neg): 
+		WeInt(i):
+		WeSet(v, e);
+		WeTee(v, e);
+		WeVar(v);
+		WeBlock(brace):
+		WeLoop(brace), WeReturn, WeZreturn;
+	 
+		WeBrace, WeCall, WeDiv, WeEqual, WeGreater, WeGreaterEqual, WeIsNull, WeLess, WeLessEqual, WeLet, WeLettuple, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeSub, WeTypeAnnotation, WeWasmOp, WeXor;
+	
+	}*/
 	[]
 }
 
