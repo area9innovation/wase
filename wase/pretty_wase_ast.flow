@@ -28,7 +28,7 @@ prettyWaseAst(w : WaseAst) -> string {
 			//DslNode("call", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 		WeData(id, size, data, offset, next): { 
 			//DslNode("data", [DslString(a0), waseAst2DslAst(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
-			size_s = if (size.id == "") "" else " ," + size.id;
+			size_s = if (size == "") "" else " ," + size;
 			offset_s = prettyWaseAst(offset);
 			"data " + id + size_s + " = " +
 			superglue(data, prettyWaseAst, ", ") + 
@@ -37,22 +37,20 @@ prettyWaseAst(w : WaseAst) -> string {
 		WeDiv(a0, a1): pretty_bin(a0, a1, "/");
 		WeDouble(a0): d2s(a0);
 		WeEqual(a0, a1): pretty_bin(a0, a1, "==");
-		WeFntype(types, typelist): 
+		WeFnType(types, typelist): 
 			//DslNode("fntype", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 			// fntype = "(" ws types ")" ws "->" ws typelist $"fntype_2";
 			"(" + prettyWaseAst(types) + ") -> " + prettyWaseAst(typelist);
 		WeFunction(id, _export, args, type, ex, next): {
 			//DslNode("function", [DslString(a0), waseAst2DslAst(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
 
-			export_s = prettyWaseAst(_export);
-			(if (export_s == "0") "" else export_s + " ") + id +
+			(if (_export == "0") "" else _export + " ") + id +
 			"(" + superglue(args, prettyWaseAst, ", ") + ") -> " + prettyWaseAst(type) + "\n" + 
 			prettyWaseAst(ex) + "\n" + prettyWaseAst(next);
 		}
 		WeGlobal(id, _export, type, _mutable, ex, next): {
 			//DslNode("global", [DslString(a0), waseAst2DslAst(a1), waseAst2DslAst(a2), DslInt(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
-			export_s = prettyWaseAst(_export);
-			(if (export_s == "0") "" else export_s + " ") + id + 
+			(if (_export == "0") "" else _export + " ") + id + 
 			(if (_mutable == 1) "mutable " else "") + ": " + prettyWaseAst(type) + " = " + prettyWaseAst(ex) + "\n" + 
 			prettyWaseAst(next);
 		}
@@ -133,8 +131,7 @@ prettyWaseAst(w : WaseAst) -> string {
 		WeMemory(_export, i0, i1, next): {
 			//DslNode("memory", [waseAst2DslAst(a0), DslInt(a1), DslInt(a2), waseAst2DslAst(a3)], 0);
 			//  optexport "memory" ws int int_def ";" ws decl $"memory_4";
-			export_s = prettyWaseAst(_export);
-			(if (export_s == "0") "" else export_s + " ") + "memory " + i2s(i0) + 
+			(if (_export == "0") "" else _export + " ") + "memory " + i2s(i0) + 
 			(if (i1 == 0) "" else " " + i2s(i1)) + ";\n" + prettyWaseAst(next);
 		}
 		WeMod(a0, a1): 

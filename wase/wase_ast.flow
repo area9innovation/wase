@@ -2,6 +2,9 @@
 import formats/wasm/wasm_types;
 
 export {
+	// The union which holds all wase AST types
+	WaseAll ::= Wase, WaseExpr, WaseInstruction, WasmInstruction;
+
 	// This is an wrapper for Wasm to make it easier to produce a valid WASM module
 	Wase ::=  WaseImportFunction, WaseImportGlobal, WaseImportMemory, WaseImportTable,
 		WaseMemory, WaseGlobal, WaseFunction, WaseData, WaseEmpty;

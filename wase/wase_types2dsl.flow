@@ -13,7 +13,6 @@ export {
 	dslAst2WeExp(d : DslAst) -> WeExp;
 	dslAst2WeImport(d : DslAst) -> WeImport;
 	dslAst2WeInstruction(d : DslAst) -> WeInstruction;
-	dslAst2WeOptexport(d : DslAst) -> WeOptexport;
 	dslAst2WeWarg(d : DslAst) -> WeWarg;
 }
 
@@ -30,13 +29,13 @@ waseAst2DslAst(wal : WaseAst) -> DslAst {
 		WeBlock(a0): DslNode("block", [waseAst2DslAst(a0)], 0);
 		WeBrace(a0): DslNode("brace", [DslList(fold(a0, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc)))], 0);
 		WeCall(a0, a1): DslNode("call", [waseAst2DslAst(a0), DslList(fold(a1, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc)))], 0);
-		WeData(a0, a1, a2, a3, a4): DslNode("data", [DslString(a0), waseAst2DslAst(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
+		WeData(a0, a1, a2, a3, a4): DslNode("data", [DslString(a0), DslString(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
 		WeDiv(a0, a1): DslNode("div", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 		WeDouble(a0): DslNode("double", [DslDouble(a0)], 0);
 		WeEqual(a0, a1): DslNode("equal", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
-		WeFntype(a0, a1): DslNode("fntype", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
-		WeFunction(a0, a1, a2, a3, a4, a5): DslNode("function", [DslString(a0), waseAst2DslAst(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
-		WeGlobal(a0, a1, a2, a3, a4, a5): DslNode("global", [DslString(a0), waseAst2DslAst(a1), waseAst2DslAst(a2), DslInt(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
+		WeFnType(a0, a1): DslNode("fn_type", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+		WeFunction(a0, a1, a2, a3, a4, a5): DslNode("function", [DslString(a0), DslString(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
+		WeGlobal(a0, a1, a2, a3, a4, a5): DslNode("global", [DslString(a0), DslString(a1), waseAst2DslAst(a2), DslInt(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
 		WeGreater(a0, a1): DslNode("greater", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 		WeGreaterEqual(a0, a1): DslNode("greater_equal", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 		WeHex32(a0): DslNode("hex32", [DslString(a0)], 0);
@@ -58,7 +57,7 @@ waseAst2DslAst(wal : WaseAst) -> DslAst {
 		WeLet(a0, a1, a2, a3, a4): DslNode("let", [DslString(a0), DslInt(a1), waseAst2DslAst(a2), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
 		WeLettuple(a0, a1, a2, a3, a4): DslNode("lettuple", [DslString(a0), DslInt(a1), waseAst2DslAst(a2), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
 		WeLoop(a0): DslNode("loop", [waseAst2DslAst(a0)], 0);
-		WeMemory(a0, a1, a2, a3): DslNode("memory", [waseAst2DslAst(a0), DslInt(a1), DslInt(a2), waseAst2DslAst(a3)], 0);
+		WeMemory(a0, a1, a2, a3): DslNode("memory", [DslString(a0), DslInt(a1), DslInt(a2), waseAst2DslAst(a3)], 0);
 		WeMod(a0, a1): DslNode("mod", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 		WeMul(a0, a1): DslNode("mul", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 		WeNegate(a0): DslNode("negate", [waseAst2DslAst(a0)], 0);
@@ -103,19 +102,19 @@ dslAst2WaseAst(d : DslAst) -> WaseAst {
 			} else if (name == "call") {
 				WeCall(dslAst2WeExp(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WeExp))(args[1]))
 			} else if (name == "data") {
-				WeData(getDslString(args[0]), dslAst2WeString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeDataValue))(args[2]), dslAst2WeDataOffset(args[3]), dslAst2WeDecl(args[4]))
+				WeData(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeDataValue))(args[2]), dslAst2WeDataOffset(args[3]), dslAst2WeDecl(args[4]))
 			} else if (name == "div") {
 				WeDiv(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
 			} else if (name == "double") {
 				WeDouble(getDslDouble(args[0]))
 			} else if (name == "equal") {
 				WeEqual(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
-			} else if (name == "fntype") {
-				WeFntype(dslAst2WeTypes(args[0]), dslAst2WeTypes(args[1]))
+			} else if (name == "fn_type") {
+				WeFnType(dslAst2WeTypes(args[0]), dslAst2WeTypes(args[1]))
 			} else if (name == "function") {
-				WeFunction(getDslString(args[0]), dslAst2WeOptexport(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeIdtype))(args[2]), dslAst2WeTypes(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
+				WeFunction(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeIdtype))(args[2]), dslAst2WeTypes(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
 			} else if (name == "global") {
-				WeGlobal(getDslString(args[0]), dslAst2WeOptexport(args[1]), dslAst2WeType(args[2]), getDslInt(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
+				WeGlobal(getDslString(args[0]), getDslString(args[1]), dslAst2WeType(args[2]), getDslInt(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
 			} else if (name == "greater") {
 				WeGreater(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
 			} else if (name == "greater_equal") {
@@ -137,7 +136,7 @@ dslAst2WaseAst(d : DslAst) -> WaseAst {
 			} else if (name == "ifelse") {
 				WeIfelse(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]), dslAst2WeExp(args[2]))
 			} else if (name == "import_fun") {
-				WeImportFun(getDslString(args[0]), dslAst2WeFntype(args[1]), getDslString(args[2]), getDslString(args[3]), dslAst2WeDecl(args[4]))
+				WeImportFun(getDslString(args[0]), dslAst2WeFnType(args[1]), getDslString(args[2]), getDslString(args[3]), dslAst2WeDecl(args[4]))
 			} else if (name == "import_global") {
 				WeImportGlobal(getDslString(args[0]), dslAst2WeType(args[1]), getDslInt(args[2]), getDslString(args[3]), getDslString(args[4]), dslAst2WeDecl(args[5]))
 			} else if (name == "import_memory") {
@@ -159,7 +158,7 @@ dslAst2WaseAst(d : DslAst) -> WaseAst {
 			} else if (name == "loop") {
 				WeLoop(dslAst2WeBrace(args[0]))
 			} else if (name == "memory") {
-				WeMemory(dslAst2WeOptexport(args[0]), getDslInt(args[1]), getDslInt(args[2]), dslAst2WeDecl(args[3]))
+				WeMemory(getDslString(args[0]), getDslInt(args[1]), getDslInt(args[2]), dslAst2WeDecl(args[3]))
 			} else if (name == "mod") {
 				WeMod(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
 			} else if (name == "mul") {
@@ -348,13 +347,13 @@ dslAst2WeDecl(d : DslAst) -> WeDecl {
 	name = node.name;
 	args = node.args;
 	if (name == "data") {
-		WeData(getDslString(args[0]), dslAst2WeString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeDataValue))(args[2]), dslAst2WeDataOffset(args[3]), dslAst2WeDecl(args[4]))
+		WeData(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeDataValue))(args[2]), dslAst2WeDataOffset(args[3]), dslAst2WeDecl(args[4]))
 	} else if (name == "function") {
-		WeFunction(getDslString(args[0]), dslAst2WeOptexport(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeIdtype))(args[2]), dslAst2WeTypes(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
+		WeFunction(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeIdtype))(args[2]), dslAst2WeTypes(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
 	} else if (name == "global") {
-		WeGlobal(getDslString(args[0]), dslAst2WeOptexport(args[1]), dslAst2WeType(args[2]), getDslInt(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
+		WeGlobal(getDslString(args[0]), getDslString(args[1]), dslAst2WeType(args[2]), getDslInt(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
 	} else if (name == "import_fun") {
-		WeImportFun(getDslString(args[0]), dslAst2WeFntype(args[1]), getDslString(args[2]), getDslString(args[3]), dslAst2WeDecl(args[4]))
+		WeImportFun(getDslString(args[0]), dslAst2WeFnType(args[1]), getDslString(args[2]), getDslString(args[3]), dslAst2WeDecl(args[4]))
 	} else if (name == "import_global") {
 		WeImportGlobal(getDslString(args[0]), dslAst2WeType(args[1]), getDslInt(args[2]), getDslString(args[3]), getDslString(args[4]), dslAst2WeDecl(args[5]))
 	} else if (name == "import_memory") {
@@ -362,12 +361,12 @@ dslAst2WeDecl(d : DslAst) -> WeDecl {
 	} else if (name == "import_table") {
 		WeImportTable(getDslString(args[0]), dslAst2WeType(args[1]), getDslInt(args[2]), getDslInt(args[3]), getDslString(args[4]), getDslString(args[5]), dslAst2WeDecl(args[6]))
 	} else if (name == "memory") {
-		WeMemory(dslAst2WeOptexport(args[0]), getDslInt(args[1]), getDslInt(args[2]), dslAst2WeDecl(args[3]))
+		WeMemory(getDslString(args[0]), getDslInt(args[1]), getDslInt(args[2]), dslAst2WeDecl(args[3]))
 	} else if (name == "wase_empty") {
 		WeWaseEmpty()
 	} else if (name == "wase_include") {
 		WeWaseInclude(getDslString(args[0]), dslAst2WeDecl(args[1]))
-	} else { println("ERROR: Could not convert " + name + " in WeDecl"); WeData("", WeString(""), [], WeInt(0), WeWaseEmpty()) }
+	} else { println("ERROR: Could not convert " + name + " in WeDecl"); WeData("", "", [], WeInt(0), WeWaseEmpty()) }
 
 }
 dslAst2WeExp(d : DslAst) -> WeExp {
@@ -460,7 +459,7 @@ dslAst2WeImport(d : DslAst) -> WeImport {
 	name = node.name;
 	args = node.args;
 	if (name == "import_fun") {
-		WeImportFun(getDslString(args[0]), dslAst2WeFntype(args[1]), getDslString(args[2]), getDslString(args[3]), dslAst2WeDecl(args[4]))
+		WeImportFun(getDslString(args[0]), dslAst2WeFnType(args[1]), getDslString(args[2]), getDslString(args[3]), dslAst2WeDecl(args[4]))
 	} else if (name == "import_global") {
 		WeImportGlobal(getDslString(args[0]), dslAst2WeType(args[1]), getDslInt(args[2]), getDslString(args[3]), getDslString(args[4]), dslAst2WeDecl(args[5]))
 	} else if (name == "import_memory") {
@@ -483,17 +482,6 @@ dslAst2WeInstruction(d : DslAst) -> WeInstruction {
 	} else if (name == "zreturn") {
 		WeZreturn()
 	} else { println("ERROR: Could not convert " + name + " in WeInstruction"); WeBlock(WeBrace([])) }
-
-}
-dslAst2WeOptexport(d : DslAst) -> WeOptexport {
-	node = getDslNode(d);
-	name = node.name;
-	args = node.args;
-	if (name == "int") {
-		WeInt(getDslInt(args[0]))
-	} else if (name == "string") {
-		WeString(getDslString(args[0]))
-	} else { println("ERROR: Could not convert " + name + " in WeOptexport"); WeInt(0) }
 
 }
 dslAst2WeWarg(d : DslAst) -> WeWarg {
@@ -542,7 +530,7 @@ dslAst2WeCall(d : DslAst) -> WeCall {
 dslAst2WeData(d : DslAst) -> WeData {
 	node = getDslNode(d);
 	args = node.args;
-	WeData(getDslString(args[0]), dslAst2WeString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeDataValue))(args[2]), dslAst2WeDataOffset(args[3]), dslAst2WeDecl(args[4]))
+	WeData(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeDataValue))(args[2]), dslAst2WeDataOffset(args[3]), dslAst2WeDecl(args[4]))
 }
 dslAst2WeDiv(d : DslAst) -> WeDiv {
 	node = getDslNode(d);
@@ -559,20 +547,20 @@ dslAst2WeEqual(d : DslAst) -> WeEqual {
 	args = node.args;
 	WeEqual(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
 }
-dslAst2WeFntype(d : DslAst) -> WeFntype {
+dslAst2WeFnType(d : DslAst) -> WeFnType {
 	node = getDslNode(d);
 	args = node.args;
-	WeFntype(dslAst2WeTypes(args[0]), dslAst2WeTypes(args[1]))
+	WeFnType(dslAst2WeTypes(args[0]), dslAst2WeTypes(args[1]))
 }
 dslAst2WeFunction(d : DslAst) -> WeFunction {
 	node = getDslNode(d);
 	args = node.args;
-	WeFunction(getDslString(args[0]), dslAst2WeOptexport(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeIdtype))(args[2]), dslAst2WeTypes(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
+	WeFunction(getDslString(args[0]), getDslString(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeIdtype))(args[2]), dslAst2WeTypes(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
 }
 dslAst2WeGlobal(d : DslAst) -> WeGlobal {
 	node = getDslNode(d);
 	args = node.args;
-	WeGlobal(getDslString(args[0]), dslAst2WeOptexport(args[1]), dslAst2WeType(args[2]), getDslInt(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
+	WeGlobal(getDslString(args[0]), getDslString(args[1]), dslAst2WeType(args[2]), getDslInt(args[3]), dslAst2WeExp(args[4]), dslAst2WeDecl(args[5]))
 }
 dslAst2WeGreater(d : DslAst) -> WeGreater {
 	node = getDslNode(d);
@@ -627,7 +615,7 @@ dslAst2WeIfelse(d : DslAst) -> WeIfelse {
 dslAst2WeImportFun(d : DslAst) -> WeImportFun {
 	node = getDslNode(d);
 	args = node.args;
-	WeImportFun(getDslString(args[0]), dslAst2WeFntype(args[1]), getDslString(args[2]), getDslString(args[3]), dslAst2WeDecl(args[4]))
+	WeImportFun(getDslString(args[0]), dslAst2WeFnType(args[1]), getDslString(args[2]), getDslString(args[3]), dslAst2WeDecl(args[4]))
 }
 dslAst2WeImportGlobal(d : DslAst) -> WeImportGlobal {
 	node = getDslNode(d);
@@ -682,7 +670,7 @@ dslAst2WeLoop(d : DslAst) -> WeLoop {
 dslAst2WeMemory(d : DslAst) -> WeMemory {
 	node = getDslNode(d);
 	args = node.args;
-	WeMemory(dslAst2WeOptexport(args[0]), getDslInt(args[1]), getDslInt(args[2]), dslAst2WeDecl(args[3]))
+	WeMemory(getDslString(args[0]), getDslInt(args[1]), getDslInt(args[2]), dslAst2WeDecl(args[3]))
 }
 dslAst2WeMod(d : DslAst) -> WeMod {
 	node = getDslNode(d);

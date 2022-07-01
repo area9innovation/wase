@@ -3,7 +3,7 @@ import ds/list;
 
 export {
 	// This is a monster type used when parsing
-	WaseAst ::= WaseAstList, WaseAstBool, WaseAstInt, WaseAstDouble, WaseAstString, WeAtom, WeDataOffset, WeDataValue, WeDecl, WeExp, WeImport, WeInstruction, WeOptexport, WeWarg, WeAdd, WeAnd, WeArray, WeBlock, WeBrace, WeCall, WeData, WeDiv, WeDouble, WeEqual, WeFntype, WeFunction, WeGlobal, WeGreater, WeGreaterEqual, WeHex32, WeHex64, WeHexf32, WeHexf64, WeI64, WeIdtype, WeIf, WeIfelse, WeImportFun, WeImportGlobal, WeImportMemory, WeImportTable, WeInt, WeIsNull, WeLess, WeLessEqual, WeLet, WeLettuple, WeLoop, WeMemory, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeReturn, WeSet, WeString, WeSub, WeTee, WeType, WeTypeannotation, WeTypes, WeVar, WeWaseEmpty, WeWaseInclude, WeWasmOp, WeXor, WeZreturn;
+	WaseAst ::= WaseAstList, WaseAstBool, WaseAstInt, WaseAstDouble, WaseAstString, WeAtom, WeDataOffset, WeDataValue, WeDecl, WeExp, WeImport, WeInstruction, WeWarg, WeAdd, WeAnd, WeArray, WeBlock, WeBrace, WeCall, WeData, WeDiv, WeDouble, WeEqual, WeFnType, WeFunction, WeGlobal, WeGreater, WeGreaterEqual, WeHex32, WeHex64, WeHexf32, WeHexf64, WeI64, WeIdtype, WeIf, WeIfelse, WeImportFun, WeImportGlobal, WeImportMemory, WeImportTable, WeInt, WeIsNull, WeLess, WeLessEqual, WeLet, WeLettuple, WeLoop, WeMemory, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeReturn, WeSet, WeString, WeSub, WeTee, WeType, WeTypeannotation, WeTypes, WeVar, WeWaseEmpty, WeWaseInclude, WeWasmOp, WeXor, WeZreturn;
 
 	WaseAstList(value : List<WaseAst>);
 	WaseAstBool(value : bool);
@@ -18,7 +18,6 @@ export {
 	WeExp ::= WeAdd, WeAnd, WeAtom, WeBrace, WeCall, WeDiv, WeEqual, WeGreater, WeGreaterEqual, WeIsNull, WeLess, WeLessEqual, WeLet, WeLettuple, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeSub, WeTypeannotation, WeWasmOp, WeXor;
 	WeImport ::= WeImportFun, WeImportGlobal, WeImportMemory, WeImportTable;
 	WeInstruction ::= WeBlock, WeLoop, WeReturn, WeZreturn;
-	WeOptexport ::= WeInt, WeString;
 	WeWarg ::= WeInt, WeString, WeType;
 	WeAdd(exp1 : WeExp, exp2 : WeExp);
 	WeAnd(exp1 : WeExp, exp2 : WeExp);
@@ -26,13 +25,13 @@ export {
 	WeBlock(brace : WeBrace);
 	WeBrace(expsemi : [WeExp]);
 	WeCall(exp : WeExp, exps : [WeExp]);
-	WeData(id : string, data_size : WeString, data_list : [WeDataValue], data_offset : WeDataOffset, decl : WeDecl);
+	WeData(id : string, data_size : string, data_list : [WeDataValue], data_offset : WeDataOffset, decl : WeDecl);
 	WeDiv(exp1 : WeExp, exp2 : WeExp);
 	WeDouble(double_0 : double);
 	WeEqual(exp1 : WeExp, exp2 : WeExp);
-	WeFntype(types : WeTypes, typelist : WeTypes);
-	WeFunction(id : string, optexport : WeOptexport, lambdaargs : [WeIdtype], typelist : WeTypes, exp : WeExp, decl : WeDecl);
-	WeGlobal(id : string, optexport : WeOptexport, type : WeType, optmutable : int, exp : WeExp, decl : WeDecl);
+	WeFnType(types : WeTypes, type_list : WeTypes);
+	WeFunction(id : string, optexport : string, lambdaargs : [WeIdtype], type_list : WeTypes, exp : WeExp, decl : WeDecl);
+	WeGlobal(id : string, optexport : string, type : WeType, optmutable : int, exp : WeExp, decl : WeDecl);
 	WeGreater(exp1 : WeExp, exp2 : WeExp);
 	WeGreaterEqual(exp1 : WeExp, exp2 : WeExp);
 	WeHex32(s : string);
@@ -43,7 +42,7 @@ export {
 	WeIdtype(id : string, type : WeType);
 	WeIf(exp1 : WeExp, exp2 : WeExp);
 	WeIfelse(exp1 : WeExp, exp2 : WeExp, exp3 : WeExp);
-	WeImportFun(id1 : string, fntype : WeFntype, id2 : string, id3 : string, decl : WeDecl);
+	WeImportFun(id1 : string, fn_type : WeFnType, id2 : string, id3 : string, decl : WeDecl);
 	WeImportGlobal(id1 : string, type : WeType, optmutable : int, id2 : string, id3 : string, decl : WeDecl);
 	WeImportMemory(int_0 : int, int_def : int, id1 : string, id2 : string, decl : WeDecl);
 	WeImportTable(id1 : string, reftype : WeType, int_0 : int, int_def : int, id2 : string, id3 : string, decl : WeDecl);
@@ -52,9 +51,9 @@ export {
 	WeLess(exp1 : WeExp, exp2 : WeExp);
 	WeLessEqual(exp1 : WeExp, exp2 : WeExp);
 	WeLet(id : string, i : int, opttype : WeType, exp : WeExp, brace : WeBrace);
-	WeLettuple(id : string, i : int, typelist : WeTypes, exp : WeExp, brace : WeBrace);
+	WeLettuple(id : string, i : int, type_list : WeTypes, exp : WeExp, brace : WeBrace);
 	WeLoop(brace : WeBrace);
-	WeMemory(optexport : WeOptexport, int_0 : int, int_def : int, decl : WeDecl);
+	WeMemory(optexport : string, int_0 : int, int_def : int, decl : WeDecl);
 	WeMod(exp1 : WeExp, exp2 : WeExp);
 	WeMul(exp1 : WeExp, exp2 : WeExp);
 	WeNegate(exp : WeExp);
@@ -66,7 +65,7 @@ export {
 	WeSub(exp1 : WeExp, exp2 : WeExp);
 	WeTee(id : string, exp : WeExp);
 	WeType(s : string);
-	WeTypeannotation(exp : WeExp, typelist : WeTypes);
+	WeTypeannotation(exp : WeExp, type_list : WeTypes);
 	WeTypes(types : [WeType]);
 	WeVar(id : string);
 	WeWaseEmpty();

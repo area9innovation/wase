@@ -7,7 +7,7 @@ global = optexport id $"swap"
 		"=" ws exp ";" ws decl $"global_6"; // (id, export : bool, type, mutable : bool, exp, body, scope)
 
 // function(id, export : bool, args : [idtype(id, type)], [returnTypes], body, scope)
-function = optexport id $"swap" "(" ws lambdaargs ")" ws "->" ws typelist exp decl $"function_6"; // The "" makes right-recursion disappear
+function = optexport id $"swap" "(" ws lambdaargs ")" ws "->" ws type_list exp decl $"function_6"; // The "" makes right-recursion disappear
 	lambdaargs = $"nil" id ":" ws type $"idtype_2" $"cons" ("," ws id ":" ws type $"idtype_2" $"cons")*
 		| $"nil";
 
@@ -15,7 +15,7 @@ import =
 	"import" ws "memory" ws int int_def "=" ws id "." id ";" ws decl $"import_memory_5"
 	| "import" ws id ":" ws "table" ws "<" ws reftype ">" ws "(" ws int int_def ")" ws "=" ws id "." id ";" ws decl $"import_table_7"
 	| "import" ws id ":" ws optmutable type $"swap" "=" ws id "." id ";" ws decl $"import_global_6" // id, type, mutable, module, name, scope
-	| "import" ws id ":" ws fntype "=" ws id "." id ";" ws decl $"import_fun_5"; // id type module name scope
+	| "import" ws id ":" ws fn_type "=" ws id "." id ";" ws decl $"import_fun_5"; // id type module name scope
 
 memory = optexport "memory" ws int int_def ";" ws decl $"memory_4";
 
@@ -32,7 +32,7 @@ data = "data" ws
 
 	data_list = $"nil" data_value $"cons" ("," ws data_value $"cons")*;
 	data_value = (int $"int_1") | (string $"string_1") | (double $"double_1");
-	data_size = ("," ws id $"string_1" | $$"" $"string_1");
+	data_size = ("," ws id | $$"");
 	data_offset = ("offset" ws exp | $$"0" $"s2i" $"int_1");
 
 include = "include" !letterOrDigit ws $(letterOrDigit+ ("/" letterOrDigit+)+) ws ";" ws decl $"wase_include_2";
@@ -40,7 +40,7 @@ include = "include" !letterOrDigit ws $(letterOrDigit+ ("/" letterOrDigit+)+) ws
 exp =
 	("var" !letterOrDigit ws $$"1" $"s2i" id $"swap" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
 		| id $$"0" $"s2i" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
-		| id $$"0" $"s2i" ":" ws typelist "=" ws exp ";" ws expsemi $"brace_1" $"lettuple_5"
+		| id $$"0" $"s2i" ":" ws type_list "=" ws exp ";" ws expsemi $"brace_1" $"lettuple_5"
 	)
 	|> exp "|" ws exp $"or_2"
 	|> exp "&" ws exp $"and_2"
@@ -52,7 +52,7 @@ exp =
 	|> exp ("*" ws exp $"mul_2" | "/" ws exp $"div_2" | "%"  ws exp $"mod_2")*
 
 
-	|> exp ':' ws typelist $"typeannotation_2"
+	|> exp ':' ws type_list $"typeannotation_2"
 
 	|> wasmop
 
@@ -111,7 +111,7 @@ exps = $"nil" exp $"cons" ("," ws exp $"cons")* ("," ws)? | $"nil";
 
 expsemi = $"nil" exp $"cons" (#";" ws exp $"cons")* (";" ws)? | $"nil";
 
-optexport = "export" ws (string $"string_1" | $$"1" $"s2i" $"int_1") | ($$"0" $"s2i" $"int_1");
+optexport = "export" ws (string | $$"1") | $$"0";
 
 optmutable = ("mutable" ws $$"1" | $$"0" ) $"s2i";
 
@@ -119,11 +119,11 @@ type = $("i32" | "i64" | "f32" | "f64" | "v128" | "func" | "extern" | "auto") $"
 
 reftype = $("func" | "extern") $"type_1" ws;
 
-typelist = "(" ws types ")" ws | ($"nil" type $"cons") $"types_1";
+type_list = "(" ws types ")" ws | ($"nil" type $"cons") $"types_1";
 
 types = ($"nil" type $"cons" ("," ws type $"cons")* | $"nil") $"types_1";
 
-fntype = "(" ws types ")" ws "->" ws typelist $"fntype_2";
+fn_type = "(" ws types ")" ws "->" ws type_list $"fn_type_2";
 
 //			| id "<" ws types ">" ws $"partype_2"
 //			| type;
