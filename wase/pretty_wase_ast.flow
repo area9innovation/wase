@@ -46,13 +46,13 @@ prettyWaseAst(w : WaseAst) -> string {
 			rettype_s = 
 				if (length(types) == 1) prettyWaseAst(types[0]) 
 				else "(" + superglue(types, prettyWaseAst, ", ") + ")";
-			(if (_export == 0) "" else if (_export == 1) "export " else "export " + i2s(_export) + " ") + id +
+			(if (_export == "0") "" else if (_export == "1") "export " else "export " + _export + " ") + id +
 			"(" + superglue(args, prettyWaseAst, ", ") + ") -> " + rettype_s + "\n" + 
 			prettyWaseAst(ex) + "\n" + prettyWaseAst(next);
 		}
 		WeGlobal(id, _export, type, _mutable, ex, next): {
 			//DslNode("global", [DslString(a0), waseAst2DslAst(a1), waseAst2DslAst(a2), DslInt(a3), waseAst2DslAst(a4), waseAst2DslAst(a5)], 0);
-			(if (_export == 0) "" else if (_export == 1) "export " else "export " + i2s(_export) + " ") + id + 
+			(if (_export == "0") "" else if (_export == "1") "export " else "export " + _export + " ") + id + 
 			(if (_mutable == 1) "mutable " else "") + ": " + prettyWaseAst(type) + " = " + prettyWaseAst(ex) + "\n" + 
 			prettyWaseAst(next);
 		}
@@ -137,7 +137,7 @@ prettyWaseAst(w : WaseAst) -> string {
 		WeMemory(_export, i0, i1, next): {
 			//DslNode("memory", [waseAst2DslAst(a0), DslInt(a1), DslInt(a2), waseAst2DslAst(a3)], 0);
 			//  optexport "memory" ws int int_def ";" ws decl $"memory_4";
-			(if (_export == 0) "" else if (_export == 1) "export " else "export " + i2s(_export) + " ") + "memory " + i2s(i0) + 
+			(if (_export == "0") "" else if (_export == "1") "export " else "export " + _export + " ") + "memory " + i2s(i0) + 
 			(if (i1 == 0) "" else " " + i2s(i1)) + ";\n" + prettyWaseAst(next);
 		}
 		WeMod(a0, a1): 

@@ -1665,8 +1665,7 @@ parse_optexport(acc : DParseAcc<?>) -> bool {
 	{
 		pushDCheckpoint(acc);
 		pushDCheckpoint(acc);
-		pushDCheckpoint(acc);
-		if (if (if ((matchString(acc, "export") && parse_ws(acc))) {
+		if (if ((matchString(acc, "export") && parse_ws(acc))) {
 			{
 				pushDCheckpoint(acc);
 				if (if (parse_string(acc)) {
@@ -1691,13 +1690,6 @@ parse_optexport(acc : DParseAcc<?>) -> bool {
 				addMatched(acc, "0");
 				discardDCheckpoint(acc)
 			}
-		}) {
-			{
-				addVerbatim(acc, "s2i");
-				discardDCheckpoint(acc)
-			}
-		} else {
-			restoreDCheckpoint(acc)
 		}
 	}
 }

@@ -8,6 +8,7 @@ import wase/dce;
 import wase/pretty_wase;
 import wase/pretty_wase_ast;
 import formats/wasm/wasm_encode;
+import formats/json/flow2json;
 
 
 compileDslProgram2wasm(includes : [string], program : DslAst, filename : string) -> WasmModule {
@@ -58,7 +59,11 @@ compileWase2File(includes : [string], filename : string, code : string) -> Promi
 					"\n------- DSL PROGRAM -------------\n" +
 					prettyDsl(program) + "\n\n"
 					"\n------- DSL PROGRAM1 -------------\n" +
-					prettyDsl(program1) + "\n\n"
+					prettyDsl(program1) + "\n\n" +
+					"\n------- WASM PROGRAM -------------\n" +
+					json2stringFormatted(flow2json(wasm)) + "\n\n"
+					"\n------- WASM PROGRAM1 -------------\n" +
+					json2stringFormatted(flow2json(wasm1)) + "\n\n"
 				);
 			}
 		}

@@ -1,4 +1,5 @@
 import tools/dsl/dsl_typing;
+import wase/wase_util;
 
 export {
 	typeWase(ast : DslAst) -> DslAst;
@@ -356,19 +357,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 			} else if (name == "wasm_op") {
 				// id, parameters, args
 				op = getDslString(args[0]);
-				//pars = getDslList(args[1]);
-				pars = mapList(getDslList(args[1]), \par ->
-					switch (par) {
-						DslNode(nm, as, __): {
-							if (nm == "string" || nm == "int" || nm == "double" || nm == "bool") {
-								as[0];
-							} else {
-								par;
-							}
-						}
-						default: par;
-					}
-				);
+				pars = unwrapDslPrimitiveList(args[1]);
 				getChildType(1);
 				opargs = getChildType(2);
 

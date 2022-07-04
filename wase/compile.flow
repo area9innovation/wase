@@ -2,6 +2,7 @@ import tools/dsl/dsl_runtime_common;
 import tools/dsl/registry/dsl_populate;
 
 import wase/wase2wasm;
+import wase/wase_util;
 import formats/wasm/wasm_encode;
 
 export {
@@ -21,8 +22,9 @@ dsl2wase(onError : (DslAst, string) -> void, d : DslAst) -> Wase {
 			// Extract an export id
 			exportid = \i, id -> {
 				named = s(i);
-				if (named != "") named
-				else if (b(i)) id
+				if (named != "" && named != "0") {
+					if (named == "1") id else named;
+				} else if (b(i)) id
 				else ""
 			};
 
@@ -112,7 +114,7 @@ dsl2wase(onError : (DslAst, string) -> void, d : DslAst) -> Wase {
 			} else if (name == "data") {
 				id = getDslString(args[0]);
 				size = getDslString(args[1]);
-				data = list2array(getDslList(args[2]));
+				data = list2array(unwrapDslPrimitiveList(args[2]));
 				bytes = fold(data, [], \acc, value -> {
 					switch (value) {
 						DslInt(v): {
@@ -464,18 +466,7 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 				if (id == "hole") {
 					acc;
 				} else {
-					pars = mapList(getDslList(args[1]), \par ->
-						switch (par) {
-							DslNode(nm, as, __): {
-								if (nm == "string" || nm == "int" || nm == "double" || nm == "bool") {
-									as[0];
-								} else {
-									par;
-								}
-							}
-							default: par;
-						}
-					);
+					pars = unwrapDslPrimitiveList(args[1]);
 					type = args[3];
 					nacc = dsl2WaseInstruction(onError, acc, args[2]);
 					fargs = getDslList(args[2]);
