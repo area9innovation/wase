@@ -44,11 +44,13 @@ compileWase2File(includes : [string], filename : string, code : string) -> Promi
 		println("\nCompiling '" + filename + "'");
 		program = parseWase(filename, code);
 		wasm = compileDslProgram2wasm(includes, program, filename);
+		bytes = wasmModule2bytes(wasm);
 		if (isUrlParameterTrue("test-generated-ast")) {
 			prog1 = parseWeDecl(code, \err -> println("Error: " + err));
 			program1 = waseAst2DslAst(prog1);
 			wasm1 = compileDslProgram2wasm(includes, program1, filename);
-			if (program == program1) {
+			bytes1 = wasmModule2bytes(wasm1);
+			if (bytes == bytes1) {
 				println("programms COINCIDE");
 			} else {
 				println("programms:\n" +
@@ -60,7 +62,6 @@ compileWase2File(includes : [string], filename : string, code : string) -> Promi
 				);
 			}
 		}
-		bytes = wasmModule2bytes(wasm);
 		filebase = changeFileExt(filename, "");
 		ok = setFileContentBytes(filebase + ".wasm", 
 			fold(bytes, "", \acc, byte -> {
