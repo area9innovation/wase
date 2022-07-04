@@ -472,6 +472,8 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 					arrayPush(nacc, dslWasmOp2WaseInstruction(onError, d, id, list2array(pars), argTypes, type));
 				}
 
+			} else if (name == "tuple") {
+				dsl2WaseInstruction(onError, acc, args[0]);
 			} else {
 				todo();
 				nacc = fold(args, acc, \a, aa -> dsl2WaseInstruction(onError, a, aa));

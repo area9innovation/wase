@@ -287,7 +287,14 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 				etype = getChildType(3);
 				acc.unifyTypes(acc, type, etype);
 
-				getChildType(4);
+				tp = getChildType(4);
+				switch (tp) {
+					DslList(tps): {
+						// It is the final element that is the type
+						foldList(tps, DslList(makeList()), \__, t -> t);
+					}
+					default: tp;
+				}
 
 			} else if (name == "var") {
 				vname = getDslString(args[0]);
@@ -449,6 +456,8 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 
 				blockType;
 
+			} else if (name == "tuple") {
+				getChildType(0);
 			} else {
 				acc.onError(node, "TODO: Type check " + summarizeDsl(node));
 				// This signifies a tyvar
