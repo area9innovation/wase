@@ -356,7 +356,19 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 			} else if (name == "wasm_op") {
 				// id, parameters, args
 				op = getDslString(args[0]);
-				pars = getDslList(args[1]);
+				//pars = getDslList(args[1]);
+				pars = mapList(getDslList(args[1]), \par ->
+					switch (par) {
+						DslNode(nm, as, __): {
+							if (nm == "string" || nm == "int" || nm == "double" || nm == "bool") {
+								as[0];
+							} else {
+								par;
+							}
+						}
+						default: par;
+					}
+				);
 				getChildType(1);
 				opargs = getChildType(2);
 
@@ -465,6 +477,12 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 
 			} else if (name == "tuple") {
 				getChildType(0);
+			}  else if (name == "string") {
+				DslString("string");
+			} else if (name == "int") {
+				DslString("i32");
+			} else if (name == "double") {
+				DslString("f64");
 			} else {
 				acc.onError(node, "TODO: Type check " + summarizeDsl(node));
 				// This signifies a tyvar

@@ -464,7 +464,18 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 				if (id == "hole") {
 					acc;
 				} else {
-					pars = getDslList(args[1]);
+					pars = mapList(getDslList(args[1]), \par ->
+						switch (par) {
+							DslNode(nm, as, __): {
+								if (nm == "string" || nm == "int" || nm == "double" || nm == "bool") {
+									as[0];
+								} else {
+									par;
+								}
+							}
+							default: par;
+						}
+					);
 					type = args[3];
 					nacc = dsl2WaseInstruction(onError, acc, args[2]);
 					fargs = getDslList(args[2]);
