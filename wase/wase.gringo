@@ -111,7 +111,7 @@ exps = $"nil" exp $"cons" ("," ws exp $"cons")* ("," ws)? | $"nil";
 
 expsemi = $"nil" exp $"cons" (#";" ws exp $"cons")* (";" ws)? | $"nil";
 
-optexport = "export" ws (string | $$"1") | $$"0";
+optexport = ("export" ws (string | $$"1") | $$"0") $"s2i";
 
 optmutable = ("mutable" ws $$"1" | $$"0" ) $"s2i";
 

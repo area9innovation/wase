@@ -29,8 +29,8 @@ export {
 	WeDouble(double_0 : double);
 	WeEqual(exp1 : WeExp, exp2 : WeExp);
 	WeFnType(types : [WeType], typeList : [WeType]);
-	WeFunction(id : string, optexport : string, lambdaArgs : [WeIdtype], typeList : [WeType], exp : WeExp, decl : WeDecl);
-	WeGlobal(id : string, optexport : string, type : WeType, optmutable : int, exp : WeExp, decl : WeDecl);
+	WeFunction(id : string, optexport : int, lambdaArgs : [WeIdtype], typeList : [WeType], exp : WeExp, decl : WeDecl);
+	WeGlobal(id : string, optexport : int, type : WeType, optmutable : int, exp : WeExp, decl : WeDecl);
 	WeGreater(exp1 : WeExp, exp2 : WeExp);
 	WeGreaterEqual(exp1 : WeExp, exp2 : WeExp);
 	WeHex32(s : string);
@@ -52,7 +52,7 @@ export {
 	WeLet(id : string, i : int, opttype : WeType, exp : WeExp, expsemi : [WeExp]);
 	WeLettuple(id : string, i : int, typeList : [WeType], exp : WeExp, expsemi : [WeExp]);
 	WeLoop(brexps : [WeExp]);
-	WeMemory(optexport : string, int_0 : int, int_def : int, decl : WeDecl);
+	WeMemory(optexport : int, int_0 : int, int_def : int, decl : WeDecl);
 	WeMod(exp1 : WeExp, exp2 : WeExp);
 	WeMul(exp1 : WeExp, exp2 : WeExp);
 	WeNegate(exp : WeExp);
