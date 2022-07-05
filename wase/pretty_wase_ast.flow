@@ -15,12 +15,12 @@ prettyWaseAst(w : WaseAst) -> string {
 		WaseAstString(value): value;
 		WaseAstList(value): 
 			//DslList(mapList(value, waseAst2DslAst));
-			superglue(list2array(value), prettyWaseAst, " ");
+			superglue(list2array(value), prettyWaseAst, "::");
 		WeAdd(a0, a1): pretty_bin(a0, a1, "+");
 		WeAnd(a0, a1): pretty_bin(a0, a1, "&&");
 		WeBlock(as): "block {\n" + strIndent(superglue(as, prettyWaseAst, ";\n")) + "\n}";
 			//DslNode("block", [waseAst2DslAst(a0)], 0);
-		WeBrace(as):
+		WeBrace(as): if (length(as) == 0) "{ }" else
 			"{\n" + strIndent(superglue(as, prettyWaseAst, ";\n")) + "\n}";
 			//DslNode("brace", [DslList(fold(a0, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc)))], 0);
 		WeCall(f, as): 
@@ -202,9 +202,6 @@ prettyWaseAst(w : WaseAst) -> string {
 			pretty_bin(a0, a1, "^");
 		WeTuple(exps): {
 			"[" + superglue(exps, prettyWaseAst, ", ") + "]";
-		}
-		WeZreturn(): {
-			"return";
 		}
 	}
 }

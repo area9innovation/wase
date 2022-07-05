@@ -75,7 +75,6 @@ waseAst2DslAst(wal : WaseAst) -> DslAst {
 		WeWaseInclude(a0, a1): DslNode("wase_include", [DslString(a0), waseAst2DslAst(a1)], 0);
 		WeWasmOp(a0, a1, a2): DslNode("wasm_op", [DslString(a0), DslList(fold(a1, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc)))], 0);
 		WeXor(a0, a1): DslNode("xor", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
-		WeZreturn(): DslNode("zreturn", [], 0);
 
 	}
 }
@@ -167,7 +166,7 @@ dslAst2WaseAst(d : DslAst) -> WaseAst {
 			} else if (name == "or") {
 				WeOr(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
 			} else if (name == "return") {
-				WeReturn(dslAst2WeExp(args[0]))
+				WeReturn(dslAst2WeInstruction(args[0]))
 			} else if (name == "set") {
 				WeSet(getDslString(args[0]), dslAst2WeExp(args[1]))
 			} else if (name == "string") {
@@ -192,8 +191,6 @@ dslAst2WaseAst(d : DslAst) -> WaseAst {
 				WeWasmOp(getDslString(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WeWarg))(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeExp))(args[2]))
 			} else if (name == "xor") {
 				WeXor(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
-			} else if (name == "zreturn") {
-				WeZreturn()
 			} else { println("ERROR: Could not convert " + name + " in WaseAst"); WaseAstBool(false) }
 
 		}
@@ -227,7 +224,7 @@ dslAst2WeAtom(d : DslAst) -> WeAtom {
 	} else if (name == "loop") {
 		WeLoop((\t -> map(list2array(getDslList(t)), dslAst2WeExp))(args[0]))
 	} else if (name == "return") {
-		WeReturn(dslAst2WeExp(args[0]))
+		WeReturn(dslAst2WeInstruction(args[0]))
 	} else if (name == "set") {
 		WeSet(getDslString(args[0]), dslAst2WeExp(args[1]))
 	} else if (name == "tee") {
@@ -236,8 +233,6 @@ dslAst2WeAtom(d : DslAst) -> WeAtom {
 		WeTuple((\t -> map(list2array(getDslList(t)), dslAst2WeExp))(args[0]))
 	} else if (name == "var") {
 		WeVar(getDslString(args[0]))
-	} else if (name == "zreturn") {
-		WeZreturn()
 	} else { println("ERROR: Could not convert " + name + " in WeAtom"); WeDouble(0.0) }
 
 }
@@ -304,7 +299,7 @@ dslAst2WeDataoffset(d : DslAst) -> WeDataoffset {
 	} else if (name == "or") {
 		WeOr(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
 	} else if (name == "return") {
-		WeReturn(dslAst2WeExp(args[0]))
+		WeReturn(dslAst2WeInstruction(args[0]))
 	} else if (name == "set") {
 		WeSet(getDslString(args[0]), dslAst2WeExp(args[1]))
 	} else if (name == "sub") {
@@ -321,8 +316,6 @@ dslAst2WeDataoffset(d : DslAst) -> WeDataoffset {
 		WeWasmOp(getDslString(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WeWarg))(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeExp))(args[2]))
 	} else if (name == "xor") {
 		WeXor(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
-	} else if (name == "zreturn") {
-		WeZreturn()
 	} else { println("ERROR: Could not convert " + name + " in WeDataoffset"); WeInt(0) }
 
 }
@@ -429,7 +422,7 @@ dslAst2WeExp(d : DslAst) -> WeExp {
 	} else if (name == "or") {
 		WeOr(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
 	} else if (name == "return") {
-		WeReturn(dslAst2WeExp(args[0]))
+		WeReturn(dslAst2WeInstruction(args[0]))
 	} else if (name == "set") {
 		WeSet(getDslString(args[0]), dslAst2WeExp(args[1]))
 	} else if (name == "sub") {
@@ -446,8 +439,6 @@ dslAst2WeExp(d : DslAst) -> WeExp {
 		WeWasmOp(getDslString(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WeWarg))(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WeExp))(args[2]))
 	} else if (name == "xor") {
 		WeXor(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
-	} else if (name == "zreturn") {
-		WeZreturn()
 	} else { println("ERROR: Could not convert " + name + " in WeExp"); WeAdd(WeDouble(0.0), WeDouble(0.0)) }
 
 }
@@ -475,9 +466,7 @@ dslAst2WeInstruction(d : DslAst) -> WeInstruction {
 	} else if (name == "loop") {
 		WeLoop((\t -> map(list2array(getDslList(t)), dslAst2WeExp))(args[0]))
 	} else if (name == "return") {
-		WeReturn(dslAst2WeExp(args[0]))
-	} else if (name == "zreturn") {
-		WeZreturn()
+		WeReturn(dslAst2WeInstruction(args[0]))
 	} else { println("ERROR: Could not convert " + name + " in WeInstruction"); WeBlock([]) }
 
 }
@@ -692,7 +681,7 @@ dslAst2WeOr(d : DslAst) -> WeOr {
 dslAst2WeReturn(d : DslAst) -> WeReturn {
 	node = getDslNode(d);
 	args = node.args;
-	WeReturn(dslAst2WeExp(args[0]))
+	WeReturn(dslAst2WeInstruction(args[0]))
 }
 dslAst2WeSet(d : DslAst) -> WeSet {
 	node = getDslNode(d);
@@ -751,8 +740,5 @@ dslAst2WeXor(d : DslAst) -> WeXor {
 	node = getDslNode(d);
 	args = node.args;
 	WeXor(dslAst2WeExp(args[0]), dslAst2WeExp(args[1]))
-}
-dslAst2WeZreturn(d : DslAst) -> WeZreturn {
-	WeZreturn()
 }
 

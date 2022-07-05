@@ -40,9 +40,13 @@ compileDslProgram2wasm(includes : [string], program : DslAst, filename : string)
 }
 
 
+failed_tests = ref 0;
+total_tests = ref 0;
+
 compileWase2File(includes : [string], filename : string, code : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
 		println("\nCompiling '" + filename + "'");
+		total_tests := ^total_tests + 1;
 		program = parseWase(filename, code);
 		wasm = compileDslProgram2wasm(includes, program, filename);
 		bytes = wasmModule2bytes(wasm);
@@ -54,6 +58,7 @@ compileWase2File(includes : [string], filename : string, code : string) -> Promi
 			if (bytes == bytes1) {
 				println("programms COINCIDE");
 			} else {
+				failed_tests := ^failed_tests + 1;
 				println("programms:\n" +
 					prettyWaseAst(prog1) + "\n" +
 					"\n------- DSL PROGRAM -------------\n" +
@@ -120,10 +125,22 @@ main() {
 			}
 		});
 		all : Promise<[int], string> = allP(compiles);
-		doneP(all, \__ -> quit(0), \error -> {
-			println(error);
-			quit(1);
-		});
+		doneP(all, 
+			\__ -> {
+				if (isUrlParameterTrue("test-generated-ast")) {
+					if (^failed_tests > 0) {
+						println("Failed tests: " + i2s(^failed_tests) + " out of " + i2s(^total_tests));
+					} else {
+						println("All " + i2s(^total_tests) + " tests passed successfully");
+					}
+				}
+				quit(0);
+			},
+			\error -> {
+				println(error);
+				quit(1);
+			}
+		);
 	}
 }
 

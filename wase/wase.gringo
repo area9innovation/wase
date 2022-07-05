@@ -84,7 +84,7 @@ atom = "if" !letterOrDigit ws exp exp "else" ws exp $"ifelse_3"
 		| id ":=" ws exp $"set_2"
 		| id "::=" ws exp $"tee_2"
 		| id $"var_1"
-		| '[' ws exps ']' ws $"tuple_1" // list
+		| tuple //'[' ws exps ']' ws $"tuple_1" // list
 //				| string $"string_1"
 		| "0x" $(hexdigit+) ("w" $"hex64_1" | "n" $"hexf32_1" | "h" $"hexf64_1" | $"hex32_1") ws
 		| $('0'-'9'+) "w" ws $"i64_1"
@@ -93,11 +93,12 @@ atom = "if" !letterOrDigit ws exp exp "else" ws exp $"ifelse_3"
 		// | '<<' $(!('>' '>') anychar)* ('>' '>') ws
 		;
 
+tuple = '[' ws exps ']' ws $"tuple_1";
+
 instruction =
 	"block" !letterOrDigit ws brexps $"block_1"
 	| "loop" !letterOrDigit ws brexps $"loop_1"
-	| "return" !letterOrDigit ws exp $"return_1"
-	| "return" $"zreturn_0"
+	| "return" !letterOrDigit ws (exp | ($"nil" $"tuple_1")) $"return_1"
 	;
 
 wasmop = $wasmid ws "<" ws wargs ">" ws "(" ws exps ")" ws $"wasm_op_3";
