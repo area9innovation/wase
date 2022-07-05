@@ -1,0 +1,27 @@
+import tools/dsl/dsl_ast;
+import tools/dsl/dsl_util;
+
+export {
+	// Remove a top-level 'string', 'int', 'double' or 'bool' AST-node
+	unwrapDslPrimitive(n : DslAst) -> DslAst;
+
+	// Map a list with unwrapDslPrimitive
+	unwrapDslPrimitiveList(x : DslAst) -> List<DslAst>;
+}
+
+unwrapDslPrimitive(n : DslAst) -> DslAst {
+	switch (n) {
+		DslNode(nm, as, __): {
+			if (nm == "string" || nm == "int" || nm == "double" || nm == "bool") {
+				as[0];
+			} else {
+				n;
+			}
+		}
+		default: n;
+	}
+}
+
+unwrapDslPrimitiveList(list : DslAst) -> List<DslAst> {
+	mapList(getDslList(list), unwrapDslPrimitive);
+}

@@ -1,4 +1,5 @@
 import tools/dsl/dsl_typing;
+import wase/wase_util;
 
 export {
 	typeWase(ast : DslAst) -> DslAst;
@@ -271,7 +272,14 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 				etype = getChildType(3);
 				acc.unifyTypes(acc, type, etype);
 
-				getChildType(4);
+				tp = getChildType(4);
+				switch (tp) {
+					DslList(tps): {
+						// It is the final element that is the type
+						foldList(tps, DslList(makeList()), \__, t -> t);
+					}
+					default: tp;
+				}
 			} else if (name == "lettuple") {
 				// (id, type, exp, body)
 				vname = getDslString(args[0]);
@@ -287,7 +295,14 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 				etype = getChildType(3);
 				acc.unifyTypes(acc, type, etype);
 
-				getChildType(4);
+				tp = getChildType(4);
+				switch (tp) {
+					DslList(tps): {
+						// It is the final element that is the type
+						foldList(tps, DslList(makeList()), \__, t -> t);
+					}
+					default: tp;
+				}
 
 			} else if (name == "var") {
 				vname = getDslString(args[0]);
@@ -342,7 +357,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 			} else if (name == "wasm_op") {
 				// id, parameters, args
 				op = getDslString(args[0]);
-				pars = getDslList(args[1]);
+				pars = unwrapDslPrimitiveList(args[1]);
 				getChildType(1);
 				opargs = getChildType(2);
 
@@ -449,6 +464,14 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 
 				blockType;
 
+			} else if (name == "tuple") {
+				getChildType(0);
+			}  else if (name == "string") {
+				DslString("string");
+			} else if (name == "int") {
+				DslString("i32");
+			} else if (name == "double") {
+				DslString("f64");
 			} else {
 				acc.onError(node, "TODO: Type check " + summarizeDsl(node));
 				// This signifies a tyvar

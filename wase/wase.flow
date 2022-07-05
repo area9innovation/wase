@@ -8,47 +8,70 @@ import wase/dce;
 import wase/pretty_wase;
 import wase/pretty_wase_ast;
 import formats/wasm/wasm_encode;
+import formats/json/flow2json;
 
-compileWase2File(includes, filename : string, code : string) -> Promise<int, string> {
+
+compileDslProgram2wasm(includes : [string], program : DslAst, filename : string) -> WasmModule {
+	include = DslInclude(includes, [".wase"], "wase_include", "wase_empty", \path, file, content -> {
+		parseWase(path, content);
+	}, ref makeSet());
+	extended = processDslIncludes(include, program);
+	typed = typeWase(extended);
+
+	if (isUrlParameterTrue("debug-type")) {
+		println("Typed '" + filename + "'':");
+		println(prettyDsl(typed));
+	}
+
+	wase0 = dsl2wase(\node, error -> {
+		println(filename + ": " + error)
+	}, typed);
+
+	// Dead code optimization
+	dce = getUrlParameterDef("dce", "1");
+	wase = if (dce == "0") wase0 else performDCE(wase0, dce);
+
+	if (isUrlParameterTrue("debug-wase")) {
+		println("\nAs wase:");
+		println(prettyWase(wase));
+	}
+
+	wase2wasm(wase);
+}
+
+
+failed_tests = ref 0;
+total_tests = ref 0;
+
+compileWase2File(includes : [string], filename : string, code : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
 		println("\nCompiling '" + filename + "'");
+		total_tests := ^total_tests + 1;
 		program = parseWase(filename, code);
-		if (isUrlParameterTrue("test-generated-ast")) {
-			prog1 = parseWeDecl(getFileContent(filename), \err -> println("Error: " + err));
-			program1 = waseAst2DslAst(prog1);
-			println("programms:\n" +
-				prettyWaseAst(prog1) + "\n" +
-				"\n------- DSL PROGRAM -------------\n" +
-				prettyDsl(program1) + "\n\n"
-			);
-		}
-		include = DslInclude(includes, [".wase"], "wase_include", "wase_empty", \path, file, content -> {
-			parseWase(path, content);
-		}, ref makeSet());
-		extended = processDslIncludes(include, program);
-		typed = typeWase(extended);
-
-		if (isUrlParameterTrue("debug-type")) {
-			println("Typed '" + filename + "'':");
-			println(prettyDsl(typed));
-		}
-
-		wase0 = dsl2wase(\node, error -> {
-			println(filename + ": " + error)
-		}, typed);
-
-		// Dead code optimization
-		dce = getUrlParameterDef("dce", "1");
-		wase = if (dce == "0") wase0 else performDCE(wase0, dce);
-
-		if (isUrlParameterTrue("debug-wase")) {
-			println("\nAs wase:");
-			println(prettyWase(wase));
-		}
-
-		wasm = wase2wasm(wase);
+		wasm = compileDslProgram2wasm(includes, program, filename);
 		bytes = wasmModule2bytes(wasm);
-
+		if (isUrlParameterTrue("test-generated-ast")) {
+			prog1 = parseWeDecl(code, \err -> println("Error: " + err));
+			program1 = waseAst2DslAst(prog1);
+			wasm1 = compileDslProgram2wasm(includes, program1, filename);
+			bytes1 = wasmModule2bytes(wasm1);
+			if (bytes == bytes1) {
+				println("programms COINCIDE");
+			} else {
+				failed_tests := ^failed_tests + 1;
+				println("programms:\n" +
+					prettyWaseAst(prog1) + "\n" +
+					"\n------- DSL PROGRAM -------------\n" +
+					prettyDsl(program) + "\n\n"
+					"\n------- DSL PROGRAM1 -------------\n" +
+					prettyDsl(program1) + "\n\n" +
+					"\n------- WASM PROGRAM -------------\n" +
+					json2stringFormatted(flow2json(wasm)) + "\n\n"
+					"\n------- WASM PROGRAM1 -------------\n" +
+					json2stringFormatted(flow2json(wasm1)) + "\n\n"
+				);
+			}
+		}
 		filebase = changeFileExt(filename, "");
 		ok = setFileContentBytes(filebase + ".wasm", 
 			fold(bytes, "", \acc, byte -> {
@@ -102,10 +125,22 @@ main() {
 			}
 		});
 		all : Promise<[int], string> = allP(compiles);
-		doneP(all, \__ -> quit(0), \error -> {
-			println(error);
-			quit(1);
-		});
+		doneP(all, 
+			\__ -> {
+				if (isUrlParameterTrue("test-generated-ast")) {
+					if (^failed_tests > 0) {
+						println("Failed tests: " + i2s(^failed_tests) + " out of " + i2s(^total_tests));
+					} else {
+						println("All " + i2s(^total_tests) + " tests passed successfully");
+					}
+				}
+				quit(0);
+			},
+			\error -> {
+				println(error);
+				quit(1);
+			}
+		);
 	}
 }
 
