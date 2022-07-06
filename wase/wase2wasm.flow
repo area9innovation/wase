@@ -263,7 +263,7 @@ compileWase(context : WaseContext, w : Wase) -> void {
 				memoryId = length(^(context.memory));
 				wmemory = WasmMemoryType(WasmLimits(minimumPages, maximumPages));
 				context.memory := arrayPush(^(context.memory), wmemory);
-				context.freeslots := arrayPush(^(context.freeslots), FreeSlot(0, minimumPages * 64));
+				context.freeslots := arrayPush(^(context.freeslots), FreeSlot(0, max(minimumPages, maximumPages) * 64 * 1024));
 
 				if (exportId != "") {
 					wexport = WasmExport(exportId, WasmExportMemory(memoryId));
@@ -338,38 +338,24 @@ compileWase(context : WaseContext, w : Wase) -> void {
 		}
 		WaseData(id, size, offset, bytes, scope): {
 			if (^(context.deep)) {
-				freeslots = ^(context.freeslots);
 				lengthB = length(bytes);
 				address = switch (offset.instructions[0] : WaseInstruction) {
 					WasmI32Const(n): {
 						// When offset isn't specified
 						if (n == 0) {
-							slotLength = \slot -> slot.end - slot.start;
+							fits = \slot -> slot.end - slot.start >= lengthB;
 							dummySlot = FreeSlot(0, 0);
 
-							findSlot = \slots -> {
-								fold(slots, dummySlot, \acc, slot -> {
-									if (acc == dummySlot && slotLength(slot) >= lengthB) slot else acc
-								})
-							}
-
-							fittingSlot = findSlot(freeslots);
-							lastSlot = lastElement(freeslots, dummySlot);
-							kb = 64;
-							maxMemory = ^(context.memory)[0].limits.maximum * kb;
-							currentMemory = lastSlot.end;
-							resultSlot = if (fittingSlot == dummySlot) {
-								if (maxMemory > currentMemory) {
-									context.freeslots := replace(freeslots, length(freeslots) - 1, FreeSlot(lastSlot.start, currentMemory + kb));
-									findSlot(^(context.freeslots))
-								} else {
-									println("not enough memory");
-									dummySlot
-								}
+							fittingSlot = fold(^(context.freeslots), dummySlot, \acc, slot -> {
+								if (acc == dummySlot && fits(slot)) slot else acc
+							})
+							
+							if (fittingSlot == dummySlot) {
+								println("Can't find free memory slot for data " + id);
+								0
 							} else {
-								fittingSlot
+								fittingSlot.start
 							}
-							resultSlot.start
 						} else n
 					};
 					default: {
@@ -377,13 +363,13 @@ compileWase(context : WaseContext, w : Wase) -> void {
 						0
 					}
 				}
-				// println(address);
+
 				addressW = WasmI32Const(address);
 				context.data := arrayPush(^(context.data), WasmData0(WasmExpr([addressW]), bytes));
 				context.get := setTree(^(context.get), id, addressW);
 				context.get := setTree(^(context.get), size, WasmI32Const(lengthB));
 
-				context.freeslots := {
+				updatedFreeslots = \freeslots -> {
 					idxM = findi(freeslots, \slot -> slot.start <= address && address + lengthB <= slot.end);
 					eitherFn(
 						idxM,
@@ -397,12 +383,14 @@ compileWase(context : WaseContext, w : Wase) -> void {
 							])
 						},
 						\ -> {
-							println("Not enough space");
+							if (address != 0) {
+								println("Not enough place to put data " + id + " at offset " + i2s(address))
+							}
 							freeslots
 						}
 					)
-				};
-				println(context.freeslots);
+				}
+				context.freeslots := updatedFreeslots(^(context.freeslots));
 			}
 			compileWase(context, scope)
 		}
