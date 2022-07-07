@@ -38,9 +38,9 @@ data = "data" ws
 include = "include" !letterOrDigit ws $(letterOrDigit+ ("/" letterOrDigit+)+) ws ";" ws decl $"wase_include_2";
 
 exp =
-	("var" !letterOrDigit ws $$"1" $"s2i" id $"swap" opttype "=" ws exp ";" ws expsemi $"let_5"
-		| id $$"0" $"s2i" opttype "=" ws exp ";" ws expsemi $"let_5"
-		| id $$"0" $"s2i" ":" ws typeList "=" ws exp ";" ws expsemi $"lettuple_5"
+	("var" !letterOrDigit ws $$"1" $"s2i" id $"swap" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
+		| id $$"0" $"s2i" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
+		| id $$"0" $"s2i" ":" ws typeList "=" ws exp ";" ws expsemi $"brace_1" $"lettuple_5"
 	)
 	|> exp "|" ws exp $"or_2"
 	|> exp "&" ws exp $"and_2"
@@ -55,15 +55,15 @@ exp =
 	|> exp ':' ws typeList $"type_annotation_2"
 
 	|> wasmop
+	|> exp "(<" ws exp ">)" ws $"call2_2" // interpret the single argument as a tuple of arguments
 
 	|> (
 		// '!' ws exp $"not_1"
 		"-" ws exp $"negate_1" // Only for floats
 		| exp (
 			"(" ws exps ")" ws $"call_2"
-		)*
+		)+
 	)
-
 
 	|> brexps $"brace_1"
 	|> "(" ws exp ")" ws
@@ -83,7 +83,7 @@ atom = "if" !letterOrDigit ws exp exp "else" ws exp $"ifelse_3"
 		| instruction
 		| id ":=" ws exp $"set_2"
 		| id "::=" ws exp $"tee_2"
-		| id $"var_1"
+		| $(id_body ("." letterOrDigit+)?) ws $"var_1"
 		| tuple //'[' ws exps ']' ws $"tuple_1" // list
 //				| string $"string_1"
 		| "0x" $(hexdigit+) ("w" $"hex64_1" | "n" $"hexf32_1" | "h" $"hexf64_1" | $"hex32_1") ws
@@ -98,7 +98,8 @@ tuple = '[' ws exps ']' ws $"tuple_1";
 instruction =
 	"block" !letterOrDigit ws brexps $"block_1"
 	| "loop" !letterOrDigit ws brexps $"loop_1"
-	| "return" !letterOrDigit ws (exp | ($"nil" $"tuple_1")) $"return_1"
+	| "return" !letterOrDigit ws exp $"return_1"
+	| "return" !letterOrDigit ws $"just_return_0"
 	;
 
 wasmop = $wasmid ws "<" ws wargs ">" ws "(" ws exps ")" ws $"wasm_op_3";
@@ -124,7 +125,11 @@ typeList = ("(" ws ($"nil" type $"cons" ("," ws type $"cons")* | $"nil") ")" ws)
 
 fn_type = "(" ws ($"nil" type $"cons" ("," ws type $"cons")* | $"nil") ")" ws "->" ws typeList $"fn_type_2";
 
-id = $(('a'-'z' | 'A'-'Z' | '_') letterOrDigit*) ws;
+id = $id_body ws;
+
+id_body = letterOrUnderscore letterOrDigit*;
+
+letterOrUnderscore = 'a'-'z' | 'A'-'Z' | '_';
 
 letterOrDigit = 'a'-'z'
 	| 'A'-'Z'

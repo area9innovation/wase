@@ -3,7 +3,7 @@ import ds/list;
 
 export {
 	// This is a monster type used when parsing
-	WaseAst ::= WaseAstList, WaseAstBool, WaseAstInt, WaseAstDouble, WaseAstString, WeAtom, WeDataoffset, WeDatavalue, WeDecl, WeExp, WeImport, WeInstruction, WeWarg, WeAdd, WeAnd, WeBlock, WeBrace, WeCall, WeData, WeDiv, WeDouble, WeEqual, WeFnType, WeFunction, WeGlobal, WeGreater, WeGreaterEqual, WeHex32, WeHex64, WeHexf32, WeHexf64, WeI64, WeIdtype, WeIf, WeIfelse, WeImportFun, WeImportGlobal, WeImportMemory, WeImportTable, WeInt, WeIsNull, WeLess, WeLessEqual, WeLet, WeLettuple, WeLoop, WeMemory, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeReturn, WeSet, WeString, WeSub, WeTee, WeTuple, WeType, WeTypeAnnotation, WeVar, WeWaseEmpty, WeWaseInclude, WeWasmOp, WeXor;
+	WaseAst ::= WaseAstList, WaseAstBool, WaseAstInt, WaseAstDouble, WaseAstString, WeAtom, WeDataoffset, WeDatavalue, WeDecl, WeExp, WeImport, WeInstruction, WeWarg, WeAdd, WeAnd, WeBlock, WeBrace, WeCall, WeCall2, WeData, WeDiv, WeDouble, WeEqual, WeFnType, WeFunction, WeGlobal, WeGreater, WeGreaterEqual, WeHex32, WeHex64, WeHexf32, WeHexf64, WeI64, WeIdtype, WeIf, WeIfelse, WeImportFun, WeImportGlobal, WeImportMemory, WeImportTable, WeInt, WeIsNull, WeJustReturn, WeLess, WeLessEqual, WeLet, WeLettuple, WeLoop, WeMemory, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeReturn, WeSet, WeString, WeSub, WeTee, WeTuple, WeType, WeTypeAnnotation, WeVar, WeWaseEmpty, WeWaseInclude, WeWasmOp, WeXor;
 
 	WaseAstList(value : List<WaseAst>);
 	WaseAstBool(value : bool);
@@ -15,15 +15,16 @@ export {
 	WeDataoffset ::= WeInt, WeExp;
 	WeDatavalue ::= WeDouble, WeInt, WeString;
 	WeDecl ::= WeData, WeFunction, WeGlobal, WeImport, WeMemory, WeWaseEmpty, WeWaseInclude;
-	WeExp ::= WeAdd, WeAnd, WeAtom, WeBrace, WeCall, WeDiv, WeEqual, WeGreater, WeGreaterEqual, WeIsNull, WeLess, WeLessEqual, WeLet, WeLettuple, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeSub, WeTypeAnnotation, WeWasmOp, WeXor;
+	WeExp ::= WeAdd, WeAnd, WeAtom, WeBrace, WeCall, WeCall2, WeDiv, WeEqual, WeGreater, WeGreaterEqual, WeIsNull, WeLess, WeLessEqual, WeLet, WeLettuple, WeMod, WeMul, WeNegate, WeNotEqual, WeOr, WeSub, WeTypeAnnotation, WeWasmOp, WeXor;
 	WeImport ::= WeImportFun, WeImportGlobal, WeImportMemory, WeImportTable;
-	WeInstruction ::= WeBlock, WeLoop, WeReturn;
+	WeInstruction ::= WeBlock, WeJustReturn, WeLoop, WeReturn;
 	WeWarg ::= WeInt, WeString, WeType;
 	WeAdd(exp1 : WeExp, exp2 : WeExp);
 	WeAnd(exp1 : WeExp, exp2 : WeExp);
 	WeBlock(brexps : [WeExp]);
-	WeBrace(brexps : [WeExp]);
+	WeBrace(expsemi : [WeExp]);
 	WeCall(exp : WeExp, exps : [WeExp]);
+	WeCall2(exp1 : WeExp, exp2 : WeExp);
 	WeData(id : string, dataSize : string, dataList : [WeDatavalue], dataOffset : WeDataoffset, decl : WeDecl);
 	WeDiv(exp1 : WeExp, exp2 : WeExp);
 	WeDouble(double_0 : double);
@@ -47,10 +48,11 @@ export {
 	WeImportTable(id1 : string, reftype : WeType, int_0 : int, int_def : int, id2 : string, id3 : string, decl : WeDecl);
 	WeInt(int_0 : int);
 	WeIsNull(exp : WeExp);
+	WeJustReturn();
 	WeLess(exp1 : WeExp, exp2 : WeExp);
 	WeLessEqual(exp1 : WeExp, exp2 : WeExp);
-	WeLet(id : string, i : int, opttype : WeType, exp : WeExp, expsemi : [WeExp]);
-	WeLettuple(id : string, i : int, typeList : [WeType], exp : WeExp, expsemi : [WeExp]);
+	WeLet(id : string, i : int, opttype : WeType, exp : WeExp, brace : WeBrace);
+	WeLettuple(id : string, i : int, typeList : [WeType], exp : WeExp, brace : WeBrace);
 	WeLoop(brexps : [WeExp]);
 	WeMemory(optexport : string, int_0 : int, int_def : int, decl : WeDecl);
 	WeMod(exp1 : WeExp, exp2 : WeExp);
@@ -58,7 +60,7 @@ export {
 	WeNegate(exp : WeExp);
 	WeNotEqual(exp1 : WeExp, exp2 : WeExp);
 	WeOr(exp1 : WeExp, exp2 : WeExp);
-	WeReturn(instruction : WeInstruction);
+	WeReturn(exp : WeExp);
 	WeSet(id : string, exp : WeExp);
 	WeString(id : string);
 	WeSub(exp1 : WeExp, exp2 : WeExp);
@@ -66,7 +68,7 @@ export {
 	WeTuple(exps : [WeExp]);
 	WeType(s : string);
 	WeTypeAnnotation(exp : WeExp, typeList : [WeType]);
-	WeVar(id : string);
+	WeVar(s : string);
 	WeWaseEmpty();
 	WeWaseInclude(s : string, decl : WeDecl);
 	WeWasmOp(s : string, wargs : [WeWarg], exps : [WeExp]);

@@ -208,7 +208,9 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 				hint = hex2uint64(getDslString(args[0]));
 				arrayPush(acc, WasmF64ConstHex(hint))
 			} else if (name == "brace") {
-				dslBrace2WaseInstruction(onError, acc, d);
+				type = waseType(args[1]);
+				ins = dslBrace2WaseInstruction(onError, [], d);
+				arrayPush(acc, WaseBlock(dsl2WaseBlockType(onError, type), ins));
 			} else if (name == "block") {
 				type = waseType(args[1]);
 				ins = dslBrace2WaseInstruction(onError, [], d);
@@ -255,6 +257,14 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 				dsl2WaseInstruction(onError, acc, args[0]);
 
 			} else if (name == "call") {
+				fnadded = dsl2WaseInstruction(onError, acc, args[0]);
+				if (length(acc) + 1 != length(fnadded)) {
+					onError(d, "Can not call " + summarizeDsl(d));
+				}
+				fn = lastElement(fnadded, WasmUnreachable());
+				callargs = dsl2WaseInstruction(onError, acc, args[1]);
+				arrayPush(callargs, WaseCall(fn));
+			} else if (name == "call2") {
 				fnadded = dsl2WaseInstruction(onError, acc, args[0]);
 				if (length(acc) + 1 != length(fnadded)) {
 					onError(d, "Can not call " + summarizeDsl(d));
@@ -476,6 +486,8 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 
 			} else if (name == "tuple") {
 				dsl2WaseInstruction(onError, acc, args[0]);
+			} else if (name == "just_return") {
+				arrayPush(acc, WasmReturn());
 			} else {
 				todo();
 				nacc = fold(args, acc, \a, aa -> dsl2WaseInstruction(onError, a, aa));
@@ -1407,14 +1419,8 @@ waseType(d : DslAst) -> DslAst {
 			println("TODO: Why do we have a tyvar " + i2s(tv) + ", and not a resolved type?");
 			d;
 		}
-		DslList(l): {
-			if (isEmptyList(l)) {
-				d;
-			} else {
-				println("Unknown type " + summarizeDsl(d));
-				d;
-			}
-		}
+		DslList(l): d;
+		DslString(tp): d;
 		default: {
 			println("Unknown type " + summarizeDsl(d));
 			d;
