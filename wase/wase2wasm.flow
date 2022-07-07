@@ -28,7 +28,7 @@ wase2wasm(wase : Wase) -> WasmModule {
 	context = WaseContext(ref makeTree(), ref makeTree(), ref makeTree(),
 		ref [], ref makeTree(), 
 		ref 0, ref 0, ref 0, ref 0, ref 0, ref 0,
-		ref [], ref [], ref [], ref [], ref [], ref [], ref [], ref [],
+		ref [], ref [], ref [], ref [], ref [], ref [], ref [], ref [], ref [],
 		ref -1,
 		// Lookup from fn to fn indexes for indirect fns
 		ref makeTree(),
@@ -88,6 +88,8 @@ wase2wasm(wase : Wase) -> WasmModule {
 	);
 }
 
+FreeSlot(start : int, end : int);
+
 WaseContext(
 	// As we construct functions, imports, etc, we record their indexes here
 	get : ref Tree<string, WasmInstruction>,
@@ -127,6 +129,9 @@ WaseContext(
 
 	// Data
 	data : ref [WasmData],
+
+	// Free memory slots for data
+	freeslots: ref [FreeSlot],
 
 	// Elements
 	elements : ref [WasmElement],
@@ -258,6 +263,7 @@ compileWase(context : WaseContext, w : Wase) -> void {
 				memoryId = length(^(context.memory));
 				wmemory = WasmMemoryType(WasmLimits(minimumPages, maximumPages));
 				context.memory := arrayPush(^(context.memory), wmemory);
+				context.freeslots := arrayPush(^(context.freeslots), FreeSlot(0, max(minimumPages, maximumPages) * 64 * 1024));
 
 				if (exportId != "") {
 					wexport = WasmExport(exportId, WasmExportMemory(memoryId));
@@ -332,18 +338,59 @@ compileWase(context : WaseContext, w : Wase) -> void {
 		}
 		WaseData(id, size, offset, bytes, scope): {
 			if (^(context.deep)) {
-				off = waseExpr2wasm(context, offset);
-				context.data := arrayPush(^(context.data), WasmData0(off, bytes));
-				instr = offset.instructions[0];
-				address = switch (instr : WaseInstruction) {
-					WasmI32Const(n): instr;
+				lengthB = length(bytes);
+				address = switch (offset.instructions[0] : WaseInstruction) {
+					WasmI32Const(n): {
+						// When offset isn't specified
+						if (n == 0) {
+							fits = \slot -> slot.end - slot.start >= lengthB;
+							dummySlot = FreeSlot(0, 0);
+
+							fittingSlot = fold(^(context.freeslots), dummySlot, \acc, slot -> {
+								if (acc == dummySlot && fits(slot)) slot else acc
+							})
+							
+							if (fittingSlot == dummySlot) {
+								println("Can't find free memory slot for data " + id);
+								0
+							} else {
+								fittingSlot.start
+							}
+						} else n
+					};
 					default: {
 						println("Data offset can only be an integer constant");
-						WasmI32Const(0)
+						0
 					}
 				}
-				context.get := setTree(^(context.get), id, address);
-				context.get := setTree(^(context.get), size, WasmI32Const(length(bytes)));
+
+				addressW = WasmI32Const(address);
+				context.data := arrayPush(^(context.data), WasmData0(WasmExpr([addressW]), bytes));
+				context.get := setTree(^(context.get), id, addressW);
+				context.get := setTree(^(context.get), size, WasmI32Const(lengthB));
+
+				updatedFreeslots = \freeslots -> {
+					idxM = findi(freeslots, \slot -> slot.start <= address && address + lengthB <= slot.end);
+					eitherFn(
+						idxM,
+						\idx -> {
+							slot = freeslots[idx];
+							concatA([
+								take(freeslots, idx),
+								if (slot.start != address) [FreeSlot(slot.start, address)] else [], 
+								if (slot.end != address + lengthB) [FreeSlot(address + lengthB, slot.end)] else [],
+								tailFrom(freeslots, idx + 1)
+							])
+						},
+						\ -> {
+							if (address != 0) {
+								println("Not enough place to put data " + id + " at offset " + i2s(address))
+							}
+							freeslots
+						}
+					)
+				}
+				context.freeslots := updatedFreeslots(^(context.freeslots));
 			}
 			compileWase(context, scope)
 		}
