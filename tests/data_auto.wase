@@ -1,0 +1,15 @@
+export memory 1 2;
+
+data hello = "hello" offset 1;
+data numbers = 1, 2;
+
+data data1 = "data1" offset 23;
+data data2 = "data2, data2";
+
+export _start() -> () {
+	hello;
+	numbers;
+	data1;
+	data2;
+	{}
+}
