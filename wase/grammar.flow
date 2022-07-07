@@ -62,6 +62,7 @@ defineWase() -> DslGrammar {
 			|> exp ':' ws typelist $"typeannotation_2"
 
 			|> wasmop
+			|> exp "(<" ws exp ">)" ws $"call2_2" // interpret the single argument as a tuple of arguments
 
 			|> (
 				// '!' ws exp $"not_1"
@@ -90,7 +91,7 @@ defineWase() -> DslGrammar {
 				| instruction
 				| id ":=" ws exp $"set_2"
 				| id "::=" ws exp $"tee_2"
-				| id $"var_1"
+				| $(id_body ("." letterOrDigit+)?) ws $"var_1"
 				| '[' ws exps ']' ws // list
 //				| string $"string_1"
 				| "0x" $(hexdigit+) ("w" $"hex64_1" | "n" $"hexf32_1" | "h" $"hexf64_1" | $"hex32_1") ws
@@ -135,6 +136,10 @@ defineWase() -> DslGrammar {
 
 //			| id "<" ws types ">" ws $"partype_2"
 //			| type;
+
+		id_body = letterOrUnderscore letterOrDigit*;
+
+		letterOrUnderscore = 'a'-'z' | 'A'-'Z' | '_';
 	
 		ws decl
 	>>, ["ws", "id", "int", "double", "string"]); // true adds definitions for whitespace

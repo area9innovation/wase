@@ -49,7 +49,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 				} else {
 					args[0];
 				}
-			} else if (name == "fntype") {
+			} else if (name == "fn_type" || name == "fntype") {
 				fargtypes = getChildType(0);
 				rettypes = getChildType(1);
 
@@ -291,6 +291,11 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 				// Record that this is NOT mutable
 				acc.constants := insertSet(^(acc.constants), vname);
 				acc.env := setTree(^(acc.env), vname, type);
+				iteriList(getDslList(type), \i, tp -> {
+					vnamei = vname + "." + i2s(i);
+					acc.constants := insertSet(^(acc.constants), vnamei);
+					acc.env := setTree(^(acc.env), vnamei, tp);
+				});
 
 				etype = getChildType(3);
 				acc.unifyTypes(acc, type, etype);
@@ -395,6 +400,14 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 				
 				retType = makeDslTypeVar(acc);
 				callType = DslNode("func", [argtype, retType], 0);
+
+				acc.unifyTypes(acc, fntype, callType);
+				retType;
+			} else if (name == "call2") {
+				fntype = getChildType(0);
+				argtype = getChildType(1);
+				retType = makeDslTypeVar(acc);
+				callType = DslNode("func", [argtype, retType], 0);
 				acc.unifyTypes(acc, fntype, callType);
 				retType;
 			} else if (name == "return") {
@@ -466,12 +479,25 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 
 			} else if (name == "tuple") {
 				getChildType(0);
-			}  else if (name == "string") {
+			} else if (name == "string") {
 				DslString("string");
 			} else if (name == "int") {
 				DslString("i32");
 			} else if (name == "double") {
 				DslString("f64");
+			} else if (name == "just_return") {
+				retType = getChildType(0);
+
+				// We have to match the return type of the top block/function
+				if (^(acc.blocks) == []) {
+					println("Expected to know function type for return");
+				} else {
+					acc.unifyTypes(acc, ^(acc.blocks)[0], retType);
+				}
+
+				// The instruction itself does not have any type info
+				makeDslTypeVar(acc);
+
 			} else {
 				acc.onError(node, "TODO: Type check " + summarizeDsl(node));
 				// This signifies a tyvar
