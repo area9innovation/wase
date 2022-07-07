@@ -26,6 +26,8 @@ prettyWaseAst(w : WaseAst) -> string {
 		WeCall(f, as): 
 			prettyWaseAst(f) + "(" + superglue(as, prettyWaseAst, ", ") + ")";
 			//DslNode("call", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+		WeCall2(f, a): 
+			prettyWaseAst(f) + "(<" + prettyWaseAst(a) + ">)";
 		WeData(id, size, data, offset, next): { 
 			//DslNode("data", [DslString(a0), waseAst2DslAst(a1), DslList(fold(a2, makeList(), \acc, e -> Cons(waseAst2DslAst(e), acc))), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
 			size_s = if (size == "") "" else " ," + size;
@@ -123,14 +125,14 @@ prettyWaseAst(w : WaseAst) -> string {
 			// id $$"0" $"s2i" opttype "=" ws exp ";" ws expsemi $"brace_1" $"let_5"
 			type_s = prettyWaseAst(type);
 			(if (i == 1) "var " else "") + id + (if (type_s == "auto") "" else " : " + type_s) + " = " + prettyWaseAst(ex) + ";\n" + 
-			//prettyWaseAst(next);
-			superglue(next, prettyWaseAst, ";\n");
+			prettyWaseAst(next);
+			//superglue(next, prettyWaseAst, ";\n");
 		}
 		WeLettuple(id, i, type, ex, next): 
 			//DslNode("lettuple", [DslString(a0), DslInt(a1), waseAst2DslAst(a2), waseAst2DslAst(a3), waseAst2DslAst(a4)], 0);
 			id + " : " + superglue(type, prettyWaseAst, ", ") + " = " + prettyWaseAst(ex) + ";\n" + 
-			//prettyWaseAst(next);
-			superglue(next, prettyWaseAst, ";\n");
+			prettyWaseAst(next);
+			//superglue(next, prettyWaseAst, ";\n");
 		WeLoop(es): 
 			//DslNode("loop", [waseAst2DslAst(a0)], 0);
 			"loop {\n" + strIndent(superglue(es, prettyWaseAst, ";\n")) + "\n}";
@@ -177,9 +179,9 @@ prettyWaseAst(w : WaseAst) -> string {
 			//DslNode("typeannotation", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
 			//  exp ':' ws typelist $"typeannotation_2"
 			prettyWaseAst(ex) + " : (" + superglue(ts, prettyWaseAst, ", ") + ")";
-		WeVar(id): 
+		WeVar(id1): 
 			//DslNode("var", [DslString(a0)], 0);
-			id;
+			id1;
 		WeWaseEmpty(): 
 			//DslNode("wase_empty", [], 0);
 			"end";
@@ -202,6 +204,9 @@ prettyWaseAst(w : WaseAst) -> string {
 			pretty_bin(a0, a1, "^");
 		WeTuple(exps): {
 			"[" + superglue(exps, prettyWaseAst, ", ") + "]";
+		}
+		WeJustReturn(): {
+			"return";
 		}
 	}
 }

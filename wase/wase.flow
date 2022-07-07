@@ -1,3 +1,4 @@
+import sys/process;
 import wase/parse;
 import tools/dsl/dsl_include;
 import wase/type;
@@ -43,6 +44,39 @@ compileDslProgram2wasm(includes : [string], program : DslAst, filename : string)
 failed_tests = ref 0;
 total_tests = ref 0;
 
+equalResults(file : string, 
+	bytes : [int], bytes1 : [int],
+	wasm : WasmModule, wasm1 : WasmModule
+) -> Pair<bool, () -> string> {
+	if (isUrlParameterTrue("test-with-wasmer")) {
+		out = execSystemProcessOutput("wasmer", [file], ".");
+		setFileContentBytes(file, 
+			fold(bytes1, "", \acc, byte ->
+				acc + fromCharCode(byte)
+			)
+		);
+		out1 = execSystemProcessOutput("wasmer", [file], ".");
+		check_exit_code = isUrlParameterTrue("test-wasmer-exit-code");
+		if (out == out1 && (!check_exit_code || out.exitCode == 0)) Pair(true, \-> "") else {
+			Pair(false, \->
+				"\n------- OUT PROGRAM -------------\n" +
+				out.stdall + "\n\n" +
+				"\n------- OUT PROGRAM 1-------------\n" +
+				out1.stdall + "\n\n"
+			);
+		}
+	} else {
+		if (bytes == bytes1) Pair(true, \-> "") else {
+			Pair(false, \->
+				"\n------- WASM PROGRAM -------------\n" +
+				toStringFormatted(wasm) + "\n\n"
+				"\n------- WASM PROGRAM 1 -------------\n" +
+				toStringFormatted(wasm1) + "\n\n"
+			);
+		}
+	}
+}
+
 compileWase2File(includes : [string], filename : string, code : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
 		println("\nCompiling '" + filename + "'");
@@ -50,34 +84,34 @@ compileWase2File(includes : [string], filename : string, code : string) -> Promi
 		program = parseWase(filename, code);
 		wasm = compileDslProgram2wasm(includes, program, filename);
 		bytes = wasmModule2bytes(wasm);
+		filebase = changeFileExt(filename, "");
+		wasm_file = filebase + ".wasm";
+		ok = setFileContentBytes(wasm_file, 
+			fold(bytes, "", \acc, byte -> {
+				acc + fromCharCode(byte)
+			})
+		);
 		if (isUrlParameterTrue("test-generated-ast")) {
+			println("\nCompiling '" + filename + "' - generated AST");
 			prog1 = parseWeDecl(code, \err -> println("Error: " + err));
 			program1 = waseAst2DslAst(prog1);
 			wasm1 = compileDslProgram2wasm(includes, program1, filename);
 			bytes1 = wasmModule2bytes(wasm1);
-			if (bytes == bytes1) {
-				println("programms COINCIDE");
+			eq = equalResults(wasm_file, bytes, bytes1, wasm, wasm1);
+			if (eq.first) {
+				println("programm results COINCIDE");
 			} else {
 				failed_tests := ^failed_tests + 1;
 				println("programms:\n" +
 					prettyWaseAst(prog1) + "\n" +
 					"\n------- DSL PROGRAM -------------\n" +
 					prettyDsl(program) + "\n\n"
-					"\n------- DSL PROGRAM1 -------------\n" +
+					"\n------- DSL PROGRAM 1 -------------\n" +
 					prettyDsl(program1) + "\n\n" +
-					"\n------- WASM PROGRAM -------------\n" +
-					json2stringFormatted(flow2json(wasm)) + "\n\n"
-					"\n------- WASM PROGRAM1 -------------\n" +
-					json2stringFormatted(flow2json(wasm1)) + "\n\n"
+					eq.second()
 				);
 			}
 		}
-		filebase = changeFileExt(filename, "");
-		ok = setFileContentBytes(filebase + ".wasm", 
-			fold(bytes, "", \acc, byte -> {
-				acc + fromCharCode(byte)
-			})
-		);
 		if (ok) {
 			println("  '" + filebase + ".wasm' saved");
 			if (isUrlParameterTrue("wat")) {
@@ -107,9 +141,16 @@ main() {
 	files = if (files0 != []) files0 else {
 		if (isUrlParameterTrue("test")) {
 			test = getUrlParameter("test");
-			testFolder = if (test == "1") "tests" else test;
-			tests = readDirectory(testFolder);
-			filtermap(tests, \t -> if (endsWith(t, ".wase")) Some(pathCombine(testFolder, t)) else None());
+			files = if (test == "1") {
+				map(readDirectory("tests"), \f -> pathCombine("tests", f));
+			} else if (isDirectory(test)) {
+				map(readDirectory(test), \f -> pathCombine(test, f));
+			} else if (fileExists(test)) {
+				[test]
+			} else {
+				[];
+			}
+			filtermap(files, \t -> if (endsWith(t, ".wase")) Some(t) else None());
 		} else [];
 	}
 	if (files == []) {
