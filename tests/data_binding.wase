@@ -2,15 +2,15 @@ include lib/runtime;
 
 export memory 1;
 
-data hello = "hello" offset 32;
-data number = 1 offset 64;
-data numbers_2 = 1, 2 offset 128;
-data numbers_3 = 1, 2, 3 offset 256;
+data hello = 1, 2, "hello";
+data number = 1;
+data numbers_2 = 1, 2;
+data numbers_3 = 1, 2, 3;
 
 export _start() -> () {
 	hello;
-	// number; // cause "unable to read data: data segment data" or "invalid data segment flags: 0x41"
+	number; 
 	numbers_2;
-	// numbers_3; // cause "unfinished section (expected end: 0x59)"
+	numbers_3;
 	{}
 }

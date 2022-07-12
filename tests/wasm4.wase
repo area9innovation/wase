@@ -2,9 +2,8 @@ include lib/wasm4;
 
 import memory 1 = env.memory;
 
-// Temporary offset until data is work correctly
-data square = 0 offset 0xa0b0;
-data moveText = "Move the square!" offset 0x25a0;
+data smiley = 195, 129, 36, 36, 0, 36, 153, 195 offset 0xa0b0;
+data moveText = "Move the smiley!" offset 0x25a0;
 
 x : mutable i32 = 76;
 y : mutable i32 = 76;
@@ -30,8 +29,8 @@ export update() -> () {
 	handleInput();
 
 	store<>(DRAW_COLORS, 2);
-	text(0x25a0, 24, 50);
+	text(moveText, 24, 50);
 
 	store<>(DRAW_COLORS, 3);
-	blit(0xa0b0, x, y, 8, 8, 0)
+	blit(smiley, x, y, 8, 8, 0)
 }

@@ -115,7 +115,7 @@ dsl2wase(onError : (DslAst, string) -> void, d : DslAst) -> Wase {
 				id = getDslString(args[0]);
 				size = getDslString(args[1]);
 				data = list2array(unwrapDslPrimitiveList(args[2]));
-				bytes = fold(data, [], \acc, value -> {
+				rawbytes = fold(data, [], \acc, value -> {
 					switch (value) {
 						DslInt(v): {
 							concat(acc,
@@ -141,10 +141,7 @@ dsl2wase(onError : (DslAst, string) -> void, d : DslAst) -> Wase {
 						}
 						DslString(v): {
 							chars = string2utf8(v);
-							concat3(acc, 
-								wasmEncodeU32(length(chars)),
-							 	chars
-							)
+							concat(acc, chars)
 						}
 						default: {
 							onError(d, "Unsupported data " + summarizeDsl(value));
@@ -153,6 +150,7 @@ dsl2wase(onError : (DslAst, string) -> void, d : DslAst) -> Wase {
 					}
 				});
 
+				bytes = concat(wasmEncodeU32(length(rawbytes)), rawbytes);
 				offset = expr(3);
 				WaseData(id, size, offset, bytes, rec(4));
 			} else if (name == "wase_empty") {
