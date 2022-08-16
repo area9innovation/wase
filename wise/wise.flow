@@ -3,6 +3,7 @@ import tools/dsl/dsl_include;
 
 import wise/wise_parser;
 import wise/wise_types2dsl;
+import wise/wise_parse_typed;
 import text/gringo/gringo_typed_action;
 
 
@@ -10,6 +11,7 @@ import wise/type;
 import wise/lower;
 import wase/compile;
 import wase/pretty_wase;
+import wase/wase_types2dsl;
 
 compileWise2File(includes, filename : string, code : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
@@ -58,6 +60,15 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 		wase = dsl2wase(\node, error -> {
 			println(filename + ": " + error)
 		}, lowered);
+
+		if (true) {
+			program1 = parseWiDecl(code, \err -> println("Error: " + err));
+			lowered1 = lowerWiseAst2WaseAst(env, program1);
+			println(waseAst2DslAst(lowered1) == program);
+			println("WaseAst : " + toString(lowered1));
+			println("DslAst  : " + toString(dslAst2WaseAst(program)));
+		}
+
 		if (isUrlParameterTrue("debug-wase")) {
 			println("\nAs wase:");
 			println(prettyWase(wase));

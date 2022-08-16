@@ -3,11 +3,14 @@ import ds/array;
 import runtime;
 import wase/compile;
 import wise/wise_types;
+import wase/wase_types;
 
 export {
 	makeLowerWiseEnv(onError : (DslAst, string) -> void) -> LowerWiseEnv;
 
-	lowerWise2Wase(acc : LowerWiseEnv, d : WiseAst) -> WaseAst;
+	lowerWise2Wase(acc : LowerWiseEnv, d : DslAst) -> DslAst;
+
+	lowerWiseAst2WaseAst(env : LowerWiseEnv, w : WiseAst) -> WaseAst;
 }
 
 LowerWiseEnv(
@@ -23,256 +26,342 @@ makeLowerWiseEnv(onError : (DslAst, string) -> void) -> LowerWiseEnv {
 	);
 }
 
-lowerWise2Wase(env : LowerWiseEnv, d : WiseAst) -> WaseAst {
-	list2 = \l, r -> DslList(Cons(r, Cons(l, makeList())));
-	switch (d) {
+lowerWiseAst2WaseAst(env : LowerWiseEnv, w : WiseAst) -> WaseAst {
+	rec = \w1 -> lowerWiseAst2WaseAst(env, w1);
+
+	switch (w) {
+		WiseAstList(value): WaseAstList(mapList(value, rec))
+		WiseAstBool(value): WaseAstBool(value)
+		WiseAstInt(value): WaseAstInt(value)
+		WiseAstDouble(value): WaseAstDouble(value)
+		WiseAstString(value): WaseAstString(value)
+		WiExp(): WiExp2WeExp(env, w)
+		WiDecl(): WiDecl2WeDecl(env, w)
+		// WiType(): lowerWiType2WeType(w)
+		
+
+		// WiBasictype(s): WeType(s)
+		// WiFntype(types, type): 
+		// WiTupletype(types): 
+		WiIdtype(id, type): WeIdtype(id, WiType2WeType(type))
+
+
+		default: WeInt(0)
+	}
+}
+
+WiIdtype2WeIdtype(w : WiIdtype) -> WeIdtype {
+	WeIdtype(w.id, WiType2WeType(w.type))
+}
+
+WiDecl2WeDecl(env : LowerWiseEnv, w : WiDecl) -> WeDecl {
+	switch (w : WiDecl) {
+		WiFunction(id, optexport, lambdaargs, type, expr, decl): {
+			WeFunction(id, optexport, map(lambdaargs, WiIdtype2WeIdtype), WiType2WeTypes(type), WiExp2WeExp(env, expr), WiDecl2WeDecl(env, decl))
+		}
+		// WiGlobal(id, optexport, type, optmutable, exp, decl): 
+		// WiImport(id1, type, optmutable, id2, id3, decl): 
+		// WiWaseEmpty(): 
+		// WiWiseInclude(s, decl): 
+		default: WeWaseEmpty()
+	}
+}
+
+WiExp2WeExp(env : LowerWiseEnv, w : WiExp) -> WeExp {
+	rec = \w1 -> WiExp2WeExp(env, w1);
+	switch (w : WiExp) {
+		// WiAdd(exp1, exp2): 
+		// WiAnd(exp1, exp2): 
+		// WiBool(b): 
+		// WiBreak(): 
+		// WiContinue(): 
+		WiDouble(double_0): WeDouble(double_0)
+		// WiHex32(s): 
+		// WiHex64(s): 
+		// WiHexf32(s): 
+		// WiHexf64(s): 
+		// WiI64(s): 
+		// WiIf(exp1, exp2): 
+		// WiIfelse(exp1, exp2, exp3): 
+		WiInt(int_0): WeInt(int_0)
+		// WiReturn(exps): 
+		// WiSet(id, exp): 
+		WiTuple(exps): WeTuple(map(exps, rec))
+		// WiVar(id): 
 		WiWhile(exp1, exp2): {
 			nenv = LowerWiseEnv(env with blocks = env.blocks + 2, loops = arrayPush(env.loops, env.blocks));
 			// while (cond) { <exp> } =>
 			// block { loop { break_if<2>(!cond); <exp>; break<>() } }
 			// cond, exp, type = void
-			cond = lowerWise2Wase(nenv, exp1);
-			exp = lowerWise2Wase(nenv, exp2);
+			cond = rec(exp1);
+			exp = rec(exp2);
 			WeBlock([
 				WeLoop([
 					WeWasmOp(
 						"break_if", 
 						[WeInt(1)], 
-						[negateWise(cond)]), 
+						[WeNegate(cond)]), 
 					WeBrace([WeInt(3)]), 
 					WeWasmOp("break", [], [])
 				])
 			])
 		}
-		// if (name == "while") {
-		// 		nenv = LowerWiseEnv(env with blocks = env.blocks + 2, loops = arrayPush(env.loops, env.blocks));
-		// 		largs = map(args, \a -> lowerWise2Wase(nenv, a));
-		// 		// while (cond) { <exp> } =>
-		// 		// block { loop { break_if<2>(!cond); <exp>; break<>() } }
-		// 		// cond, exp, type = void
-		// 		l = DslNode("block", [
-		// 			DslList(makeList1(
-		// 			DslNode("loop", [
-		// 				DslList(
-		// 					fold([
-		// 						DslNode("wasm_op", [DslString("break_if"), DslInt(1), negateWise(largs[0]),DslList(makeList())], pos),
-		// 						largs[1],
-		// 						DslNode("wasm_op", [DslString("break"), DslList(makeList()), DslList(makeList()), DslList(makeList())], pos),
-		// 					], makeList(), \acc, e -> Cons(e, acc))
-		// 				), largs[2]
-		// 			], pos))), 
-		// 			DslList(makeList())
-		// 		], pos);
-		// 		// println(l);
-		// 		l;
+		// WiBoolAnd(exp1, exp2): 
+		// WiBoolNot(exp): 
+		// WiBoolOr(exp1, exp2): 
+		WiBrace(expsemi): WeBrace(map(expsemi, rec))
+		// WiCall(exp, exps): 
+		// WiDiv(exp1, exp2): 
+		// WiEqual(exp1, exp2): 
+		// WiGreater(exp1, exp2): 
+		// WiGreaterEqual(exp1, exp2): 
+		// WiGreaterEqualu(exp1, exp2): 
+		// WiGreateru(exp1, exp2): 
+		// WiIsNull(exp): 
+		// WiLess(exp1, exp2): 
+		// WiLessEqual(exp1, exp2): 
+		// WiLessEqualu(exp1, exp2): 
+		// WiLessu(exp1, exp2): 
+		// WiLet(id, i, opttype, exp, brace): 
+		// WiMod(exp1, exp2): 
+		// WiMul(exp1, exp2): 
+		// WiNegate(exp): 
+		// WiNotEqual(exp1, exp2): 
+		// WiOr(exp1, exp2): 
+		// WiSub(exp1, exp2): 
+		// WiTupledot(exp, int_0): 
+		// WiTypeannotation(exp, type): 
+		// WiWasmOp(s, wargs, exps): 
+		// WiXor(exp1, exp2): 
+		default: WeInt(0)
+	}
+}
 
-		default: DslString("")
-		// DslBool(value): d;
-		// DslInt(value): d;
-		// DslDouble(value): d;
-		// DslString(value): d;
-		// DslList(value): DslList(mapList(value, \v -> lowerWise2Wase(env, v)));
-		// DslNode(name, args, pos): {
-		// 	if (name == "while") {
-		// 		nenv = LowerWiseEnv(env with blocks = env.blocks + 2, loops = arrayPush(env.loops, env.blocks));
-		// 		largs = map(args, \a -> lowerWise2Wase(nenv, a));
-		// 		// while (cond) { <exp> } =>
-		// 		// block { loop { break_if<2>(!cond); <exp>; break<>() } }
-		// 		// cond, exp, type = void
-		// 		l = DslNode("block", [
-		// 			DslList(makeList1(
-		// 			DslNode("loop", [
-		// 				DslList(
-		// 					fold([
-		// 						DslNode("wasm_op", [DslString("break_if"), DslInt(1), negateWise(largs[0]),DslList(makeList())], pos),
-		// 						largs[1],
-		// 						DslNode("wasm_op", [DslString("break"), DslList(makeList()), DslList(makeList()), DslList(makeList())], pos),
-		// 					], makeList(), \acc, e -> Cons(e, acc))
-		// 				), largs[2]
-		// 			], pos))), 
-		// 			DslList(makeList())
-		// 		], pos);
-		// 		// println(l);
-		// 		l;
-		// 	} else if (name == "call") {
-		// 		fn = getDslNode(args[0]);
-		// 		indirect = \ -> {
-		// 			// Indirect call
-		// 			// This is the id of the fn to call
-		// 			fncall = lowerWise2Wase(env, args[0]); 
-		// 			fnargs = getDslList(lowerWise2Wase(env, args[1]));
-		// 			withFn = DslList(Cons(fncall, fnargs));
+WiType2WeType(w : WiType) -> WeType {
+	switch (w : WiType) {
+		WiBasictype(s): WeType(s)
+		WiFntype(types, type): WeType("")
+		WiTupletype(types): WeType("")
+	}
+}
 
-		// 			// OK, turn this into a func ref
-		// 			ic = DslNode("wasm_op", [DslString("call_indirect"), DslList(makeList()), withFn, lowerWiseType(lowerWise2Wase(env, args[2]))], pos);
-		// 			// println(prettyDsl(ic));
-		// 			ic;
-		// 		};
-		// 		if (fn.name == "var") {
-		// 			cname = getDslString(fn.args[0]);
-		// 			if (containsSet(env.locals, cname)) {
-		// 				indirect();
-		// 			} else {
-		// 				// Direct call - do not lower the var, but keep as is
-		// 				arg = lowerWise2Wase(env, args[1]);
-		// 				DslNode(name, [args[0], arg, lowerWiseType(lowerWise2Wase(env, args[2]))], pos);
-		// 			}
-		// 		} else {
-		// 			indirect();
-		// 		}
-		// 	} else if (name == "ifelse") {
-		// 		// TODO: What about bool_or and bool_and?
-		// 		nenv = LowerWiseEnv(env with blocks = env.blocks + 1);
-		// 		largs = map(args, \a -> lowerWise2Wase(nenv, a));
-		// 		DslNode(name, lowerWiseExpType(largs), pos);
-		// 	} else if (name == "if") {
-		// 		// TODO: What about bool_or and bool_and?
-		// 		nenv = LowerWiseEnv(env with blocks = env.blocks + 1);
-		// 		largs = map(args, \a -> lowerWise2Wase(nenv, a));
-		// 		DslNode(name, lowerWiseExpType(largs), pos);
-		// 	} else if (name == "let") {
-		// 		// (id, mut, type, exp, body, bodytype)
-		// 		id = getDslString(args[0]);
-		// 		largs = mapi(args, \i, a -> {
-		// 			nenv = if (i == 4) {
-		// 				// Mark this var as local in the environment
-		// 				LowerWiseEnv(env with locals = insertSet(env.locals, id))
-		// 			} else env;
-		// 			t = lowerWise2Wase(nenv, a);
-		// 			if (i == 2) lowerWiseExplicitType(t)
-		// 			else if (i == 5) lowerWiseType(t) 
-		// 			else t
-		// 		});
+WiType2WeTypes(w : WiType) -> [WeType] {
+	switch (w : WiType) {
+		WiBasictype(s): [WeType(s)]
+		WiFntype(types, type): concat(fold(types, [], \acc, t -> concat(acc, WiType2WeTypes(t))), WiType2WeTypes(type))
+		WiTupletype(types): fold(types, [], \acc, t -> concat(acc, WiType2WeTypes(t)))
+	}
+}
 
-		// 		varType = wiseType(largs[3]);
-		// 		switch (varType) {
-		// 			DslList(t): {
-		// 				// OK, a tuple-let
-		// 				DslNode("lettuple", [largs[0], largs[1], unrollWiseTuple(DslList(getDslList(largs[2]))), largs[3], largs[4], largs[5]], pos);
-		// 			}
-		// 			default: {
-		// 				DslNode(name, largs, pos);
-		// 			}
-		// 		}
-		// 	} else if (name == "tupledot") {
-		// 		arg = getDslNode(args[0]);
-		// 		if (arg.name == "var") {
-		// 			index = getDslInt(args[1]);
-		// 			DslNode("var", [DslString(getDslString(arg.args[0]) + "." + i2s(index))], pos);
-		// 		} else {
-		// 			largs = map(args, \a -> lowerWise2Wase(env, a));
-		// 			value = largs[0];
-		// 			varType = wiseType(value);
-		// 			switch (varType) {
-		// 				DslList(t): {
-		// 					types = list2array(t);
-		// 					index = getDslInt(largs[1]);
-		// 					dot = DslNode("call", [DslNode("var", [DslString("dot" + i2s(length(types)))], pos), list2(largs[0], largs[1])], pos);
-		// 					println("TODO: Lowered dot to " + prettyDsl(dot) + " from " + prettyDsl(d) + ". Add the dot* function");
-		// 					dot;
-		// 				}
-		// 				default: {
-		// 					env.onError(d, ". only for tuples " + prettyDsl(varType));
-		// 					d;
-		// 				}
-		// 			}
-		// 		}
-		// 	} else {
+lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
+	list2 = \l, r -> DslList(Cons(r, Cons(l, makeList())));
+	switch (d) {
+		DslBool(value): d;
+		DslInt(value): d;
+		DslDouble(value): d;
+		DslString(value): d;
+		DslList(value): DslList(mapList(value, \v -> lowerWise2Wase(env, v)));
+		DslNode(name, args, pos): {
+			if (name == "while") {
+				nenv = LowerWiseEnv(env with blocks = env.blocks + 2, loops = arrayPush(env.loops, env.blocks));
+				largs = map(args, \a -> lowerWise2Wase(nenv, a));
+				// while (cond) { <exp> } =>
+				// block { loop { break_if<2>(!cond); <exp>; break<>() } }
+				// cond, exp, type = void
+				l = DslNode("block", [
+					DslList(makeList1(
+					DslNode("loop", [
+						DslList(
+							fold([
+								DslNode("wasm_op", [DslString("break_if"), DslInt(1), negateWise(largs[0]),DslList(makeList())], pos),
+								largs[1],
+								DslNode("wasm_op", [DslString("break"), DslList(makeList()), DslList(makeList()), DslList(makeList())], pos),
+							], makeList(), \acc, e -> Cons(e, acc))
+						), largs[2]
+					], pos))), 
+					DslList(makeList())
+				], pos);
+				// println(l);
+				l;
+			} else if (name == "call") {
+				fn = getDslNode(args[0]);
+				indirect = \ -> {
+					// Indirect call
+					// This is the id of the fn to call
+					fncall = lowerWise2Wase(env, args[0]); 
+					fnargs = getDslList(lowerWise2Wase(env, args[1]));
+					withFn = DslList(Cons(fncall, fnargs));
 
-		// 		// Those that do not affect the lowering environment
+					// OK, turn this into a func ref
+					ic = DslNode("wasm_op", [DslString("call_indirect"), DslList(makeList()), withFn, lowerWiseType(lowerWise2Wase(env, args[2]))], pos);
+					// println(prettyDsl(ic));
+					ic;
+				};
+				if (fn.name == "var") {
+					cname = getDslString(fn.args[0]);
+					if (containsSet(env.locals, cname)) {
+						indirect();
+					} else {
+						// Direct call - do not lower the var, but keep as is
+						arg = lowerWise2Wase(env, args[1]);
+						DslNode(name, [args[0], arg, lowerWiseType(lowerWise2Wase(env, args[2]))], pos);
+					}
+				} else {
+					indirect();
+				}
+			} else if (name == "ifelse") {
+				// TODO: What about bool_or and bool_and?
+				nenv = LowerWiseEnv(env with blocks = env.blocks + 1);
+				largs = map(args, \a -> lowerWise2Wase(nenv, a));
+				DslNode(name, lowerWiseExpType(largs), pos);
+			} else if (name == "if") {
+				// TODO: What about bool_or and bool_and?
+				nenv = LowerWiseEnv(env with blocks = env.blocks + 1);
+				largs = map(args, \a -> lowerWise2Wase(nenv, a));
+				DslNode(name, lowerWiseExpType(largs), pos);
+			} else if (name == "let") {
+				// (id, mut, type, exp, body, bodytype)
+				id = getDslString(args[0]);
+				largs = mapi(args, \i, a -> {
+					nenv = if (i == 4) {
+						// Mark this var as local in the environment
+						LowerWiseEnv(env with locals = insertSet(env.locals, id))
+					} else env;
+					t = lowerWise2Wase(nenv, a);
+					if (i == 2) lowerWiseExplicitType(t)
+					else if (i == 5) lowerWiseType(t) 
+					else t
+				});
 
-		// 		largs = map(args, \a -> lowerWise2Wase(env, a));
-		// 		if (name == "function") {
-		// 		// function(id, export : bool, args : [idtype(id, type)], [returnTypes], body, scope)
-		// 			DslNode("function", [largs[0], largs[1], largs[2], wiseType(largs[3]), largs[4], largs[5], largs[6]], pos);
-		// 		} else if (name == "true") {
-		// 			DslNode("int", [DslInt(1), DslString("i32")], pos);
-		// 		} else if (name == "false") {
-		// 			DslNode("int", [DslInt(0), DslString("i32")], pos);
-		// 		} else if (name == "bool_or") {
-		// 			// Make this short-circuit
-		// 			// if (a) 1 else b
-		// 			// TODO: If a does not have side-effects, we can do a bitwise or
-		// 			DslNode("ifelse", [largs[0], DslInt(1), largs[1], DslString("i32")], pos);
-		// 		} else if (name == "bool_and") {
-		// 			// Make this short-circuit
-		// 			// if (a) b else 0
-		// 			// TODO: If a does not have side-effects, we can do a bitwise and
-		// 			DslNode("ifelse", [largs[0], largs[1], DslInt(0), DslString("i32")], pos);
-		// 		} else if (name == "break") {
-		// 			depth = (env.blocks - 1) - (if (env.loops == []) {
-		// 				env.onError(d, "break only in while");
-		// 				0;
-		// 			} else lastElement(env.loops, 0));
-		// 			DslNode("wasm_op", [DslString("break"), DslList(makeList1(DslInt(depth))), DslList(makeList()), largs[0]], pos);
-		// 		} else if (name == "continue") {
-		// 			depth = (env.blocks - 2) - (if (env.loops == []) {
-		// 				env.onError(d, "continue only in while");
-		// 				0;
-		// 			} else lastElement(env.loops, 0));
-		// 			DslNode("wasm_op", [DslString("break"), DslList(makeList1(DslInt(depth))), DslList(makeList()), largs[0]], pos);
-		// 		} else if (name == "import") {
-		// 			if (getDslNode(largs[1]).name == "fntype") {
-		// 				DslNode("import_fun", [largs[0], largs[1], largs[3], largs[4], largs[5], largs[6]], pos)
-		// 			} else {
-		// 				DslNode("import_global", largs, pos)
-		// 			}
-		// 		} else if (name == "and" || name == "or" || name == "xor") {
-		// 			// OK, check that the type is integer
-		// 			type = wiseType(d);
-		// 			if (type != DslString("i32") && type != DslString("i64")) {
-		// 				env.onError(d, "bitwise operation only works on i32 and i64");
-		// 			}
-		// 			DslNode(name, largs, pos);
-		// 		} else if (name == "equal" || name == "not_equal" || name == "less_equal" || name == "less"
-		// 			|| name == "greater_equal" || name == "greater") {
-		// 			// The type becomes int
-		// 			DslNode(name, [largs[0], largs[1], DslString("i32")], pos)
-		// 		} else if (name == "less_equalu") {
-		// 			DslNode("wasm_op", [DslString("le_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
-		// 		} else if (name == "lessu") {
-		// 			DslNode("wasm_op", [DslString("lt_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
-		// 		} else if (name == "greater_equalu") {
-		// 			DslNode("wasm_op", [DslString("ge_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
-		// 		} else if (name == "greateru") {
-		// 			DslNode("wasm_op", [DslString("gt_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
-		// 		} else if (name == "var") {
-		// 			id = getDslString(largs[0]);
-		// 			type = wiseType(d);
-		// 			if (getDslNode(type).name == "func" && !containsSet(env.locals, id)) {
-		// 				// OK, turn this into a func ref
-		// 				DslNode("wasm_op", [DslString("fn"), DslList(makeList1(largs[0])), DslList(makeList()), DslString("i32")], pos);
-		// 			} else {
-		// 				switch (type) {
-		// 					DslList(tt): {
-		// 						// OK, a tuple. We have to expand this to a tuple constructor
-		// 						count = countList(tt);
-		// 						tup = DslList(
-		// 							reverseList(
-		// 								mapiList(tt, \i, t -> {
-		// 									DslNode("var", [DslString(id + "." + i2s(i)), t], pos)
-		// 								})
-		// 							)
-		// 							);
-		// 						// println("TODO: Expand " + id + " : "  + prettyDsl(type) + " to tuple constructor " + prettyDsl(tup));
-		// 						tup;
-		// 					}
-		// 					default: DslNode(name, lowerWiseExpType(largs), pos);
-		// 				}
+				varType = wiseType(largs[3]);
+				switch (varType) {
+					DslList(t): {
+						// OK, a tuple-let
+						DslNode("lettuple", [largs[0], largs[1], unrollWiseTuple(DslList(getDslList(largs[2]))), largs[3], largs[4], largs[5]], pos);
+					}
+					default: {
+						DslNode(name, largs, pos);
+					}
+				}
+			} else if (name == "tupledot") {
+				arg = getDslNode(args[0]);
+				if (arg.name == "var") {
+					index = getDslInt(args[1]);
+					DslNode("var", [DslString(getDslString(arg.args[0]) + "." + i2s(index))], pos);
+				} else {
+					largs = map(args, \a -> lowerWise2Wase(env, a));
+					value = largs[0];
+					varType = wiseType(value);
+					switch (varType) {
+						DslList(t): {
+							types = list2array(t);
+							index = getDslInt(largs[1]);
+							dot = DslNode("call", [DslNode("var", [DslString("dot" + i2s(length(types)))], pos), list2(largs[0], largs[1])], pos);
+							println("TODO: Lowered dot to " + prettyDsl(dot) + " from " + prettyDsl(d) + ". Add the dot* function");
+							dot;
+						}
+						default: {
+							env.onError(d, ". only for tuples " + prettyDsl(varType));
+							d;
+						}
+					}
+				}
+			} else {
 
-		// 			}
-		// 		} else if (name == "tuple") {
-		// 			largs[0];
+				// Those that do not affect the lowering environment
 
-		// 		} else {
-		// 			type = lastElement(args, d);
-		// 			if (type == DslString("bool")) {
-		// 				println("Figure out how to get rid of bool type when lowering: " + prettyDsl(d));
-		// 			}
-		// 			DslNode(name, largs, pos);
-		// 		}
-		// 	}
-		// }
+				largs = map(args, \a -> lowerWise2Wase(env, a));
+				if (name == "function") {
+				// function(id, export : bool, args : [idtype(id, type)], [returnTypes], body, scope)
+					DslNode("function", [largs[0], largs[1], largs[2], wiseType(largs[3]), largs[4], largs[5], largs[6]], pos);
+				} else if (name == "true") {
+					DslNode("int", [DslInt(1), DslString("i32")], pos);
+				} else if (name == "false") {
+					DslNode("int", [DslInt(0), DslString("i32")], pos);
+				} else if (name == "bool_or") {
+					// Make this short-circuit
+					// if (a) 1 else b
+					// TODO: If a does not have side-effects, we can do a bitwise or
+					DslNode("ifelse", [largs[0], DslInt(1), largs[1], DslString("i32")], pos);
+				} else if (name == "bool_and") {
+					// Make this short-circuit
+					// if (a) b else 0
+					// TODO: If a does not have side-effects, we can do a bitwise and
+					DslNode("ifelse", [largs[0], largs[1], DslInt(0), DslString("i32")], pos);
+				} else if (name == "break") {
+					depth = (env.blocks - 1) - (if (env.loops == []) {
+						env.onError(d, "break only in while");
+						0;
+					} else lastElement(env.loops, 0));
+					DslNode("wasm_op", [DslString("break"), DslList(makeList1(DslInt(depth))), DslList(makeList()), largs[0]], pos);
+				} else if (name == "continue") {
+					depth = (env.blocks - 2) - (if (env.loops == []) {
+						env.onError(d, "continue only in while");
+						0;
+					} else lastElement(env.loops, 0));
+					DslNode("wasm_op", [DslString("break"), DslList(makeList1(DslInt(depth))), DslList(makeList()), largs[0]], pos);
+				} else if (name == "import") {
+					if (getDslNode(largs[1]).name == "fntype") {
+						DslNode("import_fun", [largs[0], largs[1], largs[3], largs[4], largs[5], largs[6]], pos)
+					} else {
+						DslNode("import_global", largs, pos)
+					}
+				} else if (name == "and" || name == "or" || name == "xor") {
+					// OK, check that the type is integer
+					type = wiseType(d);
+					if (type != DslString("i32") && type != DslString("i64")) {
+						env.onError(d, "bitwise operation only works on i32 and i64");
+					}
+					DslNode(name, largs, pos);
+				} else if (name == "equal" || name == "not_equal" || name == "less_equal" || name == "less"
+					|| name == "greater_equal" || name == "greater") {
+					// The type becomes int
+					DslNode(name, [largs[0], largs[1], DslString("i32")], pos)
+				} else if (name == "less_equalu") {
+					DslNode("wasm_op", [DslString("le_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
+				} else if (name == "lessu") {
+					DslNode("wasm_op", [DslString("lt_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
+				} else if (name == "greater_equalu") {
+					DslNode("wasm_op", [DslString("ge_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
+				} else if (name == "greateru") {
+					DslNode("wasm_op", [DslString("gt_u"), DslList(makeList()), list2(largs[0], largs[1]), DslString("i32")], pos)
+				} else if (name == "var") {
+					id = getDslString(largs[0]);
+					type = wiseType(d);
+					if (getDslNode(type).name == "func" && !containsSet(env.locals, id)) {
+						// OK, turn this into a func ref
+						DslNode("wasm_op", [DslString("fn"), DslList(makeList1(largs[0])), DslList(makeList()), DslString("i32")], pos);
+					} else {
+						switch (type) {
+							DslList(tt): {
+								// OK, a tuple. We have to expand this to a tuple constructor
+								count = countList(tt);
+								tup = DslList(
+									reverseList(
+										mapiList(tt, \i, t -> {
+											DslNode("var", [DslString(id + "." + i2s(i)), t], pos)
+										})
+									)
+									);
+								// println("TODO: Expand " + id + " : "  + prettyDsl(type) + " to tuple constructor " + prettyDsl(tup));
+								tup;
+							}
+							default: DslNode(name, lowerWiseExpType(largs), pos);
+						}
+
+					}
+				} else if (name == "tuple") {
+					largs[0];
+
+				} else {
+					type = lastElement(args, d);
+					if (type == DslString("bool")) {
+						println("Figure out how to get rid of bool type when lowering: " + prettyDsl(d));
+					}
+					DslNode(name, largs, pos);
+				}
+			}
+		}
 	}
 }
 

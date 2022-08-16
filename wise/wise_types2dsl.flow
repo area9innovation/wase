@@ -5,6 +5,7 @@ import tools/dsl/dsl_util;
 export {
 	wiseAst2DslAst(w : WiseAst) -> DslAst;
 	dslAst2WiseAst(d : DslAst) -> WiseAst;
+	dslAst2WiDecl(d : DslAst) -> WiDecl;
 }
 
 wiseAst2DslAst(wal : WiseAst) -> DslAst {
