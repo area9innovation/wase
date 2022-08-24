@@ -151,8 +151,6 @@ files have been compiled to `.wasm` and then decompiled to `.wat`.
 Beta. The compiler works, and the compiler can parse, type and compile 
 most instructions directly to WASM binaries that validate and run correctly.
 
-There is not support for vector SIMD instructions yet.
-
 One problem in daily use is that error messages are currently without positions.
 
 This compiler is not validating. For example, you can use dynamic code in constant
@@ -719,6 +717,7 @@ memory.init and data.drop not implemented yet. Requires data indexing.
 | `v128.store16_lane` | `v128.store16_lane` | v128.store16_lane
 | `v128.store32_lane` | `v128.store32_lane` | v128.store32_lane
 | `v128.store64_lane` | `v128.store64_lane` | v128.store64_lane
+
 ### Extract/replace lane instructions
 | Wasm | Wase | Comments |
 |-|-|-|
