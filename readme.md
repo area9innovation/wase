@@ -380,7 +380,7 @@ Wasm uses blocks for control flow. Each function introduces a block.
 The `block` and `loop` constructs also do that, as well as the `then`
 and `else` branches of `if`. The `break` and `break_if` instructions
 refer to this stack of blocks. A break with level 0 breaks out of the
-inner most block, while `break<1>()` breaks out of the next level.
+inner most block, while `break<1>()` breaks out of the next level. The number defines what parent block to break to.
 
 	block {
 		code;
