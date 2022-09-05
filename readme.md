@@ -434,6 +434,8 @@ inner most block, while `break<1>()` breaks out of the next level. The number de
 	};
 	// This is "F"
 	printByte(70);
+	
+TODO: illustrations (blocks with colors? with colorful brackets / font)
 
 ## Indirect calls
 
