@@ -540,6 +540,8 @@ The alignment is expressed as what power of 2 to use:
 	v : i32 = load16_u<0, 1>(i) // alignment at 2 bytes
 	v : i32 = load32_u<0, 2>(i) // alignment at 4 bytes
 	v : i64 = load_u<0, 3>(i) // alignment at 8 bytes
+	
+TODO: illustrations (offset, alignment)
 
 # Instructions
 
