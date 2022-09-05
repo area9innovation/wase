@@ -133,7 +133,7 @@ Compile with
 
 	bin\wase tests/euler1.wase
 
-and run with
+and run with wasmer ([install ](https://wasmer.io/))
 
 	wasmer tests/euler1.wasm
 	233168
