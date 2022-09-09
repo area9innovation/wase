@@ -1,0 +1,45 @@
+import runtime;
+
+/*
+If we list all the natural numbers below 10 that are multiples of 3 or 5, 
+we get 3, 5, 6 and 9. The sum of these multiples is 23.
+
+Find the sum of all the multiples of 3 or 5 below 1000.
+*/
+//--------------
+// TODO:
+// 1) fn type ( Error: Can not compile fntype([type("i32", "i32")::type("i32", "i32")], type("i32", "i32"), func(["i32"::"i32"], "i32")) to wasm val type)
+// 2) lambda
+// 3) ?, ??
+// 4) tail recursion -> loop
+//-------------
+calc(acc : int, i : int) -> int {
+	if (i % 3 == 0 || i % 5 == 0) {
+		acc + i;
+	} else {
+		acc;
+	}
+}
+
+// TODO: Lambda. ?, import foldRange
+foldRangeInt(start : int, end : int, acc : int/* , fn : (int, int) -> int */) -> int {
+	if (start <= end) {
+		foldRangeInt(start + 1, end, calc(acc, start)/* , fn */)
+	} else {
+		acc;
+	}
+}
+
+euler1(limit : int) -> int {
+	foldRangeInt(1, limit - 1, 0/* , calc */);
+    // foldRange(1, limit - 1, 0, \acc, i -> {
+    //     if (i % 3 == 0 || i % 5 == 0) {
+    //         acc + i;
+    //     } else acc;
+    // });
+}
+
+main() {
+    println(euler1(1000)); // Correct: 233168
+    // quit(0);
+}
