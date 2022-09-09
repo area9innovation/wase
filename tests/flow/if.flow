@@ -1,0 +1,20 @@
+import runtime;
+
+// print 1258-3
+main() {
+	if (true) println(1);
+	if (true) println(2) else println(3);
+	// a = if (false) 4-8 else 5*(-1);
+	a = if (false) 4 else 5;
+	println(a);
+	if (false) {
+		if (true) println(6) else println(7);
+	 } else {
+		if (true) println(8) else println(9);
+	}
+	println(if (false) {
+		if (true) -1 else -2;
+	 } else {
+		if (true) -3 else -4;
+	});
+}
