@@ -1,0 +1,14 @@
+import runtime;
+
+main() {
+	println((2 + 3 - 4) * 5); // 5
+	println(-2 + (5 % 2)); // -1
+	println(-2 + 5 / 2 ); // 0
+	println(2 >= 3); // false
+	println(2 > 3); // false
+	println(2 <= 3); // true
+	println(2 < 3); // true
+	println(2 == 3); // false
+	println(2 != 3); // true
+	println((2 > 3) || 5*(-1) <= 0); // true
+}

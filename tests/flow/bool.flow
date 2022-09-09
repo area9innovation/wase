@@ -12,4 +12,5 @@ main() {
 	println(false && true && false); // 0
 	println((true || false) && (true || true)); // 1
 	println(!true || !(false && true)); // 1
+	println(!true || !(false && true)); // 1
 }
