@@ -1517,7 +1517,7 @@ dsl2WaseBlockType(onError : (DslAst, string) -> void, d : DslAst) -> WaseBlockTy
 			if (isEmptyList(l)) {
 				WasmEmptyType()
 			} else {
-				WasmFuncType([], map(list2array(flatDslList(d, makeList())), \t -> dsl2WasmValType(onError, t)));
+				WasmFuncType([], map(getDslTupleTypes(d), \t -> dsl2WasmValType(onError, t)));
 			}
 		}
 		DslNode(name, __, __): {
@@ -1534,17 +1534,4 @@ dsl2WaseBlockType(onError : (DslAst, string) -> void, d : DslAst) -> WaseBlockTy
 
 isNumericWaseType(d : DslAst) -> bool {
 	contains([DslString("i32"), DslString("i64"), DslString("f32"), DslString("f64")], d)
-}
-
-flatDslList(l : DslList, acc : List<DslAst>) -> List<DslAst> {
-	foldList(l.value, acc, \acc2, v -> {
-		switch (v : DslAst) {
-			DslBool(value) : Cons(v, acc2);
-			DslInt(value) : Cons(v, acc2);
-			DslDouble(value) : Cons(v, acc2);
-			DslString(value) : Cons(v, acc2);
-			DslNode(name, args, pos) : Cons(v, acc2);
-			DslList(value) : flatDslList(v, acc2);
-		}
-	});
 }
