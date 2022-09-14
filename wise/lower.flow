@@ -22,6 +22,87 @@ makeLowerWiseEnv(onError : (DslAst, string) -> void) -> LowerWiseEnv {
 	);
 }
 
+extractVarInfo(arg : DslNode, indexes : [int]) -> Maybe<Triple<string, DslAst, [int]>> {
+	if (arg.name == "var") {
+		if (length(arg.args) >= 2) {
+			Some(Triple(getDslString(arg.args[0]), arg.args[1], indexes));
+		} else {
+			None();
+		}
+	} else if (arg.name == "tupledot") {
+		extractVarInfo(getDslNode(arg.args[0]), concat([getDslInt(arg.args[1])], indexes));
+	} else {
+		None();
+	}
+}
+
+fieldPath2index(route : [int], types : DslAst, acc : int) -> int {
+	if (route == []) {
+		acc;
+	} else {
+		pathLength = ref -1;
+		foundItem = findItemInDslAst(types, [], \itemPath, item -> {
+			pathLength := ^pathLength + 1;
+			itemPath == route;
+		});
+		if (foundItem) ^pathLength else -1;
+	}
+}
+
+// todo: tail recursion
+findItemInDslAst(v : DslAst, route : [int], fn : ([int], DslAst) -> bool) -> bool {
+	switch (v : DslAst) {
+		DslBool(__) : fn(route, v);
+		DslInt(__) : fn(route, v);
+		DslDouble(__) : fn(route, v);
+		DslString(__) : fn(route, v);
+		DslList(l) : foldiList(l, false, \i, acc, item ->
+			acc || findItemInDslAst(item, arrayPush(route, i), fn)
+		);
+		DslNode(__, __, __) : fn(route, v);
+	}
+}
+
+tupledot2DslAst(env : LowerWiseEnv, d : DslNode) -> DslAst {
+	list2 = \l, r -> DslList(Cons(r, Cons(l, makeList())));
+	arg = getDslNode(d.args[0]);
+	makeDefExp = \ -> {
+		largs = map(d.args, \a -> lowerWise2Wase(env, a));
+		value = largs[0];
+		varType = wiseType(value);
+		switch (varType) {
+			DslList(t): {
+				types = getDslTupleTypes(varType);
+				dot = DslNode("call", [DslNode("var", [DslString("dot" + i2s(length(types)))], d.pos), list2(largs[0], largs[1])], d.pos);
+				println("TODO: Lowered dot to " + prettyDsl(dot) + " from " + prettyDsl(d) + ". Add the dot* function");
+				dot;
+			}
+			default: {
+				env.onError(d, ". only for tuples " + prettyDsl(varType));
+				d;
+			}
+		}
+	}
+	// TODO: call().field.field
+	if (arg.name == "var" || arg.name == "tupledot") {
+		eitherFn(
+			if (arg.name == "var") extractVarInfo(d, []) else extractVarInfo(arg, [getDslInt(d.args[1])]),
+			untripleC(\varName, types, path -> {
+				index = fieldPath2index(path, types, -1);
+				if (index > -1) {
+					DslNode("var", [DslString(varName + "." + i2s(index))], d.pos);
+				} else {
+					env.onError(d, "wrong index of tuple " + prettyDsl(d));
+					d;
+				}
+			}),
+			makeDefExp
+		)
+	} else {
+		makeDefExp()
+	}
+}
+
 lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 	list2 = \l, r -> DslList(Cons(r, Cons(l, makeList())));
 	switch (d) {
@@ -113,28 +194,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 					}
 				}
 			} else if (name == "tupledot") {
-				arg = getDslNode(args[0]);
-				if (arg.name == "var") {
-					index = getDslInt(args[1]);
-					DslNode("var", [DslString(getDslString(arg.args[0]) + "." + i2s(index))], pos);
-				} else {
-					largs = map(args, \a -> lowerWise2Wase(env, a));
-					value = largs[0];
-					varType = wiseType(value);
-					switch (varType) {
-						DslList(t): {
-							types = list2array(t);
-							index = getDslInt(largs[1]);
-							dot = DslNode("call", [DslNode("var", [DslString("dot" + i2s(length(types)))], pos), list2(largs[0], largs[1])], pos);
-							println("TODO: Lowered dot to " + prettyDsl(dot) + " from " + prettyDsl(d) + ". Add the dot* function");
-							dot;
-						}
-						default: {
-							env.onError(d, ". only for tuples " + prettyDsl(varType));
-							d;
-						}
-					}
-				}
+				tupledot2DslAst(env, d);
 			} else {
 
 				// Those that do not affect the lowering environment

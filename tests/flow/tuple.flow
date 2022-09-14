@@ -1,0 +1,92 @@
+import runtime;
+
+native trunc : (d : double) -> int = Native.trunc;
+
+Tuple(
+	i : int,
+	f : double,
+);
+ 
+mktuple() -> Tuple {
+	Tuple(1, 3.141)
+}
+
+Nested(
+	l : int,
+	t : Tuple,
+);
+
+nested() -> Nested {
+    Nested(1, Tuple(2, 1.1));
+}
+
+Nested2(
+	t : Tuple,
+	l : int,
+);
+
+Tuple0(
+	t : Tuple1,
+	i0 : int,
+	f0 : double,
+);
+Tuple1(
+	i1 : int,
+	t1 : Tuple2,
+	t2 : Tuple2,
+	i2 : int,
+);
+Tuple2(
+	t : Tuple,
+	f : double,
+);
+
+piece() -> Tuple {
+Tuple(3, 3.141);
+}
+
+main() {
+	t10 = Tuple(1, 3.141);
+	t11 = mktuple();
+
+	fi = t11.f;
+	println(fi); // 3.141
+
+	// ERROR
+	// TODO : field from Construct
+	// i1 = Tuple(1, 3.141).i;
+	// i1 = mktuple().i;
+	// println(i1);
+
+	si : int = trunc(fi);
+	println(si); // 3
+
+	t22 = if (true) Tuple(11, 0.0) else t11;
+	t23 = Nested(1, t11);
+	println(t22.i); // 11
+	
+	t30 = nested();
+	t31 = Nested(6, Tuple(7, 8.8));
+	t32 = Nested2(piece(), 1);
+
+	t40 = Nested2(Tuple(9, 9.9), 10);
+	println(t40.t.i); // == t40.0 == 9
+	println(t40.t.f); // == t40.1 == 9.9
+	println(t40.l); // == t40.2 == 10
+
+	t50 = Tuple0(
+		Tuple1(
+			3,
+			Tuple2(Tuple(7, 0.0), 9.3),
+			Tuple2(Tuple(8, 10.4), 6.4),
+			4
+		),
+		1,
+		2.2
+	);
+	println(t50.t.t2.t.i); // 8
+
+	// ERROR :  type mismatch: expected f64, found i32 (at offset 467)
+    // r3 : Nested = if (true) t31 else Nested(1, Tuple(2, 1.1));
+	{}
+}
