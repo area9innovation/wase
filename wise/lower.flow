@@ -264,10 +264,9 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 						switch (type) {
 							DslList(tt): {
 								// OK, a tuple. We have to expand this to a tuple constructor
-								count = countList(tt);
 								tup = DslList(
 									reverseList(
-										mapiList(tt, \i, t -> {
+										deepMapiDslAst(tt, 0, \i, t -> {
 											DslNode("var", [DslString(id + "." + i2s(i)), t], pos)
 										})
 									)
@@ -290,6 +289,16 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 					DslNode(name, largs, pos);
 				}
 			}
+		}
+	}
+}
+
+deepMapiDslAst(l : List<DslAst>, i : int, fn : (int, DslAst) -> ??) -> List<??> {
+	switch (l : List<DslAst>) {
+		EmptyList(): EmptyList();
+		Cons(h, t): switch (h : DslAst) {
+			DslList(l2) : deepMapiDslAst(concatList(l2, t), i, fn);
+			default : Cons(fn(i, h), deepMapiDslAst(t, i + 1, fn));
 		}
 	}
 }

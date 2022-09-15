@@ -86,7 +86,7 @@ main() {
 	);
 	println(t50.t.t2.t.i); // 8
 
-	// ERROR :  type mismatch: expected f64, found i32 (at offset 467)
-    // r3 : Nested = if (true) t31 else Nested(1, Tuple(2, 1.1));
+	r3 : Nested = if (true) t31 else Nested(1, Tuple(2, 1.1));
+	println(r3.t.i); // 7
 	{}
 }
