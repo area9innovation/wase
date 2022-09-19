@@ -1,4 +1,5 @@
 
+include lib/runtime;
 
  mktuple() -> (i32, f64) {
 	(1, 3.141)

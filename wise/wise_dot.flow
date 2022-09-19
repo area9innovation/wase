@@ -48,16 +48,19 @@ isDotCallFn(v : DslAst) -> bool {
 addDotNFunctions(d : DslAst) -> DslAst {
 	fnNames = extractDotFnNames(d);
 	fold(fnNames, d, \acc, name -> {
-		// TODO
+		// TODO : num offn = num of combinations
 		// DslList(makeList()) = variant
-		returnType = DslList(makeList());
-		variantType = DslList(makeList());
+		variantType = DslString("auto");
+		returnType = DslNode("type", [variantType, variantType], 0);
 		DslNode(
 			"function",
 			[
 				DslString(name),
 				DslInt(0), // export
-				DslList(array2list(generate(1, getDotArgCount(name), \__ -> DslNode("type", [variantType, variantType], 0)))), // args : [idtype(id, type)]
+				DslList(array2list(arrayPush(
+					generate(1, getDotArgCount(name), \i -> DslNode("type", [DslString("f" + i2s(i)), variantType], 0)),
+					DslNode("type", [DslString("n"), DslInt(0)], 0)
+				))), // args : [idtype(id, type)]
 				// DslNode("type", args, 0)
 				returnType,
 				DslNode("brace", [DslList(makeList()), returnType], 0), // body

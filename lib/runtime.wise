@@ -99,3 +99,15 @@ printlnf64(f : f64) -> () {
 	printf64(f);
 	printByte(10);
 }
+
+// dot n
+
+dot2(v1 : auto, v2 : auto, n : i32) -> (auto) {
+	if (n == 0) v1 else v2;
+}
+
+dot3(v1 : auto, v2 : auto, v3 : auto, n : i32) -> (auto) {
+	if (n == 0) v1
+	else if (n == 1) v2
+	else v3;
+}
