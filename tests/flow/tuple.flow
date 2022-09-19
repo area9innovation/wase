@@ -7,11 +7,11 @@ Tuple(
 	f : double,
 );
  
-/* mktuple() -> Tuple {
+mktuple() -> Tuple {
 	Tuple(1, 3.141)
 }
 
-Nested(
+/*Nested(
 	l : int,
 	t : Tuple,
 );
@@ -54,8 +54,8 @@ main() {
 
 	// ERROR dot2
 	i1 = Tuple(1, 3.141).i;
-	i1 = mktuple().i;
-	// println(i1);
+	i2 = mktuple().i;
+	// println(i2);
 
 	/* si : int = trunc(fi);
 	println(si); // 3
