@@ -1,4 +1,4 @@
-// import runtime;
+import runtime;
 
 // native trunc : (d : double) -> int = Native.trunc;
 
@@ -11,7 +11,7 @@ mktuple() -> Tuple {
 	Tuple(1, 3.141)
 }
 
-/*Nested(
+Nested(
 	l : int,
 	t : Tuple,
 );
@@ -20,7 +20,7 @@ nested() -> Nested {
 	Nested(1, Tuple(2, 1.1));
 }
 
-Nested2(
+/*Nested2(
 	t : Tuple,
 	l : int,
 );
@@ -46,16 +46,20 @@ piece() -> Tuple {
 } */
 
 main() {
-	/* t10 = Tuple(1, 3.141);
-	t11 = mktuple();
+	// t10 = Tuple(1, 3.141);
+	// t11 = mktuple();
 
-	fi = t11.f;
-	println(fi); // 3.141 */
+	// fi = t11.f;
+	// println(fi); // 3.141
 
 	// ERROR dot2
-	i1 = Tuple(1, 3.141).i;
-	i2 = mktuple().i;
-	// println(i2);
+	// i1 = Tuple(967, 3.141).i;
+	// println(i1);
+	f2 = mktuple().f;
+	println(f2); // 3.141
+	println(mktuple().i); // 1
+	// ERROR
+	// println(nested().t.i); // 2
 
 	/* si : int = trunc(fi);
 	println(si); // 3
@@ -86,6 +90,14 @@ main() {
 	println(t50.t.t2.t.i); // 8
 
 	r3 : Nested = if (true) t31 else Nested(1, Tuple(2, 1.1));
-	println(r3.t.i); // 7
-	{} */
+	println(r3.t.i); // 7*/
+	{} 
 }
+
+
+/* i2 = mktuple().i;
+-> 
+dot2_Tuple(v : Tuple, fieldIndex : int) -> _flow_ {
+   if (fieldIndex == 0) v.i else v.f;
+}
+i2 = dot2(mktuple(), 0); */

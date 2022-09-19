@@ -66,7 +66,6 @@ findItemInDslAst(v : DslAst, route : [int], fn : ([int], DslAst) -> bool) -> boo
 }
 
 tupledot2DslAst(env : LowerWiseEnv, d : DslNode) -> DslAst {
-	// list2 = \l, r -> DslList(Cons(r, Cons(l, makeList())));
 	arg = getDslNode(d.args[0]);
 	makeDefExp = \ -> {
 		largs = map(d.args, \a -> lowerWise2Wase(env, a));
