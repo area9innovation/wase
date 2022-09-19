@@ -1,0 +1,100 @@
+import ds/set;
+import math/math;
+import tools/dsl/dsl_util;
+
+export {
+
+	makeDotCallFn(arg1 : DslAst, arg2 : DslAst, n : int, pos : int) -> DslAst; // n is N from dotN
+	isDotCallFn(v : DslAst) -> bool;
+
+	addDotNFunctions(d : DslAst) -> DslAst;
+
+}
+
+makeDotCallFn(arg1 : DslAst, arg2 : DslAst, n : int, pos : int) -> DslAst {
+	list2 = \l, r -> DslList(Cons(r, Cons(l, makeList())));
+	DslNode("call", [makeDotNode(n, pos), list2(arg1, arg2)], pos);
+}
+
+makeDotNode(n : int, pos : int) -> DslNode {
+	DslNode("var", [DslString("dot" + i2s(n))], pos)
+}
+
+extractDotFnName(v : DslAst) -> string {
+	switch (v) {
+		DslNode(name, largs, pos) : {
+			if (name == "var" && length(largs) == 1) {
+				varName = getDslString(largs[0]);
+				if (startsWith(varName, "dot")) varName else "";
+			} else {
+				"";
+			}
+		}
+		default: "";
+	}
+}
+
+isDotCallFn(v : DslAst) -> bool {
+	switch (v) {
+		DslNode(name, largs, pos) : {
+			name == "call"
+			&& largs != []
+			&& extractDotFnName(largs[0]) != "";
+		}
+		default: false;
+	}
+}
+
+addDotNFunctions(d : DslAst) -> DslAst {
+	fnNames = extractDotFnNames(d);
+	fold(fnNames, d, \acc, name -> {
+		// TODO
+		// DslList(makeList()) = variant
+		returnType = DslList(makeList());
+		variantType = DslList(makeList());
+		DslNode(
+			"function",
+			[
+				DslString(name),
+				DslInt(0), // export
+				DslList(array2list(generate(1, getDotArgCount(name), \__ -> DslNode("type", [variantType, variantType], 0)))), // args : [idtype(id, type)]
+				// DslNode("type", args, 0)
+				returnType,
+				DslNode("brace", [DslList(makeList()), returnType], 0), // body
+				acc, // scope
+				DslList(makeList())],
+			0
+		)
+	});
+}
+
+extractDotFnNames(v : DslAst) -> [string] {
+	set2array(extractDotNodeNames(makeList1(v), makeSet()));
+}
+
+getDotArgCount(fnName : string) -> int {
+	s2i(takeAfter(fnName, "dot", ""));
+}
+
+extractDotNodeNames(values : List<DslAst>, acc : Set<string>) -> Set<string> {
+	switch (values : List) {
+		EmptyList(): acc;
+		Cons(v, t): {
+			switch (v : DslAst) {
+				DslBool(__) : extractDotNodeNames(t, acc);
+				DslInt(__) : extractDotNodeNames(t, acc);
+				DslDouble(__) : extractDotNodeNames(t, acc);
+				DslString(__) : extractDotNodeNames(t, acc);
+				DslList(l) : extractDotNodeNames(concatList(l, t), acc);
+				DslNode(__, args, __) : {
+					name = extractDotFnName(v);
+					extractDotNodeNames(
+						fold(args, t, \ac, e -> Cons(e, ac)),
+						if (name == "") acc else insertSet(acc, name)
+					);
+				}
+			}
+		}
+	}
+}
+		

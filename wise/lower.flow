@@ -2,6 +2,7 @@ import tools/dsl/dsl_ast;
 import ds/array;
 import runtime;
 import wase/compile;
+import wise/wise_dot;
 
 export {
 	makeLowerWiseEnv(onError : (DslAst, string) -> void) -> LowerWiseEnv;
@@ -64,7 +65,7 @@ findItemInDslAst(v : DslAst, route : [int], fn : ([int], DslAst) -> bool) -> boo
 }
 
 tupledot2DslAst(env : LowerWiseEnv, d : DslNode) -> DslAst {
-	list2 = \l, r -> DslList(Cons(r, Cons(l, makeList())));
+	// list2 = \l, r -> DslList(Cons(r, Cons(l, makeList())));
 	arg = getDslNode(d.args[0]);
 	makeDefExp = \ -> {
 		largs = map(d.args, \a -> lowerWise2Wase(env, a));
@@ -73,9 +74,10 @@ tupledot2DslAst(env : LowerWiseEnv, d : DslNode) -> DslAst {
 		switch (varType) {
 			DslList(t): {
 				types = getDslTupleTypes(varType);
-				dot = DslNode("call", [makeDotNode(length(types), d.pos), list2(largs[0], largs[1])], d.pos);
-				println("TODO: Lowered dot to " + prettyDsl(dot) + " from " + prettyDsl(d) + ". Add the dot* function");
-				dot;
+				makeDotCallFn(largs[0], largs[1], length(types), d.pos);
+				// dot = DslNode("call", [makeDotNode(length(types), d.pos), list2(largs[0], largs[1])], d.pos);
+				// println("TODO: Lowered dot to " + prettyDsl(dot) + " from " + prettyDsl(d) + ". Add the dot* function");
+				// dot;
 			}
 			default: {
 				env.onError(d, ". only for tuples " + prettyDsl(varType));
@@ -100,32 +102,6 @@ tupledot2DslAst(env : LowerWiseEnv, d : DslNode) -> DslAst {
 		)
 	} else {
 		makeDefExp()
-	}
-}
-
-makeDotNode(n : int, pos : int) -> DslNode {
-	DslNode("var", [DslString("dot" + i2s(n))], pos)
-}
-
-isDotNode(v : DslAst) -> bool {
-	switch (v) {
-		DslNode(name, largs, pos) : {
-			name == "var"
-			&& length(largs) == 1
-			&& startsWith(getDslString(largs[0]), "dot");
-		}
-		default: false;
-	}
-}
-
-isDotCallFn(v : DslAst) -> bool {
-	switch (v) {
-		DslNode(name, largs, pos) : {
-			name == "call"
-			&& largs != []
-			&& isDotNode(largs[0]);
-		}
-		default: false;
 	}
 }
 
