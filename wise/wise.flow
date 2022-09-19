@@ -48,7 +48,7 @@ compileWise2File(includes, filename : string, code : string, outputPath : string
 		});
 		lowered0 = lowerWise2Wase(env, typed);
 		// add dot* functions
-		lowered1 = addDotNFunctions(lowered0);
+		lowered1 = addDotNFunctions(^(env.dots), lowered0);
 		// Add exported memory
 		lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered1], 0);
 

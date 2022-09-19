@@ -14,12 +14,13 @@ LowerWiseEnv(
 	blocks : int,
 	loops : [int],
 	locals : Set<string>,
+	dots : ref Set<DslDotFn>,
 	onError : (DslAst, string) -> void, 
 );
 
 makeLowerWiseEnv(onError : (DslAst, string) -> void) -> LowerWiseEnv {
 	LowerWiseEnv(
-		0, [], makeSet(), onError
+		0, [], makeSet(), ref makeSet(), onError
 	);
 }
 
@@ -74,10 +75,9 @@ tupledot2DslAst(env : LowerWiseEnv, d : DslNode) -> DslAst {
 		switch (varType) {
 			DslList(t): {
 				types = getDslTupleTypes(varType);
-				makeDotCallFn(largs[0], largs[1], length(types), d.pos);
-				// dot = DslNode("call", [makeDotNode(length(types), d.pos), list2(largs[0], largs[1])], d.pos);
-				// println("TODO: Lowered dot to " + prettyDsl(dot) + " from " + prettyDsl(d) + ". Add the dot* function");
-				// dot;
+				dot = makeDotFn(largs[0], largs[1], types, d.pos);
+				env.dots := insertSet(^(env.dots), dot.fn);
+				dot.value;
 			}
 			default: {
 				env.onError(d, ". only for tuples " + prettyDsl(varType));
