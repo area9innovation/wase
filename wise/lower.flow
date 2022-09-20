@@ -24,17 +24,21 @@ makeLowerWiseEnv(onError : (DslAst, string) -> void) -> LowerWiseEnv {
 	);
 }
 
-extractVarInfo(arg : DslNode, indexes : [int]) -> Maybe<Triple<string, DslAst, [int]>> {
+extractVarInfo(arg : DslNode, indexes : [int]) -> Triple<Maybe<string>, DslAst, [int]> {
 	if (arg.name == "var") {
 		if (length(arg.args) >= 2) {
-			Some(Triple(getDslString(arg.args[0]), arg.args[1], indexes));
+			Triple(Some(getDslString(arg.args[0])), arg.args[1], indexes);
 		} else {
-			None();
+			Triple(None(), arg.args[1], indexes);
 		}
 	} else if (arg.name == "tupledot") {
 		extractVarInfo(getDslNode(arg.args[0]), concat([getDslInt(arg.args[1])], indexes));
+	} else if (arg.name == "tuple") {
+		Triple(None(), arg.args[1], indexes);
+	} else if (arg.name == "call") {
+		Triple(None(), arg.args[2], indexes);
 	} else {
-		None();
+		Triple(None(), arg, indexes);
 	}
 }
 
@@ -67,40 +71,73 @@ findItemInDslAst(v : DslAst, route : [int], fn : ([int], DslAst) -> bool) -> boo
 
 tupledot2DslAst(env : LowerWiseEnv, d : DslNode) -> DslAst {
 	arg = getDslNode(d.args[0]);
-	makeDefExp = \ -> {
-		largs = map(d.args, \a -> lowerWise2Wase(env, a));
-		value = largs[0];
-		varType = wiseType(value);
+	
+	onErrorTupledot = \val -> {
+		env.onError(d, ". only for tuples " + prettyDsl(val));
+		d;
+	}
+	makeDotFnAndPushToEnv = \value, index, types  -> {
+		dot = makeDotFn(value, index, types, d.pos);
+		env.dots := insertSet(^(env.dots), dot.fn);
+		dot.value;
+	}
+	makeNestedDotFn = \index, dotIndex, primTypes -> makeDotFnAndPushToEnv(
+		lowerWise2Wase(env, extractTupldotValue(d.args[0])),
+		if (index >= 0) DslInt(index) else dotIndex,
+		getDslTupleTypes(primTypes)
+	);
+	// tuple construction
+	makeTupleConstructExp = \index, primTypes -> {
+		loweredValue = lowerWise2Wase(env, d.args[0]);
+		dotIndex = lowerWise2Wase(env, d.args[1]);
+		varType = wiseType(loweredValue);
 		switch (varType) {
 			DslList(t): {
 				types = getDslTupleTypes(varType);
-				dot = makeDotFn(largs[0], largs[1], orderDotFnTypes(arg, types), d.pos);
-				env.dots := insertSet(^(env.dots), dot.fn);
-				dot.value;
+				if (exists(types, \v -> !isPrimitiveDslType(v))) {
+					makeNestedDotFn(index, dotIndex, primTypes); // nested dot for construction
+				} else {
+					makeDotFnAndPushToEnv(loweredValue, dotIndex, orderDotFnTypes(arg, types));
+				}
 			}
-			default: {
-				env.onError(d, ". only for tuples " + prettyDsl(varType));
-				d;
+			DslNode(name, __, __) : if (name == "call") {
+				makeNestedDotFn(index, dotIndex, primTypes);
+			} else {
+				onErrorTupledot(varType);
 			}
+			default: onErrorTupledot(varType);
 		}
 	}
-	// TODO: call().field.field
 	if (arg.name == "var" || arg.name == "tupledot") {
-		eitherFn(
+		untriple(
 			if (arg.name == "var") extractVarInfo(d, []) else extractVarInfo(arg, [getDslInt(d.args[1])]),
-			untripleC(\varName, types, path -> {
+			\varNameM, types, path -> {
 				index = fieldPath2index(path, types, -1);
-				if (index > -1) {
-					DslNode("var", [DslString(varName + "." + i2s(index))], d.pos);
-				} else {
-					env.onError(d, "wrong index of tuple " + prettyDsl(d));
-					d;
-				}
-			}),
-			makeDefExp
-		)
+				eitherFn(
+					varNameM,
+					\varName -> {
+						// do not fall below. stop tree traversal
+						// varName.field1.field2;
+						if (index > -1) {
+							DslNode("var", [DslString(varName + "." + i2s(index))], d.pos);
+						} else {
+							env.onError(d, "wrong index of tuple " + prettyDsl(d));
+							d;
+						}
+					},
+					\-> makeTupleConstructExp(index, types)
+				)
+			}
+		);
 	} else {
-		makeDefExp()
+		makeTupleConstructExp(-1, DslList(makeList()))
+	}
+}
+
+extractTupldotValue(d : DslAst) -> DslAst {
+	switch (d) {
+		DslNode(name, args, __): if (name == "tupledot") extractTupldotValue(args[0]) else d;
+		default: d;
 	}
 }
 

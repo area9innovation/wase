@@ -7,7 +7,7 @@ Tuple(
 	f : double,
 );
  
-mktuple() -> Tuple {
+ mktuple() -> Tuple {
 	Tuple(1, 3.141)
 }
 
@@ -41,8 +41,8 @@ Tuple2(
 	f : double,
 );
 
-piece() -> Tuple {
-	Tuple(3, 3.141);
+makeTuple1(t : Tuple) -> Tuple1 {
+	Tuple1(87, Tuple2(t, 1.56), Tuple2(Tuple(9, 9.08), 21));
 }
 
 main() {
@@ -52,13 +52,22 @@ main() {
 	fi = t11.f;
 	println(fi); // 3.141
 
-	i1 = Tuple(967, 3.141).i;
-	println(i1); // 967
+	i1 = Tuple(345, 3.141).i;
+	println(i1); // 345
 	f2 = mktuple().f;
 	println(f2); // 3.141
-	println(mktuple().i); // 1
-	// ERROR
-	// println(nested().t.i); // 2
+	println(mktuple().i); // 1 
+	k=111; f=3.141;
+	st = Tuple(k, f);
+	v = Nested(123, st);
+	println(v.t.i + 1); // 112
+	
+	i2 = Nested(123, Tuple(678, 3.141)).t.i;
+	println(i2); // 678
+	i3 = nested().t.i;
+	println(i3); // 2
+	i4 = makeTuple1(mktuple()).t1.i;
+	println(i4); // 1
 
 	si : int = trunc(fi);
 	println(si); // 3
@@ -69,7 +78,7 @@ main() {
 	
 	t30 = nested();
 	t31 = Nested(6, Tuple(7, 8.8));
-	t32 = Nested2(piece(), 1);
+	t32 = Nested2(mktuple(), 1);
 
 	t40 = Nested2(Tuple(9, 9.9), 10);
 	println(t40.t.i); // 9

@@ -23,7 +23,6 @@ export {
 }
 
 makeDotFn(arg1 : DslAst, arg2 : DslAst, types : [DslAst], pos : int) -> DslNodeDotFn {
-	list2 = \l, r -> DslList(Cons(r, Cons(l, makeList())));
 	index = switch (arg2) {
 		DslInt(v): v;
 		default: -1;
