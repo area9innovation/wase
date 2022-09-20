@@ -5,9 +5,63 @@ include lib/runtime;
 	(1, 3.141)
 }
 
+ nested() -> (i32, (i32, f64)) {
+	(1, (2, 1.1))
+}
+
+ piece() -> (i32, f64) {
+	(3, 3.141)
+}
+
  export _start() -> auto {
+	t10 : (i32, f64) = (1, 3.141);
 	t11 : (i32, f64) = mktuple();
 	fi : f64 = t11.1;
-	i2 : i32 = mktuple().0;
+	
+	printlnf64(fi);
+	i1 : i32 = (967, 3.141).0;
+	
+	printlni32(i1);
+	f2 : f64 = mktuple().1;
+	
+	printlnf64(f2);
+	printlni32(mktuple().0);
+	si : i32 = trunc_s<>(fi);
+	
+	printlni32(si);
+	t22 : (i32, f64) = if (true) {
+	(11, 0.0)
+} else {
+	t11
+};
+	t23 : (i32, (i32, f64)) = (1, t11);
+	
+	printlni32(t22.0);
+	t30 : (i32, (i32, f64)) = nested();
+	t31 : (i32, (i32, f64)) = (6, (7, 8.8));
+	t32 : ((i32, f64), i32) = (piece(), 1);
+	t40 : ((i32, f64), i32) = ((9, 9.9), 10);
+	
+	printlni32(t40.0.0);
+	printlnf64(t40.0.1);
+	printlni32(t40.1);
+	t50 : ((i32, ((i32, f64), f64), ((i32, f64), f64), i32), i32, f64) = ((3, ((7, 0.0), 9.3), ((8, 10.4), 6.4), 4), 1, 2.2);
+	
+	printlni32(t50.0.2.0.0);
+	r3 : (i32, (i32, f64)) = if (true) {
+	t31
+} else {
+	(1, (2, 1.1))
+};
+	
+	printlni32(r3.1.0);
+	();
+	;
+	;
+	;
+	;
+	;
+	;
+	;
 	
 }

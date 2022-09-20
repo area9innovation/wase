@@ -74,7 +74,7 @@ tupledot2DslAst(env : LowerWiseEnv, d : DslNode) -> DslAst {
 		switch (varType) {
 			DslList(t): {
 				types = getDslTupleTypes(varType);
-				dot = makeDotFn(largs[0], largs[1], types, d.pos);
+				dot = makeDotFn(largs[0], largs[1], orderDotFnTypes(arg, types), d.pos);
 				env.dots := insertSet(^(env.dots), dot.fn);
 				dot.value;
 			}
@@ -101,6 +101,21 @@ tupledot2DslAst(env : LowerWiseEnv, d : DslNode) -> DslAst {
 		)
 	} else {
 		makeDefExp()
+	}
+}
+
+// TODO: think about the order
+// example : 
+// Tuple(i32, f64);
+// makeTuple() -> Tuple;
+// Tuple(1, 1.1) == [f64, i32]
+// makeTuple() == [i32, f64]
+orderDotFnTypes(node : DslNode, types : [DslAst]) -> [DslAst] {
+	if (node.name == "tuple") {
+		// tuples have reversed types
+		reverseA(types)
+	} else {
+		types;
 	}
 }
 
@@ -191,6 +206,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 					switch (varType) {
 						DslList(t): {
 							// OK, a tuple-let
+							// types are reversed
 							DslNode("lettuple", [largs[0], largs[1], unrollWiseTuple(DslList(getDslList(largs[2]))), largs[3], largs[4], largs[5]], pos);
 						}
 						default: {

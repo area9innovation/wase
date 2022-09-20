@@ -69,7 +69,7 @@ type2dotname(type : DslAst) -> string {
 extractDotFnName(v : DslAst) -> string {
 	switch (v) {
 		DslNode(name, largs, pos) : {
-			if (name == "var" && length(largs) == 1) {
+			if (name == "var" && largs != []) {
 				varName = getDslString(largs[0]);
 				if (startsWith(varName, "dot")) varName else "";
 			} else {
