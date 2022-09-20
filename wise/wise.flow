@@ -47,8 +47,10 @@ compileWise2File(includes, filename : string, code : string, outputPath : string
 			println(error + " at " + summarizeDsl(node));
 		});
 		lowered0 = lowerWise2Wase(env, typed);
+		// add dot* functions
+		lowered1 = addDotNFunctions(^(env.dots), lowered0);
 		// Add exported memory
-		lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered0], 0);
+		lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered1], 0);
 
 		if (isUrlParameterTrue("debug-lower")) {
 			println("Wase '" + filename + "'':");
