@@ -77,7 +77,7 @@ printlnb(i : i32) -> () {
 		printByte(76);
 		printByte(83);
 		printByte(69);
-	}
+	};
 	printByte(10);
 }
 
