@@ -1,0 +1,144 @@
+include lib/runtime;
+
+//
+// This is the worlds simplest memory allocator
+// TODO: Add a free list and implement "free"
+//
+
+HEAP_POINTER : i32 = 4096;
+
+initMemory() -> () {
+    store<>(HEAP_POINTER, HEAP_POINTER + 4);
+}
+
+allocate(bytes : i32) -> i32 {
+    headP : i32 = load<>(HEAP_POINTER);
+
+    store<>(HEAP_POINTER, headP + bytes);
+
+    headP;
+}
+
+freeMemory(address : i32, bytes : i32) -> () {
+    // TODO: Add this memory to a free list
+}
+
+
+// Memory layout for arrays:
+// An array is a pointer to memory where the memory looks like this:
+// 0: length of the array in # elements as i32
+// 4+: The bytes for the elements
+
+getArrayLength(array : i32) -> i32 {
+    load<>(array) : i32;
+}
+
+// i32 arrays:
+
+makeI32ArrayOfLength(length : i32) -> i32 {
+    addr : i32 = allocate(4 + 4 * length);
+    store<>(addr, length);
+    addr
+}
+
+makeI32EmptyArray() -> i32 {
+    makeI32ArrayOfLength(0);
+}
+
+
+arrayPushI32(array : i32, value : i32) -> i32 {
+    // OK, first make a copy of the original array, but with one more element
+    olength = getArrayLength(array);
+    newArray = makeI32ArrayOfLength(olength + 1);
+
+    if (olength > 0) {
+        memory.copy<>(newArray + 4, array + 4, olength * 4);
+    };
+    store<>(newArray + olength * 4 + 4, value);
+
+    newArray;
+}
+
+getIndexI32Array(a : i32, index : i32) -> i32 {
+    l = getArrayLength(a);
+    if (0 <= index && index < l) {
+        load<>(a + 4 + 4 * index);
+    } else {
+        // OUT OF BOUNDS!
+        0;
+    }
+}
+
+freeI32Array(a : i32) -> () {
+    freeMemory(a, 4 * load<>(a));
+}
+
+
+// f64 arrays:
+
+makeF64ArrayOfLength(length : i32) -> i32 {
+    addr : i32 = allocate(4 + 8 * length);
+    store<>(addr, length);
+    addr
+}
+
+makeF64EmptyArray() -> i32 {
+    makeF64ArrayOfLength(0);
+}
+
+arrayPushF64(array : i32, value : f64) -> i32 {
+    // OK, first make a copy of the original array, but with one more element
+    olength = getArrayLength(array);
+    newArray = makeI32ArrayOfLength(olength + 1);
+
+    if (olength > 0) {
+        memory.copy<>(newArray + 4, array + 4, olength * 8);
+    };
+    store<>(newArray + olength * 8 + 4, value);
+    newArray;
+}
+
+getIndexF64Array(a : i32, index : i32) -> f64 {
+    l = getArrayLength(a);
+    if (0 <= index && index < l) {
+        load<>(a + 4 + 8 * index);
+    } else {
+        // OUT OF BOUNDS!
+        0.0;
+    }
+}
+
+freeF64Array(a : i32) -> () {
+    freeMemory(a, 8 * load<>(a));
+}
+
+
+
+export _start() -> () {
+    initMemory();
+
+    // i32 tests:
+    
+    myArray1 = makeI32EmptyArray();
+    myArray2 = arrayPushI32(myArray1, 42);
+    myArray3 = arrayPushI32(myArray2, 666);
+
+    printi32(getArrayLength(myArray1)); // 0
+    printByte(10);
+    printi32(getArrayLength(myArray2)); // 1
+    printByte(10);
+    printi32(getIndexI32Array(myArray2, 0)); // 42
+    printByte(10);
+
+    printi32(getIndexI32Array(myArray3, 0));// 42
+    printByte(10);
+    printi32(getIndexI32Array(myArray3, 1));// 666
+    printByte(10);
+
+    // f64 array test:
+    farray1 = makeF64EmptyArray();
+    farray2 = arrayPushF64(farray1, 3.141);
+    printf64(getIndexF64Array(farray2, 0)); // 3.141
+
+	{}
+}
