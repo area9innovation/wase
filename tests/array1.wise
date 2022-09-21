@@ -11,16 +11,29 @@ initMemory() -> () {
     store<>(HEAP_POINTER, HEAP_POINTER + 4);
 }
 
-allocate(bytes : i32) -> i32 {
+// Reserve i32 for ref count
+allocateMemory(bytes : i32) -> i32 {
     headP : i32 = load<>(HEAP_POINTER);
 
-    store<>(HEAP_POINTER, headP + bytes);
+    store<>(HEAP_POINTER, headP + bytes + 4); // 4 for the ref counter
 
-    headP;
+    // Ref counter
+    store<>(headP, 1);
+
+    headP + 4;
 }
 
-freeMemory(address : i32, bytes : i32) -> () {
-    // TODO: Add this memory to a free list
+dupMemory(address :i32) -> () {
+    store<>(address - 4, load<>(address - 4) + 1);
+}
+
+dropMemory(address : i32, bytes : i32) -> () {
+    refCnt = load<>(address - 4);
+    if (refCnt == 1) {
+        // TODO: Add this memory to a free list when ref count is 0
+    } else {
+        store<>(address - 4, refCnt - 1);
+    }
 }
 
 
@@ -36,7 +49,7 @@ getArrayLength(array : i32) -> i32 {
 // i32 arrays:
 
 makeI32ArrayOfLength(length : i32) -> i32 {
-    addr : i32 = allocate(4 + 4 * length);
+    addr : i32 = allocateMemory(4 + 4 * length);
     store<>(addr, length);
     addr
 }
@@ -45,6 +58,51 @@ makeI32EmptyArray() -> i32 {
     makeI32ArrayOfLength(0);
 }
 
+
+// DOES NOT MAKE COPY. Used for initialization of constant arrays
+/*
+// [1,2,3,4]
+a = makeI32ArrayOfLength(4);
+setI32ArrayIndex(a, 0, 1);
+setI32ArrayIndex(a, 1, 2);
+setI32ArrayIndex(a, 2, 3);
+setI32ArrayIndex(a, 3, 4);
+*/
+
+setIndexI32Array(a : i32, index : i32, value : i32) -> () {
+    l = getArrayLength(a);
+    if (0 <= index && index < l) {
+        store<>(a + 4 + 4 * index, value);
+    }
+}
+
+/*
+// TODO:
+// Natives:
+// init array
+// compare arrays : -1 if array1 is smaller than array2, 0 is equal, 1 if bigger
+// Probably specialze this with the comparison function, or implement function arguments in Wise
+compareI32Arrays(array1 : i32, array2 : i32, comparison : (i32, i32) -> i32) -> i32 {
+    // TODO
+    0
+}
+*/
+
+concatI32Arrays(array1 : i32, array2 : i32) -> i32 {
+    length1 = getArrayLength(array1);
+    length2 = getArrayLength(array2);
+    newArray = makeI32ArrayOfLength(length1 + length2);
+    if (length1 > 0) {
+        memory.copy<>(newArray + 4, array1, length1 * 4);
+    };
+    if (length2 > 0) {
+        memory.copy<>(newArray + 4 + length1 * 4, array2, length2 * 4);
+    };
+    newArray;
+}
+
+//	native replace : ([?], int, ?) -> [?] = Native.replace;
+//	native subrange : (a : [?], index : int, length : int) -> [?] = Native.subrange;
 
 arrayPushI32(array : i32, value : i32) -> i32 {
     // OK, first make a copy of the original array, but with one more element
@@ -70,14 +128,14 @@ getIndexI32Array(a : i32, index : i32) -> i32 {
 }
 
 freeI32Array(a : i32) -> () {
-    freeMemory(a, 4 * load<>(a));
+    dropMemory(a, 4 * load<>(a));
 }
 
 
 // f64 arrays:
 
 makeF64ArrayOfLength(length : i32) -> i32 {
-    addr : i32 = allocate(4 + 8 * length);
+    addr : i32 = allocateMemory(4 + 8 * length);
     store<>(addr, length);
     addr
 }
@@ -109,10 +167,13 @@ getIndexF64Array(a : i32, index : i32) -> f64 {
 }
 
 freeF64Array(a : i32) -> () {
-    freeMemory(a, 8 * load<>(a));
+    dropMemory(a, 8 * load<>(a));
 }
 
-
+// TODO:
+// Get flow with [int] to work with comparison
+// Get flow with [double] to work with comparison
+// Get flow with [[int]] to work with comparison
 
 export _start() -> () {
     initMemory();

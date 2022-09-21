@@ -621,9 +621,9 @@ memory.init and data.drop not implemented yet. Requires data indexing.
 | `*.store(8,16,32)` | `store(8,16,32)<>(address, value)` | Store the lower N bits of a value. The width is inferred from the value
 | `memory.size` | `memory.size<>()` | Returns the unsigned size of memory in terms of pages (64k)
 | `memory.grow` | `memory.grow<>(size)` | Increases the memory by `size` pages. Returns the previous size of memory, or -1 if memory can not increase
-| `memory.copy` | `memory.copy<>(bytes, source, dest)` | Copy `bytes` bytes from source to destination
-| `memory.fill` | `memory.fill<>(bytes, bytevalue, dest)` | Fills `bytes` bytes with the given byte value at `dest`
-| `memory.init` | `memory.init<id>(bytes, source, dest)` | Copies `bytes` from a data section `<id>` at address `source` into memory starting at address `dest`
+| `memory.copy` | `memory.copy<>(dest, source, bytes)` | Copy `bytes` bytes from source to destination
+| `memory.fill` | `memory.fill<>(dest, bytevalue, bytes)` | Fills `bytes` bytes with the given byte value at `dest`
+| `memory.init` | `memory.init<id>(dest, source, bytes)` | Copies `bytes` from a data section `<id>` at address `source` into memory starting at address `dest`
 | `data.drop` | `data.drop<id>()` | Frees the memory of data segment <id>
 
 ## Numeric Instructions
