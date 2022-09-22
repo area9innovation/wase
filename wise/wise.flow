@@ -34,7 +34,7 @@ compileWise2File(includes, filename : string, code : string, outputPath : string
 			parseWise(path, content);
 		}, ref makeSet());
 		extended = processDslIncludes(include, program);
-
+println("typeWise:: " + toString(extended));
 		typed = typeWise(extended);
 
 		if (isUrlParameterTrue("debug-type")) {
@@ -46,13 +46,15 @@ compileWise2File(includes, filename : string, code : string, outputPath : string
 		env = makeLowerWiseEnv(\node, error -> {
 			println(error + " at " + summarizeDsl(node));
 		});
+println("extended: "+toString(extended));println("");
+// println("TYPED: "+toString(typed));println("");
 		lowered0 = lowerWise2Wase(env, typed);
 		// add dot* functions
 		lowered1 = addDotNFunctions(^(env.dots), lowered0);
 		// Add exported memory
 		lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered1], 0);
 
-		if (isUrlParameterTrue("debug-lower")) {
+		if (true/* isUrlParameterTrue("debug-lower") */) {
 			println("Wase '" + filename + "'':");
 			println(prettyDsl(lowered));
 		}
@@ -60,12 +62,13 @@ compileWise2File(includes, filename : string, code : string, outputPath : string
 		wase = dsl2wase(\node, error -> {
 			println(filename + ": " + error)
 		}, lowered);
-		if (isUrlParameterTrue("debug-wase")) {
+		if (true/* isUrlParameterTrue("debug-wase") */) {
 			println("\nAs wase:");
 			println(prettyWase(wase));
 		}
 
 		wasm = wase2wasm(wase);
+println("WASM:: "+toString(wasm));
 		bytes = wasmModule2bytes(wasm);
 
 		filebase = changeFileExt(pathCombine(outputPath, fileNameOnly(filename)), "");

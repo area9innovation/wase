@@ -1,5 +1,5 @@
 
-//include lib/runtime;
+include lib/runtime;
 
  getPairSecond(t : (i32, f64)) -> i32 {
 	t.0
@@ -13,10 +13,9 @@
 	mt1 : (i32, f64) = (83, 80.91);
 	mt1i : i32 = getPairSecond(mt1);
 	
-	//printlni32(mt1i);
-
+	printlni32(mt1i);
 	nt1 : (i32, ((i32, f64), f64), ((i32, f64), f64), i32) = (13, ((17, 10.01), 19.3), ((18, 110.4), 16.4), 14);
 	nf1 : f64 = getTuple1FirstFloat(nt1);
-	//printlnf64(nf1);
+	printlnf64(nf1);
 	
 }

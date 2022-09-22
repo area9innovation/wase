@@ -1,6 +1,8 @@
 import tools/dsl/dsl_ast;
 import tools/dsl/dsl_util;
 
+import runtime;
+
 export {
 	// Remove a top-level 'string', 'int', 'double' or 'bool' AST-node
 	unwrapDslPrimitive(n : DslAst) -> DslAst;
@@ -33,7 +35,8 @@ unwrapDslPrimitiveList(list : DslAst) -> List<DslAst> {
 }
 
 getDslTupleTypes(l : DslAst) -> [DslAst] {
-	switch (l : DslAst) {
+
+	v=switch (l : DslAst) {
 		DslBool(__) : [l];
 		DslInt(__) : [l];
 		DslDouble(__) : [l];
@@ -41,6 +44,8 @@ getDslTupleTypes(l : DslAst) -> [DslAst] {
 		DslNode(__, __, __) : [l];
 		DslList(v) : list2array(flatDslTypes(v, makeList()));
 	}
+println("BEFORE:: "+toString(l));
+println("AFTER:: "+toString(v));v
 }
 
 flatDslTypes(l : List<DslAst>, acc : List<DslAst>) -> List<DslAst> {
