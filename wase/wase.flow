@@ -77,14 +77,14 @@ equalResults(file : string,
 	}
 }
 
-compileWase2File(includes : [string], filename : string, code : string) -> Promise<int, string> {
+compileWase2File(includes : [string], filename : string, code : string, outputPath : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
 		println("\nCompiling '" + filename + "'");
 		total_tests := ^total_tests + 1;
 		program = parseWase(filename, code);
 		wasm = compileDslProgram2wasm(includes, program, filename);
 		bytes = wasmModule2bytes(wasm);
-		filebase = changeFileExt(filename, "");
+		filebase = changeFileExt(pathCombine(outputPath, fileNameOnly(filename)), "");
 		wasm_file = filebase + ".wasm";
 		ok = setFileContentBytes(wasm_file, 
 			fold(bytes, "", \acc, byte -> {
@@ -137,34 +137,34 @@ compileWase2File(includes : [string], filename : string, code : string) -> Promi
 
 main() {
 	includes = strSplit(getUrlParameter("I"), ",");
-	files0 : [string] = filtermap(getAllUrlParametersArray(), \a -> if (a[1] == "") Some(changeFileExt(a[0], ".wase")) else None());
+	files0 = filtermap(getAllUrlParametersArray(), \a -> if (a[1] == "") Some(Pair(changeFileExt(a[0], ".wase"), dirName(a[0]))) else None());
 	files = if (files0 != []) files0 else {
 		if (isUrlParameterTrue("test")) {
 			test = getUrlParameter("test");
 			files = if (test == "1") {
-				map(readDirectory("tests"), \f -> pathCombine("tests", f));
+				map(readDirectory("tests"), \f -> Pair(pathCombine("tests", f), dirName(pathCombine("tests/wase", f))));
 			} else if (isDirectory(test)) {
-				map(readDirectory(test), \f -> pathCombine(test, f));
+				map(readDirectory(test), \f -> Pair(pathCombine(test, f), dirName(pathCombine(test, f))));
 			} else if (fileExists(test)) {
-				[test]
+				[Pair(test, dirName(test))]
 			} else {
 				[];
 			}
-			filtermap(files, \t -> if (endsWith(t, ".wase")) Some(t) else None());
+			filter(files, unpairC(\t, __ -> endsWith(t, ".wase")));
 		} else [];
 	}
 	if (files == []) {
 		printWaseHelp();
 		quit(1);
 	} else {
-		compiles : [Promise<int, string>]= map(files, \file0 -> {
+		compiles : [Promise<int, string>]= map(files, unpairC(\file0, outPath -> {
 			file = resolveDslFile(includes, file0);
 			if (fileExists(file)) {
-				compileWase2File(includes, file, getFileContent(file))
+				compileWase2File(includes, file, getFileContent(file), resolveDslFile(includes, outPath))
 			} else {
 				Promise(\__, onError -> onError(file0 + " not found"));
 			}
-		});
+		}));
 		all : Promise<[int], string> = allP(compiles);
 		doneP(all, 
 			\__ -> {

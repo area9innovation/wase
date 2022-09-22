@@ -170,7 +170,7 @@ unifyWiseType(acc : DslTypeAcc<WiseTypeAcc>, left : DslAst, right : DslAst) -> b
 				DslNode(rname, rargs, __): {
 					if (rname == "tupledottype") {
 						// tupledottype(val, index, res)
-						ttypes = list2array(lvalue);
+						ttypes = getDslTupleTypes(left);
 		
 						index = getDslInt(rargs[1]);
 						// Extract the tuple index type

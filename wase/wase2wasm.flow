@@ -329,6 +329,7 @@ compileWase(context : WaseContext, w : Wase) -> void {
 					context.set := setTree(^(context.set), local.name, WasmLocalSet(i));
 					context.tee := setTree(^(context.tee), local.name, WasmLocalTee(i));
 				});
+
 				// Register the code
 				wcode = WasmCode(map(locals, \local : WaseLocal -> WasmLocal(1, local.type)), waseExpr2wasm(context, code));
 				context.codes := arrayPush(^(context.codes), wcode);

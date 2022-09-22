@@ -1,0 +1,41 @@
+include lib/runtime;
+
+export memory 1;
+
+foo() -> i32 {
+	42;
+}
+
+bar() -> i32 {
+	666;
+}
+
+add1(v : i32) -> i32 {
+	v + 1;
+}
+
+sub1(v : i32) -> i32 {
+	v - 1;
+}
+
+export _start() -> () {
+	// This is bar
+	printi32(call_indirect<>(fn<bar>()));
+	printByte(10);
+
+	// This is foo
+	printi32(call_indirect<>(fn<foo>()));
+	printByte(10);
+
+	// This is add1
+	printi32(call_indirect<>(41, fn<add1>()));
+	printByte(10);
+
+	// This is sub1
+	printi32(call_indirect<>(43, fn<sub1>()));
+	printByte(10);
+
+	myfn : i32 = if (true) fn<bar>() else fn<foo>();
+	printi32(call_indirect<>(myfn)); // 666
+	printByte(10);
+}

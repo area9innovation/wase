@@ -1,0 +1,13 @@
+import runtime;
+
+// native println3 : io (flow) -> void = Native.println;
+// foo(v : int) -> int {
+// 	v;
+// }
+
+main() {
+	// println3(65);
+	println(675);
+	// println(foo(24));
+    // quit(0);
+}

@@ -1,0 +1,6 @@
+import runtime;
+
+main() {
+	i = 56;
+    println(i);
+}

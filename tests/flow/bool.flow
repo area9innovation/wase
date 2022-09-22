@@ -1,0 +1,16 @@
+import runtime;
+
+// print 111011
+main() {
+	a = true && (false || true); // 1
+	println(a);
+	println(true || false); // 1
+	{
+		false;
+	}
+	println(true || false || false || true); // 1
+	println(false && true && false); // 0
+	println((true || false) && (true || true)); // 1
+	println(!true || !(false && true)); // 1
+	println(!true || !(false && true)); // 1
+}

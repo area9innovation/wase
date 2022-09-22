@@ -1,0 +1,120 @@
+import ds/set;
+import math/math;
+import ds/arrayutils;
+import tools/dsl/dsl_util;
+import text/blueprint;
+
+export {
+
+	makeDotFn(arg1 : DslAst, arg2 : DslAst, types : [DslAst], pos : int) -> DslNodeDotFn;
+	DslNodeDotFn(
+		value : DslAst,
+		fn : DslDotFn,
+	);
+	DslDotFn(
+		name : string,  // format : dot_type[_type]_index
+		argTypes : [DslAst],
+		index : int,
+	);
+	isDotCallFn(v : DslAst) -> bool;
+
+	addDotNFunctions(fns : Set<DslDotFn>, d : DslAst) -> DslAst;
+
+}
+
+makeDotFn(arg1 : DslAst, arg2 : DslAst, types : [DslAst], pos : int) -> DslNodeDotFn {
+	index = switch (arg2) {
+		DslInt(v): v;
+		default: -1;
+	}
+	dotFn = makeDotFnName(types, index);
+	value = DslNode(
+		"call",
+		[
+			DslNode("var", [DslString(dotFn), DslNode("func", arrayPush(types, arg2), 0)], 0),
+			arg1
+		],
+		pos
+	);
+	DslNodeDotFn(
+		value,
+		DslDotFn(dotFn, types, index)
+	);
+}
+
+makeDotFnName(types : [DslAst], index : int) -> string {
+	"dot_"
+	+ superglue(types, type2dotname, "_") + "_"
+	+ (if (index >= 0) i2s(index) else "");
+}
+
+type2dotname(type : DslAst) -> string {
+	switch (type) {
+		DslBool(value): b2s(value);
+		DslInt(value): i2s(value);
+		DslDouble(value): d2s(value);
+		DslString(value): value;
+		DslList(value): {
+			arr = reverseA(list2array(value));
+			"[" + superglue(arr, type2dotname, ",") + "]";
+		}
+		DslNode(name, args, pos): {
+			children = map(args, type2dotname);
+			name + "(" + strGlue(children, ",") + ")"
+		}
+	}
+}
+
+extractDotFnName(v : DslAst) -> string {
+	switch (v) {
+		DslNode(name, largs, pos) : {
+			if (name == "var" && largs != []) {
+				varName = getDslString(largs[0]);
+				if (startsWith(varName, "dot")) varName else "";
+			} else {
+				"";
+			}
+		}
+		default: "";
+	}
+}
+
+isDotCallFn(v : DslAst) -> bool {
+	switch (v) {
+		DslNode(name, largs, pos) : {
+			name == "call"
+			&& largs != []
+			&& extractDotFnName(largs[0]) != "";
+		}
+		default: false;
+	}
+}
+
+addDotNFunctions(fns : Set<DslDotFn>, d : DslAst) -> DslAst {
+	foldSet(fns, d, \acc, fn -> {
+		returnType = elementAt(fn.argTypes, fn.index, DslList(makeList()));
+		DslNode(
+			"function",
+			[
+				DslString(fn.name),
+				DslInt(0), // export
+				DslList(array2list(mapi(fn.argTypes, \i, argType -> DslNode(
+					"idtype",
+					[DslString("v" + i2s(i)), DslNode("type", [argType, argType], 0), argType],
+					0
+				)))),
+				returnType,
+				DslNode( // body
+					"brace", 
+					[
+						DslList(makeList1(DslNode("var", [DslString("v" + i2s(fn.index)), returnType], 0))),
+						returnType
+					],
+					0
+				),
+				acc, // scope
+				DslList(makeList())],
+			0
+		)
+	});
+}

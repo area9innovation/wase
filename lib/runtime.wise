@@ -57,3 +57,45 @@ printv128(v : v128) -> () {
 	fd_write(1, 0, 1, 8);
 	{}
 }
+
+// Print signed i32 as decimal
+printlni32(i : i32) -> () {
+	printi32(i);
+	printByte(10);
+}
+
+// Print bool as sting (TRUE or FALSE)
+printlnb(i : i32) -> () {
+	if (i == 1) {
+		printByte(84);
+		printByte(82);
+		printByte(85);
+		printByte(69);
+	} else {
+		printByte(70);
+		printByte(65);
+		printByte(76);
+		printByte(83);
+		printByte(69);
+	};
+	printByte(10);
+}
+
+// for tests. the current version is a loss of accuracy! (trunc/-/*)
+printf64(f : f64) -> () {
+	b : i32 = trunc_s<>(f);
+	printi32(b); // sign and int
+	printByte(46); // .
+	f0 : f64 = abs<>(f);
+	f1 : f64 = (f0 - trunc<>(f0)) * 100000000.0;
+	printi32(trunc_u<>(f1)); // 8 symbols
+	f2 = (f1 - trunc<>(f1));
+	f3 = f2 * 100000000.0; // 8 symbols
+	printi32(trunc_u<>(f3));
+	{}
+}
+
+printlnf64(f : f64) -> () {
+	printf64(f);
+	printByte(10);
+}

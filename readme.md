@@ -133,7 +133,7 @@ Compile with
 
 	bin\wase tests/euler1.wase
 
-and run with
+and run with wasmer ([install ](https://wasmer.io/))
 
 	wasmer tests/euler1.wasm
 	233168
@@ -150,8 +150,6 @@ files have been compiled to `.wasm` and then decompiled to `.wat`.
 
 Beta. The compiler works, and the compiler can parse, type and compile 
 most instructions directly to WASM binaries that validate and run correctly.
-
-There is not support for vector SIMD instructions yet.
 
 One problem in daily use is that error messages are currently without positions.
 
@@ -382,7 +380,7 @@ Wasm uses blocks for control flow. Each function introduces a block.
 The `block` and `loop` constructs also do that, as well as the `then`
 and `else` branches of `if`. The `break` and `break_if` instructions
 refer to this stack of blocks. A break with level 0 breaks out of the
-inner most block, while `break<1>()` breaks out of the next level.
+inner most block, while `break<1>()` breaks out of the next level. The number defines what parent block to break to.
 
 	block {
 		code;
@@ -436,6 +434,8 @@ inner most block, while `break<1>()` breaks out of the next level.
 	};
 	// This is "F"
 	printByte(70);
+	
+TODO: illustrations (blocks with colors? with colorful brackets / font)
 
 ## Indirect calls
 
@@ -542,6 +542,8 @@ The alignment is expressed as what power of 2 to use:
 	v : i32 = load16_u<0, 1>(i) // alignment at 2 bytes
 	v : i32 = load32_u<0, 2>(i) // alignment at 4 bytes
 	v : i64 = load_u<0, 3>(i) // alignment at 8 bytes
+	
+TODO: illustrations (offset, alignment)
 
 # Instructions
 
@@ -619,9 +621,9 @@ memory.init and data.drop not implemented yet. Requires data indexing.
 | `*.store(8,16,32)` | `store(8,16,32)<>(address, value)` | Store the lower N bits of a value. The width is inferred from the value
 | `memory.size` | `memory.size<>()` | Returns the unsigned size of memory in terms of pages (64k)
 | `memory.grow` | `memory.grow<>(size)` | Increases the memory by `size` pages. Returns the previous size of memory, or -1 if memory can not increase
-| `memory.copy` | `memory.copy<>(bytes, source, dest)` | Copy `bytes` bytes from source to destination
-| `memory.fill` | `memory.fill<>(bytes, bytevalue, dest)` | Fills `bytes` bytes with the given byte value at `dest`
-| `memory.init` | `memory.init<id>(bytes, source, dest)` | Copies `bytes` from a data section `<id>` at address `source` into memory starting at address `dest`
+| `memory.copy` | `memory.copy<>(dest, source, bytes)` | Copy `bytes` bytes from source to destination
+| `memory.fill` | `memory.fill<>(dest, bytevalue, bytes)` | Fills `bytes` bytes with the given byte value at `dest`
+| `memory.init` | `memory.init<id>(dest, source, bytes)` | Copies `bytes` from a data section `<id>` at address `source` into memory starting at address `dest`
 | `data.drop` | `data.drop<id>()` | Frees the memory of data segment <id>
 
 ## Numeric Instructions
@@ -681,7 +683,7 @@ memory.init and data.drop not implemented yet. Requires data indexing.
 | `*.extend_i32_u` | `extend_u<>(val)` | Lifts a i32 to a i64, as unsigned.
 | `*.extend8_s` | `extend8_s<>(val)` | Lifts a byte to a i32/i64, as signed. The val is the same type as the result
 | `*.extend16_s` | `extend16_s<>(val)` | Lifts 16 bits to a i32/i64, as signed.  The val is the same type as the result
-| `*.convert*_s` | `convert_s<>(val)` | Lifts signed i32/i64 to f32/f64.
+| `*.convert_*_s` | `convert_s<>(val)` | Lifts signed i32/i64 to f32/f64.
 | `*.convert*_u` | `convert_u<>(val)` | Lifts unsigned i32/i64 to d32/f64.
 | `*.demote_f64` | `demote*<>(val)` | Lowers a f64 to f32
 | `*.promote_f32` | `promote*<>(val)` | Lifts a f32 to a f64
@@ -719,6 +721,7 @@ memory.init and data.drop not implemented yet. Requires data indexing.
 | `v128.store16_lane` | `v128.store16_lane` | v128.store16_lane
 | `v128.store32_lane` | `v128.store32_lane` | v128.store32_lane
 | `v128.store64_lane` | `v128.store64_lane` | v128.store64_lane
+
 ### Extract/replace lane instructions
 | Wasm | Wase | Comments |
 |-|-|-|

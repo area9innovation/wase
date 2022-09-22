@@ -7,6 +7,12 @@ export {
 
 	// Map a list with unwrapDslPrimitive
 	unwrapDslPrimitiveList(x : DslAst) -> List<DslAst>;
+
+	// convert the tree of types to array
+	// example : ((int, float), int) -> [int, float, int]
+	getDslTupleTypes(l : DslAst) -> [DslAst];
+
+	isPrimitiveDslType(type : DslAst) -> bool;
 }
 
 unwrapDslPrimitive(n : DslAst) -> DslAst {
@@ -24,4 +30,39 @@ unwrapDslPrimitive(n : DslAst) -> DslAst {
 
 unwrapDslPrimitiveList(list : DslAst) -> List<DslAst> {
 	mapList(getDslList(list), unwrapDslPrimitive);
+}
+
+getDslTupleTypes(l : DslAst) -> [DslAst] {
+	switch (l : DslAst) {
+		DslBool(__) : [l];
+		DslInt(__) : [l];
+		DslDouble(__) : [l];
+		DslString(__) : [l];
+		DslNode(__, __, __) : [l];
+		DslList(v) : list2array(flatDslTypes(v, makeList()));
+	}
+}
+
+flatDslTypes(l : List<DslAst>, acc : List<DslAst>) -> List<DslAst> {
+	foldList(l, acc, \acc2, v -> {
+		switch (v : DslAst) {
+			DslBool(value) : Cons(v, acc2);
+			DslInt(value) : Cons(v, acc2);
+			DslDouble(value) : Cons(v, acc2);
+			DslString(value) : Cons(v, acc2);
+			DslNode(name, args, pos) : Cons(v, acc2);
+			DslList(value) : flatDslTypes(value, acc2);
+		}
+	});
+}
+
+isPrimitiveDslType(type : DslAst) -> bool {
+	switch (type : DslAst) {
+		DslBool(__) : true;
+		DslInt(__) : true;
+		DslDouble(__) : true;
+		DslString(__) : true;
+		DslNode(__, __, __) : false;
+		DslList(__) : false;
+	}
 }

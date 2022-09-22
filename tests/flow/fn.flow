@@ -1,0 +1,38 @@
+import runtime;
+
+foo() -> int {
+	42;
+}
+
+bar() -> int {
+	666;
+}
+
+add1(v : int) -> int {
+	v + 1;
+}
+
+sub1(v : int) -> int {
+	v - 1;
+}
+
+main() {
+	// This is bar
+	b0 = bar;
+	println(b0());
+
+	// This is foo
+	f0 = foo;
+	println(f0());
+
+	// This is add1
+	a0 = add1;
+	println(a0(41));
+
+	// This is sub1
+	s0 = sub1;
+	println(s0(43));
+
+	myfn : () -> int = if (true) bar else foo; // var fn
+	println(myfn()); // 666
+}

@@ -1517,7 +1517,7 @@ dsl2WaseBlockType(onError : (DslAst, string) -> void, d : DslAst) -> WaseBlockTy
 			if (isEmptyList(l)) {
 				WasmEmptyType()
 			} else {
-				WasmFuncType([], reverseA(map(list2array(l), \t -> dsl2WasmValType(onError, t))));
+				WasmFuncType([], map(getDslTupleTypes(d), \t -> dsl2WasmValType(onError, t)));
 			}
 		}
 		DslNode(name, __, __): {
@@ -1526,7 +1526,7 @@ dsl2WaseBlockType(onError : (DslAst, string) -> void, d : DslAst) -> WaseBlockTy
 				WasmEmptyType();
 			} else {
 				error();
-			}			
+			}
 		}
 		default: error();
 	}

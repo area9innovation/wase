@@ -13,7 +13,7 @@ import wase/compile;
 import wase/pretty_wase;
 import wase/wase_types2dsl;
 
-compileWise2File(includes, filename : string, code : string) -> Promise<int, string> {
+compileWise2File(includes, filename : string, code : string, outputPath : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
 		println("\nCompiling '" + filename + "'");
 
@@ -49,8 +49,10 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 			println(error + " at " + summarizeDsl(node));
 		});
 		lowered0 = lowerWise2Wase(env, typed);
+		// add dot* functions
+		lowered1 = addDotNFunctions(^(env.dots), lowered0);
 		// Add exported memory
-		lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered0], 0);
+		lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered1], 0);
 
 		if (isUrlParameterTrue("debug-lower")) {
 			println("Wase '" + filename + "'':");
@@ -82,7 +84,7 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 		wasm = wase2wasm(wase);
 		bytes = wasmModule2bytes(wasm);
 
-		filebase = changeFileExt(filename, "");
+		filebase = changeFileExt(pathCombine(outputPath, fileNameOnly(filename)), "");
 		ok = setFileContentBytes(filebase + ".wasm", 
 			fold(bytes, "", \acc, byte -> {
 				acc + fromCharCode(byte)
@@ -113,27 +115,27 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 
 main() {
 	includes = strSplit(getUrlParameter("I"), ",");
-	files0 : [string] = filtermap(getAllUrlParametersArray(), \a -> if (a[1] == "") Some(changeFileExt(a[0], ".wise")) else None());
+	files0 = filtermap(getAllUrlParametersArray(), \a -> if (a[1] == "") Some(Pair(changeFileExt(a[0], ".wise"), dirName(a[0]))) else None());
 	files = if (files0 != []) files0 else {
 		if (isUrlParameterTrue("test")) {
 			test = getUrlParameter("test");
-			testFolder = if (test == "1") "tests" else test;
-			tests = readDirectory(testFolder);
-			filtermap(tests, \t -> if (endsWith(t, ".wise")) Some(pathCombine(testFolder, t)) else None());
-		} else ["tests/print.wise"];
+			testFolder = if (test == "1") Pair("tests", "tests/wise") else Pair(test, test);
+			tests = readDirectory(testFolder.first);
+			filtermap(tests, \t -> if (endsWith(t, ".wise")) Some(Pair(pathCombine(testFolder.first, t), testFolder.second)) else None());
+		} else [Pair("tests/print.wise", "tests/wise")];
 	}
 	if (files == []) {
 		printWiseHelp();
 		quit(1);
 	} else {
-		compiles : [Promise<int, string>]= map(files, \file0 -> {
+		compiles : [Promise<int, string>]= map(files, unpairC(\file0, outPath -> {
 			file = resolveDslFile(includes, file0);
 			if (fileExists(file)) {
-				compileWise2File(includes, file, getFileContent(file))
+				compileWise2File(includes, file, getFileContent(file), resolveDslFile(includes, outPath))
 			} else {
 				Promise(\__, onError -> onError(file0 + " not found"));
 			}
-		});
+		}));
 		all : Promise<[int], string> = allP(compiles);
 		doneP(all, \__ -> quit(0), \error -> {
 			println(error);

@@ -1,0 +1,7 @@
+native trunc : (d : double) -> int = Native.trunc;
+
+main() {
+
+	si : int = trunc(3.14); 
+	// println(si);
+}
