@@ -7,7 +7,7 @@ Tuple(
 	f : double,
 );
  
- mktuple() -> Tuple {
+mktuple() -> Tuple {
 	Tuple(1, 3.141)
 }
 
@@ -35,14 +35,31 @@ Tuple1(
 	t1 : Tuple2,
 	t2 : Tuple2,
 	i2 : int,
-);
+); 
 Tuple2(
 	t : Tuple,
 	f : double,
 );
 
+PairTuple(
+	i : int,
+	f2 : double,
+);
+getPairSecond(t : PairTuple) -> int {
+	t.i;
+}
+
 makeTuple1(t : Tuple) -> Tuple1 {
-	Tuple1(87, Tuple2(t, 1.56), Tuple2(Tuple(9, 9.08), 21));
+	Tuple1(
+		87,
+		Tuple2(t, 1.56),
+		Tuple2(Tuple(9, 9.08), 4.083),
+		21
+	);
+}
+
+getTuple1FirstFloat(t : Tuple1) -> double {
+	t.t1.t.f;
 }
 
 main() {
@@ -50,7 +67,7 @@ main() {
 	t11 = mktuple();
 
 	fi = t11.f;
-	println(fi); // 3.141
+	 println(fi); // 3.141
 
 	i1 = Tuple(345, 3.141).i;
 	println(i1); // 345
@@ -66,8 +83,20 @@ main() {
 	println(i2); // 678
 	i3 = nested().t.i;
 	println(i3); // 2
-	i4 = makeTuple1(mktuple()).t1.i;
+	
+	mt1 = PairTuple(83, 80.91);
+	mt1i = getPairSecond(mt1);
+	println(mt1i); // 83
+	i4 = makeTuple1(mktuple()).t1.t.i;
 	println(i4); // 1
+	nt1 = Tuple1(
+		13,
+		Tuple2(Tuple(17, 10.01), 19.3),
+		Tuple2(Tuple(18, 110.4), 16.4),
+		14
+	);
+	nf1 = getTuple1FirstFloat(nt1);
+	println(nf1); // 10.01
 
 	si : int = trunc(fi);
 	println(si); // 3
@@ -99,5 +128,5 @@ main() {
 
 	r3 : Nested = if (true) t31 else Nested(1, Tuple(2, 1.1));
 	println(r3.t.i); // 7
-	{} 
+	{}
 }

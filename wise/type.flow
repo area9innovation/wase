@@ -118,8 +118,16 @@ typecheckWise(acc : DslTypeAcc<WiseTypeAcc>, deep : bool, node : DslAst, getChil
 			} else if (name == "tupledot") {
 				res = makeDslTypeVar(acc);
 				// This is a list
-				val = getChildType(0);
-				index = getChildType(1);
+				val0 = getChildType(0);
+				// TODO: reverse if fn arg
+				val = switch (val0 : DslAst) {
+					DslBool(__) : val0;
+					DslInt(__) : val0;
+					DslDouble(__) : val0;
+					DslString(__) : val0;
+					DslList(l) : DslList(reverseList(l));
+					DslNode(__, __, __) : val0;
+				};
 				// tupledottype(val, index, res)
 				acc.unifyTypes(acc, val, DslNode("tupledottype", [val, args[1], res], pos));
 				res;
@@ -159,7 +167,7 @@ typecheckWise(acc : DslTypeAcc<WiseTypeAcc>, deep : bool, node : DslAst, getChil
 				typecheckWase(acc, deep, node, getChildType);
 			}
 		}
-		default: typecheckWase(acc, deep, node, getChildType);
+		default: {/* println("DEF "+toString(node));  */typecheckWase(acc, deep, node, getChildType);}
 	}
 }
 
