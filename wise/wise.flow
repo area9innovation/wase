@@ -65,8 +65,13 @@ compileWise2File(includes, filename : string, code : string) -> Promise<int, str
 			program1 = parseWiDecl(code, \err -> println("Error: " + err));
 			lowered1 = lowerWiseAst2WaseAst(env, program1);
 			println(waseAst2DslAst(lowered1) == program);
+			// println(program1);
+			println(typed);
 			println("WaseAst : " + toString(lowered1));
-			println("DslAst  : " + toString(dslAst2WaseAst(program)));
+			// println("DslAst  : " + toString(dsl2wase(\node, error -> {
+			// 	println(error + " at: " + toString(node))
+			// }, lowered0)));
+			println("DslAst  : " + toString(dslAst2WaseAst(lowerWise2Wase(env, typed))));
 		}
 
 		if (isUrlParameterTrue("debug-wase")) {

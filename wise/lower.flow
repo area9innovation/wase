@@ -9,8 +9,6 @@ export {
 	makeLowerWiseEnv(onError : (DslAst, string) -> void) -> LowerWiseEnv;
 
 	lowerWise2Wase(acc : LowerWiseEnv, d : DslAst) -> DslAst;
-
-	lowerWiseAst2WaseAst(env : LowerWiseEnv, w : WiseAst) -> WaseAst;
 }
 
 LowerWiseEnv(
@@ -24,133 +22,6 @@ makeLowerWiseEnv(onError : (DslAst, string) -> void) -> LowerWiseEnv {
 	LowerWiseEnv(
 		0, [], makeSet(), onError
 	);
-}
-
-lowerWiseAst2WaseAst(env : LowerWiseEnv, w : WiseAst) -> WaseAst {
-	rec = \w1 -> lowerWiseAst2WaseAst(env, w1);
-
-	switch (w) {
-		WiseAstList(value): WaseAstList(mapList(value, rec))
-		WiseAstBool(value): WaseAstBool(value)
-		WiseAstInt(value): WaseAstInt(value)
-		WiseAstDouble(value): WaseAstDouble(value)
-		WiseAstString(value): WaseAstString(value)
-		WiExp(): WiExp2WeExp(env, w)
-		WiDecl(): WiDecl2WeDecl(env, w)
-		// WiType(): lowerWiType2WeType(w)
-		
-
-		// WiBasictype(s): WeType(s)
-		// WiFntype(types, type): 
-		// WiTupletype(types): 
-		WiIdtype(id, type): WeIdtype(id, WiType2WeType(type))
-
-
-		default: WeInt(0)
-	}
-}
-
-WiIdtype2WeIdtype(w : WiIdtype) -> WeIdtype {
-	WeIdtype(w.id, WiType2WeType(w.type))
-}
-
-WiDecl2WeDecl(env : LowerWiseEnv, w : WiDecl) -> WeDecl {
-	switch (w : WiDecl) {
-		WiFunction(id, optexport, lambdaargs, type, expr, decl): {
-			WeFunction(id, optexport, map(lambdaargs, WiIdtype2WeIdtype), WiType2WeTypes(type), WiExp2WeExp(env, expr), WiDecl2WeDecl(env, decl))
-		}
-		// WiGlobal(id, optexport, type, optmutable, exp, decl): 
-		// WiImport(id1, type, optmutable, id2, id3, decl): 
-		// WiWaseEmpty(): 
-		// WiWiseInclude(s, decl): 
-		default: WeWaseEmpty()
-	}
-}
-
-WiExp2WeExp(env : LowerWiseEnv, w : WiExp) -> WeExp {
-	rec = \w1 -> WiExp2WeExp(env, w1);
-	switch (w : WiExp) {
-		// WiAdd(exp1, exp2): 
-		// WiAnd(exp1, exp2): 
-		// WiBool(b): 
-		// WiBreak(): 
-		// WiContinue(): 
-		WiDouble(double_0): WeDouble(double_0)
-		// WiHex32(s): 
-		// WiHex64(s): 
-		// WiHexf32(s): 
-		// WiHexf64(s): 
-		// WiI64(s): 
-		// WiIf(exp1, exp2): 
-		// WiIfelse(exp1, exp2, exp3): 
-		WiInt(int_0): WeInt(int_0)
-		// WiReturn(exps): 
-		// WiSet(id, exp): 
-		WiTuple(exps): WeTuple(map(exps, rec))
-		// WiVar(id): 
-		WiWhile(exp1, exp2): {
-			nenv = LowerWiseEnv(env with blocks = env.blocks + 2, loops = arrayPush(env.loops, env.blocks));
-			// while (cond) { <exp> } =>
-			// block { loop { break_if<2>(!cond); <exp>; break<>() } }
-			// cond, exp, type = void
-			cond = rec(exp1);
-			exp = rec(exp2);
-			WeBlock([
-				WeLoop([
-					WeWasmOp(
-						"break_if", 
-						[WeInt(1)], 
-						[WeNegate(cond)]), 
-					WeBrace([WeInt(3)]), 
-					WeWasmOp("break", [], [])
-				])
-			])
-		}
-		// WiBoolAnd(exp1, exp2): 
-		// WiBoolNot(exp): 
-		// WiBoolOr(exp1, exp2): 
-		WiBrace(expsemi): WeBrace(map(expsemi, rec))
-		// WiCall(exp, exps): 
-		// WiDiv(exp1, exp2): 
-		// WiEqual(exp1, exp2): 
-		// WiGreater(exp1, exp2): 
-		// WiGreaterEqual(exp1, exp2): 
-		// WiGreaterEqualu(exp1, exp2): 
-		// WiGreateru(exp1, exp2): 
-		// WiIsNull(exp): 
-		// WiLess(exp1, exp2): 
-		// WiLessEqual(exp1, exp2): 
-		// WiLessEqualu(exp1, exp2): 
-		// WiLessu(exp1, exp2): 
-		// WiLet(id, i, opttype, exp, brace): 
-		// WiMod(exp1, exp2): 
-		// WiMul(exp1, exp2): 
-		// WiNegate(exp): 
-		// WiNotEqual(exp1, exp2): 
-		// WiOr(exp1, exp2): 
-		// WiSub(exp1, exp2): 
-		// WiTupledot(exp, int_0): 
-		// WiTypeannotation(exp, type): 
-		// WiWasmOp(s, wargs, exps): 
-		// WiXor(exp1, exp2): 
-		default: WeInt(0)
-	}
-}
-
-WiType2WeType(w : WiType) -> WeType {
-	switch (w : WiType) {
-		WiBasictype(s): WeType(s)
-		WiFntype(types, type): WeType("")
-		WiTupletype(types): WeType("")
-	}
-}
-
-WiType2WeTypes(w : WiType) -> [WeType] {
-	switch (w : WiType) {
-		WiBasictype(s): [WeType(s)]
-		WiFntype(types, type): concat(fold(types, [], \acc, t -> concat(acc, WiType2WeTypes(t))), WiType2WeTypes(type))
-		WiTupletype(types): fold(types, [], \acc, t -> concat(acc, WiType2WeTypes(t)))
-	}
 }
 
 lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
@@ -234,6 +105,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 				});
 
 				varType = wiseType(largs[3]);
+				println("varType: " + toString(varType));
 				switch (varType) {
 					DslList(t): {
 						// OK, a tuple-let
