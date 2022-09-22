@@ -260,7 +260,7 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 				largs = map(args, \a -> lowerWise2Wase(env, a));
 				if (name == "function") {
 				// function(id, export : bool, args : [idtype(id, type)], [returnTypes], body, scope)
-					DslNode("function", [largs[0], largs[1], largs[2], wiseType(largs[3]), largs[4], largs[5], largs[6]], pos);
+					DslNode("function", [largs[0], largs[1], lowerWiseFnArgs(largs[2]), wiseType(largs[3]), largs[4], largs[5], largs[6]], pos);
 				} else if (name == "true") {
 					DslNode("int", [DslInt(1), DslString("i32")], pos);
 				} else if (name == "false") {
@@ -348,6 +348,60 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 				}
 			}
 		}
+	}
+}
+
+// expand tuples to the list
+// foo(two : (i32, f64)) -> ()
+// =>
+// foo(two_0 : i32, two_1 : f64) -> ()
+lowerWiseFnArgs(v : DslAst) -> DslAst {
+	switch (v : DslAst) {
+		DslBool(__) : v;
+		DslInt(__) : v;
+		DslDouble(__) : v;
+		DslString(__) : v;
+		DslList(l) : DslList(foldList(l, makeList(), \acc, t -> {
+			newValue = lowerWiseFnArgs(t);
+			switch (newValue : DslAst) {
+				DslList(nl): concatList(nl, acc);
+				default : Cons(newValue, acc);
+			}
+		}));
+		DslNode(name, args, pos) : {
+			if (name == "idtype") {
+				switch (args[1] : DslAst) {
+					DslBool(__) : v;
+					DslInt(__) : v;
+					DslDouble(__) : v;
+					DslString(__) : v;
+					DslList(values) : {
+						varName = getDslString(args[0]);
+						newValues = deepMapiDslAst(reverseList(values), 0, \i, t -> {
+							switch (t : DslAst) {
+								DslBool(__) : t;
+								DslInt(__) : t;
+								DslDouble(__) : t;
+								DslString(__) : t;
+								DslList(l) : t;
+								DslNode(n, nargs, __) : {
+									if (n == "type") {
+										newArgType = nargs[0];
+										DslNode("idtype", [DslString(varName + "." + i2s(i)), DslNode("type", [newArgType, newArgType], 0), newArgType], 0)
+									} else {
+										t;
+									}
+								}
+							}
+						});
+						DslList(reverseList(newValues));
+					}
+					DslNode(__, __, __) : v;
+				}
+			} else {
+				v;
+			}
+		};
 	}
 }
 

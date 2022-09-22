@@ -119,13 +119,13 @@ typecheckWise(acc : DslTypeAcc<WiseTypeAcc>, deep : bool, node : DslAst, getChil
 				res = makeDslTypeVar(acc);
 				// This is a list
 				val0 = getChildType(0);
-				// TODO: reverse if fn arg
+				// TODO: ?? reverse only if it is a fn arg
 				val = switch (val0 : DslAst) {
 					DslBool(__) : val0;
 					DslInt(__) : val0;
 					DslDouble(__) : val0;
 					DslString(__) : val0;
-					DslList(l) : DslList(reverseList(l));
+					DslList(l) : DslList(reverseList(colcatLists(l)));
 					DslNode(__, __, __) : val0;
 				};
 				// tupledottype(val, index, res)
@@ -204,5 +204,16 @@ unifyWiseType(acc : DslTypeAcc<WiseTypeAcc>, left : DslAst, right : DslAst) -> b
 			}
 		}
 		default: false;
+	}
+}
+
+// only for tests
+colcatLists(l : List<DslAst>) -> List<DslAst> {
+	switch (l : List<DslAst>) {
+		EmptyList(): EmptyList();
+		Cons(h, t): switch (h : DslAst) {
+			DslList(hl) : colcatLists(concatList(hl, t));
+			default : Cons(h, colcatLists(t));
+		}
 	}
 }
