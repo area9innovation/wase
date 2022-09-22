@@ -1,0 +1,7 @@
+// loop in doGringoParse
+
+fn() -> () {
+	{}
+}
+
+// this comment is the reason
