@@ -1,0 +1,88 @@
+import wise/wise_types;
+import ds/tree;
+
+export {
+	typeWiseAst(ast : WiseAst) -> string;
+}
+
+varNames : ref Tree<string, string> = ref makeTree();
+
+typeWiseAst(ast : WiseAst) -> string {
+	rec = \a -> typeWiseAst(a);
+	switch (ast : WiseAst) {
+		WiseAstList(value): rec(headList(value, WiWaseEmpty()))
+		WiseAstBool(value): "bool"
+		WiseAstInt(value): "i32"
+		WiseAstDouble(value): "f64"
+		WiseAstString(value): "string"
+		WiBool(b): "bool"
+		WiBreak(): ""
+		WiContinue(): ""
+		WiDouble(double_0): "f64"
+		WiHex32(s): "i32"
+		WiHex64(s): "i64"
+		WiHexf32(s): "f32"
+		WiHexf64(s): "f64"
+		WiI64(s): "i64"
+		WiIf(exp1, exp2): {
+			cond = rec(exp1);
+			if (cond != "bool") println("Type mismatch in If condition, expected bool,got " + cond);
+			rec(exp2)
+		}
+		WiIfelse(exp1, exp2, exp3): {
+			cond = rec(exp1);
+			if (cond != "bool") println("Type mismatch in If condition, expected bool, got " + cond);
+			then = rec(exp2);
+			elsec = rec(exp3);
+			if (then != elsec) println("Type mismatch in If false branch, expected " + then + ", got " + elsec);
+			then
+		}
+		WiInt(int_0): "i32"
+		WiReturn(exps): rec(exps[0])
+		WiSet(id, exp): ""
+		WiTuple(exps): rec(exps[0])
+		WiVar(id): {
+			mtype = lookupTree(^varNames, id);
+			mtype ?? mtype : ""
+		}
+		WiWhile(exp1, exp2): ""
+		WiFunction(id, optexport, lambdaargs, type, exp, decl): rec(decl)
+		WiGlobal(id, optexport, type, optmutable, exp, decl): rec(decl)
+		WiImport(id1, type, optmutable, id2, id3, decl): rec(decl)
+		WiWaseEmpty(): ""
+		WiWiseInclude(s, decl): rec(decl)
+		WiAdd(exp1, exp2): rec(exp1)
+		WiAnd(exp1, exp2): rec(exp1)
+		WiBoolAnd(exp1, exp2): rec(exp1)
+		WiBoolNot(exp): rec(exp)
+		WiBoolOr(exp1, exp2): rec(exp1)
+		WiBrace(expsemi): rec(expsemi[0])
+		WiCall(exp, exps): ""
+		WiDiv(exp1, exp2): rec(exp1)
+		WiEqual(exp1, exp2): "bool"
+		WiGreater(exp1, exp2): "bool"
+		WiGreaterEqual(exp1, exp2): "bool"
+		WiGreaterEqualu(exp1, exp2): "bool"
+		WiGreateru(exp1, exp2): "bool"
+		WiIsNull(exp): "i32"
+		WiLess(exp1, exp2): "bool"
+		WiLessEqual(exp1, exp2): "bool"
+		WiLessEqualu(exp1, exp2): "bool"
+		WiLessu(exp1, exp2): "bool"
+		WiLet(id, i, opttype, exp, brace): rec(brace)
+		WiMod(exp1, exp2): rec(exp1)
+		WiMul(exp1, exp2): rec(exp1)
+		WiNegate(exp): rec(exp)
+		WiNotEqual(exp1, exp2): "bool"
+		WiOr(exp1, exp2): rec(exp1)
+		WiSub(exp1, exp2): rec(exp1)
+		WiTupledot(exp, int_0): ""
+		WiTypeannotation(exp, type): rec(exp)
+		WiWasmOp(s, wargs, exps): rec(exps[0])
+		WiXor(exp1, exp2): rec(exp1)
+		WiBasictype(s): s
+		WiFntype(types, type): "func"
+		WiTupletype(types): ""
+		WiIdtype(id, type): rec(type)
+	}
+}

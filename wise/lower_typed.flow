@@ -1,5 +1,6 @@
 import wise/wise_types;
 import wase/wase_types;
+import wise/type_ast;
 import ds/set;
 
 export {
@@ -32,14 +33,8 @@ lowerWiseAst2WaseAst(env : LowerWiseAstEnv, w : WiseAst) -> WaseAst {
 		WiseAstString(value): WaseAstString(value)
 		WiExp(): WiExp2WeExp(env, w)
 		WiDecl(): WiDecl2WeDecl(env, w)
-		// WiType(): lowerWiType2WeType(w)
+		WiType(): WiType2WeType(w)
 		WiIdtype(__, __): WiIdtype2WeIdtype(w)
-		
-
-		// WiBasictype(s): WeType(s)
-		// WiFntype(types, type): 
-		// WiTupletype(types): 
-		default: WeInt(0)
 	}
 }
 
@@ -57,24 +52,36 @@ WiDecl2WeDecl(env : LowerWiseAstEnv, w : WiDecl) -> WeDecl {
 		WiGlobal(id, optexport, type, optmutable, expr, decl): {
 			WeGlobal(id, optexport, WiType2WeType(type), optmutable, lowerExp(expr), lowerDecl(decl))
 		}
-		// WiImport(id1, type, optmutable, id2, id3, decl): {
-		// 	switch(type : WiType) {
-		// 		WiFntype(types, type): WeImportFun(id, WeFnType())
-		// 	}
-		// }
-		// WeImport(id1, WiType2WeType(type), optmutable, id2, id3, lowerDecl(decl))
+		WiImport(id1, type, optmutable, id2, id3, decl): {
+			switch(type : WiType) {
+				WiFntype(types, type0): {
+					WeImportFun(id1, WeFnType(map(types, WiType2WeType), WiType2WeTypes(type0)), id2, id3, WiDecl2WeDecl(env, decl))
+				}
+				default: WeImportGlobal(id1, WiType2WeType(type), optmutable, id2, id3, WiDecl2WeDecl(env, decl))
+			}
+		}
 		WiWaseEmpty(): WeWaseEmpty()
 		WiWiseInclude(s, decl): WeWaseInclude(s, lowerDecl(decl))
-		default: WeWaseEmpty()
 	}
 }
+
+WiWarg2WeWarg(w : WiWarg) -> WeWarg {
+	switch (w : WiWarg) {
+		WiInt(int_0): WeInt(int_0)
+		WiVar(id): WeString(id)
+		WiType(): WiType2WeType(w)
+	}
+} 
 
 WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 	rec = \w1 -> WiExp2WeExp(env, w1);
 	switch (w : WiExp) {
 		WiAdd(exp1, exp2): WeAdd(rec(exp1), rec(exp2))
 		WiAnd(exp1, exp2): {
-			// Add type check
+			type = typeWiseAst(w);
+			if (type != "i32" && type != "i64") {
+				env.onError(w, "bitwise operation only works on i32 and i64")
+			}
 			WeAnd(rec(exp1), rec(exp2))
 		}
 		WiBool(b): {
@@ -120,31 +127,12 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiSet(id, exp): WeSet(id, rec(exp))
 		WiTuple(exps): WeTuple(map(exps, rec))
 		WiVar(id): {
-			WeVar("")
-			// id = getDslString(largs[0]);
-			// 		type = wiseType(d);
-			// 		if (getDslNode(type).name == "func" && !containsSet(env.locals, id)) {
-			// 			// OK, turn this into a func ref
-			// 			DslNode("wasm_op", [DslString("fn"), DslList(makeList1(largs[0])), DslList(makeList()), DslString("i32")], pos);
-			// 		} else {
-			// 			switch (type) {
-			// 				DslList(tt): {
-			// 					// OK, a tuple. We have to expand this to a tuple constructor
-			// 					count = countList(tt);
-			// 					tup = DslList(
-			// 						reverseList(
-			// 							mapiList(tt, \i, t -> {
-			// 								DslNode("var", [DslString(id + "." + i2s(i)), t], pos)
-			// 							})
-			// 						)
-			// 						);
-			// 					// println("TODO: Expand " + id + " : "  + prettyDsl(type) + " to tuple constructor " + prettyDsl(tup));
-			// 					tup;
-			// 				}
-			// 				default: DslNode(name, lowerWiseExpType(largs), pos);
-			// 			}
-
-			// 		}
+			type = typeWiseAst(w);
+			if (type == "func" && containsSet(env.locals, id)) {
+				WeWasmOp("fn", [WeString(id)], [])
+			} else {
+				WeVar(id)
+			}
 		}
 		WiWhile(exp1, exp2): {
 			nenv = LowerWiseAstEnv(env with blocks = env.blocks + 2, loops = arrayPush(env.loops, env.blocks));
@@ -159,7 +147,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 						"break_if", 
 						[WeInt(1)], 
 						[WeNegate(cond)]), 
-					WeBrace([WeInt(3)]), 
+					exp, 
 					WeWasmOp("break", [], [])
 				])
 			])
@@ -168,33 +156,24 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiBoolNot(exp): WeIfelse(rec(exp), WeInt(0), WeInt(1))
 		WiBoolOr(exp1, exp2): WeIfelse(rec(exp1), WeInt(1), rec(exp2))
 		WiBrace(expsemi): WeBrace(map(expsemi, rec))
-		// WiCall(exp, exps): {
-		// 	fn = getDslNode(args[0]);
-		// 	indirect = \ -> {
-		// 		// Indirect call
-		// 		// This is the id of the fn to call
-		// 		fncall = lowerWise2Wase(env, args[0]); 
-		// 		fnargs = getDslList(lowerWise2Wase(env, args[1]));
-		// 		withFn = DslList(Cons(fncall, fnargs));
+		WiCall(exp, exps): {
+			indirect = \ -> {
+				fncall = rec(exp);
+				fnargs = map(exps, rec);
+				WeWasmOp("call_indirect", [], concat([fncall], fnargs))
+			};
 
-		// 		// OK, turn this into a func ref
-		// 		ic = DslNode("wasm_op", [DslString("call_indirect"), DslList(makeList()), withFn, lowerWiseType(lowerWise2Wase(env, args[2]))], pos);
-		// 		// println(prettyDsl(ic));
-		// 		ic;
-		// 	};
-		// 	if (fn.name == "var") {
-		// 		cname = getDslString(fn.args[0]);
-		// 		if (containsSet(env.locals, cname)) {
-		// 			indirect();
-		// 		} else {
-		// 			// Direct call - do not lower the var, but keep as is
-		// 			arg = lowerWise2Wase(env, args[1]);
-		// 			DslNode(name, [args[0], arg, lowerWiseType(lowerWise2Wase(env, args[2]))], pos);
-		// 		}
-		// 	} else {
-		// 		indirect();
-		// 	}
-		// }
+			switch (exp : WiseAst) {
+				WiVar(id):  {
+					if (containsSet(env.locals, id)) {
+						indirect()
+					} else {
+						WeCall(rec(exp), map(exps, rec))
+					}
+				}
+				default: indirect()
+			}
+		}
 		WiDiv(exp1, exp2): WeDiv(rec(exp1), rec(exp2))
 		WiEqual(exp1, exp2): WeEqual(rec(exp1), rec(exp2))
 		WiGreater(exp1, exp2): WeGreater(rec(exp1), rec(exp2))
@@ -206,21 +185,27 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiLessEqual(exp1, exp2): WeLessEqual(rec(exp1), rec(exp2))
 		WiLessEqualu(exp1, exp2): WeWasmOp("le_u", [], [rec(exp1), rec(exp2)])
 		WiLessu(exp1, exp2): WeWasmOp("lt_u", [], [rec(exp1), rec(exp2)])
-		// WiLet(id, i, opttype, exp, brace): WeLet(id, i, )
+		WiLet(id, i, opttype, exp, brace): WeLet(id, i, WiType2WeType(opttype), rec(exp), WeBrace(map(brace.expsemi, rec)))
 		WiMod(exp1, exp2): WeMod(rec(exp1), rec(exp2))
 		WiMul(exp1, exp2): WeMul(rec(exp1), rec(exp2))
 		WiNegate(exp): WeNegate(rec(exp))
 		WiNotEqual(exp1, exp2): WeNotEqual(rec(exp1), rec(exp2))
 		WiOr(exp1, exp2): {
-			// Typecheck
+			type = typeWiseAst(w);
+			if (type != "i32" && type != "i64") {
+				env.onError(w, "bitwise operation only works on i32 and i64")
+			}
 			WeOr(rec(exp1), rec(exp2))
 		}
 		WiSub(exp1, exp2): WeSub(rec(exp1), rec(exp2))
 		// WiTupledot(exp, int_0): 
-		// WiTypeannotation(exp, type): 
-		// WiWasmOp(s, wargs, exps): WeWasmOp(s, WiWa)
+		WiTypeannotation(exp, type): WeTypeAnnotation(rec(exp), WiType2WeTypes(type))
+		WiWasmOp(s, wargs, exps): WeWasmOp(s, map(wargs, WiWarg2WeWarg), map(exps, rec))
 		WiXor(exp1, exp2): {
-			// Typecheck
+			type = typeWiseAst(w);
+			if (type != "i32" && type != "i64") {
+				env.onError(w, "bitwise operation only works on i32 and i64")
+			}
 			WeXor(rec(exp1), rec(exp2))
 		}
 		default: WeInt(0)
@@ -231,8 +216,8 @@ WiType2WeType(w : WiType) -> WeType {
 	rec = \w1 -> WiType2WeType(w1);
 	switch (w : WiType) {
 		WiBasictype(s): WeType(s)
-		WiFntype(types, type): WeFnType(map(types, rec), map(type, rec))
-		WiTupletype(types): WeType("")
+		WiFntype(types, type): rec(type)
+		WiTupletype(types): rec(types[0])
 	}
 }
 

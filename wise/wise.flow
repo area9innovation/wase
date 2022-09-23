@@ -12,6 +12,7 @@ import wise/lower;
 import wase/compile;
 import wase/pretty_wase;
 import wase/wase_types2dsl;
+import wise/lower_typed;
 
 compileWise2File(includes, filename : string, code : string, outputPath : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
@@ -63,16 +64,11 @@ compileWise2File(includes, filename : string, code : string, outputPath : string
 			println(filename + ": " + error)
 		}, lowered);
 
-		if (true) {
+		if (false) {
 			program1 = parseWiDecl(code, \err -> println("Error: " + err));
-			lowered1 = lowerWiseAst2WaseAst(env, program1);
-			println(waseAst2DslAst(lowered1) == program);
-			// println(program1);
-			println(typed);
-			println("WaseAst : " + toString(lowered1));
-			// println("DslAst  : " + toString(dsl2wase(\node, error -> {
-			// 	println(error + " at: " + toString(node))
-			// }, lowered0)));
+			env1 = makeLowerWiseAstEnv(\ast, error -> println(error + " at: " + toString(ast)));
+			loweredAst = lowerWiseAst2WaseAst(env1, program1);
+			println("WaseAst : " + toString(loweredAst));
 			println("DslAst  : " + toString(dslAst2WaseAst(lowerWise2Wase(env, typed))));
 		}
 
