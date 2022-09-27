@@ -1,0 +1,31 @@
+// include lib/wise/array;
+// include lib/wise/runtime;
+
+// TODO: we have to reduce the size of strings
+
+// string is an array of bytes (sumbols)
+// 1 symbol = 4 bytes (UTF-32 ?)
+
+printlnStr(s : i32) -> () {
+	len : i32 = getArrayLength(s);
+	var i = 0;
+	while (i < len) {
+		char : i32 = load<>(s + i32NumSize * i);
+		printByte(char);
+		i := i + 1;
+	};
+	// drop(s);
+	printByte(10);
+}
+
+strlen(s : i32) -> i32 {
+	len : i32 = getArrayLength(s);
+	// drop(s);
+	len;
+}
+
+substring(s : i32, start : i32, length : i32) -> i32 {
+	newStr : i32 = subrangeArray(s, start, length, i32NumSize);
+	// drop(s);
+	newStr;
+}
