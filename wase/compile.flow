@@ -1455,6 +1455,8 @@ dsl2WasmValType(onError : (DslAst, string) -> void, d : DslAst) -> WasmValType {
 			} else if (name == "") {
 				onError(d, "Could not resolve type. Add type annotation");
 				WasmI32Type();
+			} else if (name == "fntype") {
+				WasmI32Type();
 			} else {
 				error();
 			}

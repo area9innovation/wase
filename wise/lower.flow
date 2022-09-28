@@ -259,8 +259,11 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 
 				largs = map(args, \a -> lowerWise2Wase(env, a));
 				if (name == "function") {
-				// function(id, export : bool, args : [idtype(id, type)], [returnTypes], body, scope)
-					DslNode("function", [largs[0], largs[1], largs[2], wiseType(largs[3]), largs[4], largs[5], largs[6]], pos);
+					fnArgNames = extractArgFnNames([largs[2]], makeSet());
+					newEnv = LowerWiseEnv(env with locals = mergeSets(fnArgNames, env.locals));
+					newBody = lowerWise2Wase(newEnv, args[4]);
+				// function(id, export : bool, args : [idtype(id, type)], [returnTypes], body, scope, ?)
+					DslNode("function", [largs[0], largs[1], largs[2], wiseType(largs[3]), newBody, largs[5], largs[6]], pos);
 				} else if (name == "true") {
 					DslNode("int", [DslInt(1), DslString("i32")], pos);
 				} else if (name == "false") {
@@ -348,6 +351,32 @@ lowerWise2Wase(env : LowerWiseEnv, d : DslAst) -> DslAst {
 				}
 			}
 		}
+	}
+}
+
+extractArgFnNames(args : [DslAst], acc : Set<string>) -> Set<string> {
+	if (args == []) {
+		acc
+	} else {
+		newVals = switch (args[0] : DslAst) {
+			DslBool(__) : Pair([], acc);
+			DslInt(__) : Pair([], acc);
+			DslDouble(__) : Pair([], acc);
+			DslString(__) : Pair([], acc);
+			DslList(value) : Pair(list2array(value), acc);
+			DslNode(name, values, __) : {
+				if (name == "idtype") {
+					if (getDslNode(values[1]).name == "fntype") {
+						Pair(values, insertSet(acc, getDslString(values[0])));
+					} else {
+						Pair(values, acc);
+					}
+				} else {
+					Pair(values, acc);
+				}
+			};
+		}
+		extractArgFnNames(concat(tail(args), newVals.first), newVals.second);
 	}
 }
 
