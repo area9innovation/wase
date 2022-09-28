@@ -7,11 +7,12 @@ main() {
 	s = "hello, world!";
 	println(s);
 	println(strlen(s)); // hello, world!
-
-	println("https://music.youtube.com/channel/UCSaZ0fxvVzTGxmtAQut1tVw");
-
 	println(substring(s, 7, 5)); // world
 
+	println("https://music.youtube.com/channel/UCSaZ0fxvVzTGxmtAQut1tVw");
+	
+	// TODO : unicode
+	println("Danish: Stødgrænsen \"The Stød border\"");
 }
 
 // error in include
