@@ -1,0 +1,52 @@
+include lib/runtime;
+
+//myFnTemplate2[T, E](value1: T, value2 : E) -> () { } // fixed
+
+// myFnTemplate1[T, V](value: T) -> () { } // fixed
+
+// myFnTemplate4[T](value1 : T, value2 : V) -> () { } // fixed
+
+// TODO: ERROR :  TODO: Compile brace([], []) to wase
+// myFn(val : (f64, i32)) -> () {}
+
+//myFnTemplate3[T](value: T) -> i32 { 0; } // fixed
+
+
+// myFnTemplate5(val : T) -> () { } // fixed
+// TemplateRes[T](val : T) -> T { } // fixed
+
+ justFn(val : f64)-> () {} // fixed
+
+//myFnTemplate02[T](fn: T) -> () { } // fixed
+myFnTemplate01[T](value: T) -> i32 { sizeoftype(T) } // fixed
+
+//myFn() -> () {
+	//printi32(myFnTemplate01[f64](0.34)); // fixed
+	//printi32(myFnTemplate01[i32](6)); // fixed
+
+//}
+
+ export _start() -> auto {
+	//myFn();
+	a: auto = justFn;
+
+	//myFnTemplate01[f64](0.34); // fixed
+	//myFnTemplate01[i32](6); // fixed
+	//myFnTemplate2(1.1, 3); // fixed
+
+	// myFnTemplate01[i32, f64](6); // fixed
+	// myFnTemplate01[](6); // fixed
+
+	//v1 : (i32) -> i32 = myFnTemplate01[i32]; // fixed
+	//printi32(v1(6)); // fixed
+	v2 : auto = myFnTemplate01[f64]; // fixed
+	//printi32(v2(60.09)); // fixed
+
+	// not implemented
+	v3 : auto = myFnTemplate01; // fixed
+	// not implemented
+	v4 : (T) -> i32 = myFnTemplate01; // fixed
+
+	// TODO
+	// map[i32](xs, add[i32])
+}

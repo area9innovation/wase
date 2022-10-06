@@ -10,6 +10,7 @@ import wise/type;
 import wise/lower;
 import wase/compile;
 import wase/pretty_wase;
+import wise/wise_template;
 
 compileWise2File(includes, filename : string, code : string, outputPath : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
@@ -33,10 +34,9 @@ compileWise2File(includes, filename : string, code : string, outputPath : string
 		include = DslInclude(includes, [".wise"], "wise_include", "wase_empty", \path, file, content -> {
 			parseWise(path, content);
 		}, ref makeSet());
-		extended = processDslIncludes(include, program);
-
+		combined = processDslIncludes(include, program);
+		extended = decomposePolyWise(combined);
 		typed = typeWise(extended);
-
 		if (isUrlParameterTrue("debug-type")) {
 			println("Typed '" + filename + "'':");
 			println(prettyDsl(typed));

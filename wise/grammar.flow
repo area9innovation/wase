@@ -12,8 +12,14 @@ defineWise() -> DslGrammar {
 				":" ws optmutable type $"swap"
 				"=" ws exp ";" ws decl $"global_6"; // (id, export : bool, type, mutable : bool, exp, body, scope)
 
-		// function(id, export : bool, args : [idtype(id, type)], [returnTypes], body, scope)
-		function = optexport id $"swap" "(" ws lambdaargs ")" ws "->" ws type exp decl $"function_6"; // The "" makes right-recursion disappear
+		templateNames = ("[" ws templateName "]" ws) | ($"nil");
+		templateName = $"nil" $templateid $"cons"("," ws $templateid $"cons")* | $"nil";
+		templateValue = ("[" ws types "]" ws);
+		templateid = ('A'-'Z' | 'a'-'z') (templateidpart+)?;
+			templateidpart = 'A-Z' | 'a'-'z' | '0'-'9' | "_";
+
+		// function(id, export : bool, templates : [name], args : [idtype(id, type)], [returnTypes], body, scope)
+		function = optexport id templateNames ws "(" lambdaargs ")" ws "->" ws type exp decl $"function_7"; // The "" makes right-recursion disappear
 			lambdaargs = $"nil" id ":" ws type $"idtype_2" $"cons" ("," ws id ":" ws type $"idtype_2" $"cons")*
 				| $"nil";
 
@@ -47,8 +53,9 @@ defineWise() -> DslGrammar {
 				'!' ws exp $"bool_not_1"
 				| "-" ws exp $"negate_1" // Only for floats
 				| exp (
-					"(" ws exps ")" ws $"call_2"
-					| "." ws int $"tupledot_2"
+					templateValue $"polycall_2"
+					| ("(" ws exps ")" ws $"call_2")
+					| ("." ws int $"tupledot_2")
 				)*
 			)
 
@@ -68,6 +75,7 @@ defineWise() -> DslGrammar {
 				| "while"  !letterOrDigit ws "(" ws exp ")" ws exp $"while_2"
 				| "break" !letterOrDigit ws $"break_0"
 				| "continue" !letterOrDigit ws $"continue_0" 
+				| "sizeoftype"  !letterOrDigit ws "(" ws type ")" ws $"sizeoftype_1" 
 				| id ":=" ws exp $"set_2"
 				| id $"var_1"
 
@@ -99,7 +107,7 @@ defineWise() -> DslGrammar {
 
 		optmutable = ("mutable" ws $$"1" | $$"0" ) $"s2i";
 
-		type = $("i32" | "i64" | "f32" | "f64" | "v128" | "bool" | "auto") ws $"type_1"
+		type = $("i32" | "i64" | "f32" | "f64" | "v128" | "bool" | templateid | "auto") ws $"type_1"
 			| "(" ws types ")" ws "->" ws type $"fntype_2"
 			| "(" ws types ")" ws; // Tuples
 		
