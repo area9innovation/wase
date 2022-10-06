@@ -26,6 +26,9 @@ myFnTemplate01[T](value: T) -> i32 { sizeoftype(T) } // fixed
 
 //}
 
+map[T](arr : i32, fn : (T) -> T) -> i32 { arr}
+add[T](v : T) -> T { v }
+
  export _start() -> auto {
 	//myFn();
 	a: auto = justFn;
@@ -43,10 +46,11 @@ myFnTemplate01[T](value: T) -> i32 { sizeoftype(T) } // fixed
 	//printi32(v2(60.09)); // fixed
 
 	// not implemented
-	v3 : auto = myFnTemplate01; // fixed
+	//v3 : auto = myFnTemplate01; // fixed
 	// not implemented
-	v4 : (T) -> i32 = myFnTemplate01; // fixed
+	//v4 : (T) -> i32 = myFnTemplate01; // fixed
 
-	// TODO
-	// map[i32](xs, add[i32])
+	arr : i32 = 1;
+	res : i32 = map[i32](arr, add[i32]);
+	printlni32(res);
 }

@@ -201,22 +201,31 @@ collectPolyCalls(value : WiseAst, declarations : Tree<string, [string]>, acc : T
 		WiSizeOfType(type): acc;
 		WiPolyCall(e, templateTypes): {
 			fnName = extractFnName(e);
-			declTemplates = lookupTreeDef(declarations, fnName, []);
-			if (length(declTemplates) != length(templateTypes)) {
-				println("ERROR : wrong '" + fnName + "' call. Expected " + toString(length(declTemplates)) + " templates, but got " + toString(length(templateTypes))+". In " + toString(value));
-				acc;
-			} else {
-				oldTypes = lookupTreeDef(acc, fnName, makeTree());
-				newTypes = foldi(templateTypes, oldTypes, \i, acc2, t -> {
-					newTemplateTypes = eitherFn(
-						lookupTree(acc2, declTemplates[i]),
-						\types -> insertSet(types, t),
-						\-> makeSet1(t)
-					);
-					setTree(acc2, declTemplates[i], newTemplateTypes);
-				});
-				setTree(acc, fnName, newTypes);
-			}
+			templatesM = lookupTree(declarations, fnName);
+			eitherFn(
+				templatesM,
+				\declTemplates -> {
+					if (length(declTemplates) != length(templateTypes)) {
+						println("ERROR : wrong '" + fnName + "' call. Expected " + toString(length(declTemplates)) + " templates, but got " + toString(length(templateTypes))+". In " + toString(value));
+						acc;
+					} else {
+						oldTypes = lookupTreeDef(acc, fnName, makeTree());
+						newTypes = foldi(templateTypes, oldTypes, \i, acc2, t -> {
+							newTemplateTypes = eitherFn(
+								lookupTree(acc2, declTemplates[i]),
+								\types -> insertSet(types, t),
+								\-> makeSet1(t)
+							);
+							setTree(acc2, declTemplates[i], newTemplateTypes);
+						});
+						setTree(acc, fnName, newTypes);
+					}
+				},
+				\-> {
+					println("ERROR : function '" + fnName + "' is not found. " + toString(value));
+					acc
+				}
+			)
 		}
 	}
 }
