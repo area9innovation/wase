@@ -59,7 +59,11 @@ wiseAst2DslAst(wal : WiseAst) -> DslAst {
 		WiNegate(a0): DslNode("negate", [wiseAst2DslAst(a0)], 0);
 		WiNotEqual(a0, a1): DslNode("not_equal", [wiseAst2DslAst(a0), wiseAst2DslAst(a1)], 0);
 		WiOr(a0, a1): DslNode("or", [wiseAst2DslAst(a0), wiseAst2DslAst(a1)], 0);
-		WiReturn(a0): DslNode("return", [DslList(fold(a0, makeList(), \acc, e -> Cons(wiseAst2DslAst(e), acc)))], 0);
+		WiReturn(a0): {
+			// don't create a list, if we return 1 type
+			retTypes = if (length(a0) == 1) wiseAst2DslAst(a0[0]) else DslList(fold(a0, makeList(), \acc, e -> Cons(wiseAst2DslAst(e), acc)));
+			DslNode("return", [retTypes], 0);
+		}
 		WiSet(a0, a1): DslNode("set", [DslString(a0), wiseAst2DslAst(a1)], 0);
 		WiSizeOfType(a0): DslNode("sizeoftype", [wiseAst2DslAst(a0)], 0);
 		WiSub(a0, a1): DslNode("sub", [wiseAst2DslAst(a0), wiseAst2DslAst(a1)], 0);
