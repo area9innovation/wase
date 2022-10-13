@@ -11,7 +11,7 @@ export {
 decomposePolyWise(program : DslAst) -> DslAst {
 	wiseCode = dslAst2WiseAst(program);
 	declarations = collectPolyDeclarations(wiseCode, makeTree());
-	polyVars = collectPolyCalls(wiseCode, declarations, makeTree());
+	polyVars = collectPolyCalls(wiseCode, declarations);
 	wiseProgram = expandPolyCalls(wiseCode, declarations, polyVars);
 	wiseAst2DslAst(wiseProgram);
 }
@@ -119,8 +119,13 @@ isValidFnTemplates(templates : [string], types : [WiType]) -> Pair<bool, [string
 }
 
 extractUsedTemplates(types : [WiType]) -> Set<string> {
-	simpleTypes = buildSet(["i32", "i64",  "f32", "f64", "v128", "bool", "auto"]);
+	simpleTypes = buildSet(getSimpleWiseTypes());
 	fold(types, makeSet(), \acc, t -> extractWiBasictypeNames(makeList1(t), acc, \bt -> !containsSet(simpleTypes, bt)));
+}
+
+// const?
+getSimpleWiseTypes() -> [string] {
+	["i32", "i64",  "f32", "f64", "v128", "bool", "auto"]
 }
 
 extractWiBasictypeNames(l : List<WiType>, acc : Set<string>, filterFn : (string) -> bool) -> Set<string> {
@@ -135,23 +140,52 @@ extractWiBasictypeNames(l : List<WiType>, acc : Set<string>, filterFn : (string)
 }
 
 // result - Tree<fnName, Tree<templName, types>>
-collectPolyCalls(value : WiseAst, declarations : Tree<string, [string]>, acc : Tree<string, Tree<string, Set<WiType>>>) -> Tree<string, Tree<string, Set<WiType>>> {
-	rec = \v -> collectPolyCalls(v, declarations, acc);
-	rec2 = \v1, v2 -> collectPolyCalls(v2, declarations, collectPolyCalls(v1, declarations, acc));
-	recA = \exps, acc2 -> fold(exps, acc2, \acc3, e -> collectPolyCalls(e, declarations, acc3));
+collectPolyCalls(value : WiseAst, declarations : Tree<string, [string]>) -> Tree<string, Tree<string, Set<WiType>>> {
+	collectPolyCallsRec(value, declarations, makeTree(), makeTree(), makeSet()).first;
+}
+
+collectPolyCallsRec(
+	value : WiseAst,
+	declarations : Tree<string, [string]>,
+	acc : Tree<string, Tree<string, Set<WiType>>>,
+	scope : Tree<string, Set<WiType>>,
+	uncollectedCalls : Set<Pair<string, string>>,
+) -> Pair<Tree<string, Tree<string, Set<WiType>>>, Set<Pair<string, string>>> {
+	polyCalls = collectPolyCallsFromAst(value, declarations, Pair(acc, makeSet()), scope);
+	if (!isEmptySet(polyCalls.second) && polyCalls.second != uncollectedCalls) {
+		collectPolyCallsRec(value, declarations, polyCalls.first, makeTree(), polyCalls.second);
+	} else {
+		polyCalls;
+	}
+}
+
+collectPolyCallsFromAst(
+	value : WiseAst,
+	declarations : Tree<string, [string]>,
+	acc : Pair<Tree<string, Tree<string, Set<WiType>>>, Set<Pair<string, string>>>,
+	scope : Tree<string, Set<WiType>>
+) -> Pair<Tree<string, Tree<string, Set<WiType>>>, Set<Pair<string, string>>> {
+	rec = \v -> collectPolyCallsFromAst(v, declarations, acc, scope);
+	recNewScope = \v -> collectPolyCallsFromAst(v, declarations, acc, makeTree());
+	rec2 = \v1, v2 -> collectPolyCallsFromAst(v2, declarations, collectPolyCallsFromAst(v1, declarations, acc, scope), scope);
+	rec2NewScope = \fnId, v1, v2 -> {
+		fnScope = eitherFn(lookupTree(acc.first, fnId), idfn, makeTree);
+		collectPolyCallsFromAst(v2, declarations, collectPolyCallsFromAst(v1, declarations, acc, fnScope), fnScope);
+	}
+	recA = \exps, acc2 -> fold(exps, acc2, \acc3, e -> collectPolyCallsFromAst(e, declarations, acc3, scope));
 	switch(value : WiseAst) {
-		WiseAstList(l) : foldList(l, acc, \acc2, v -> collectPolyCalls(v, declarations, acc2));
+		WiseAstList(l) : foldList(l, acc, \acc2, v -> collectPolyCallsFromAst(v, declarations, acc2, scope));
 		WiseAstBool(__) : acc;
 		WiseAstInt(__) : acc;
 		WiseAstDouble(__) : acc;
 		WiseAstString(__) : acc;
 		WiType(): acc;
 		WiIdtype(__, __) : acc;
-		WiFunction(__, __, __, __, __, e, decl2) : rec2(e, decl2);
-		WiGlobal(__, __, __, __, e, decl2) : rec2(e, decl2);
-		WiImport(__, __, __, __, __, decl2) : rec(decl2);
+		WiFunction(__, id, __, __, __, e, decl2) : rec2NewScope(id, e, decl2);
+		WiGlobal(__, __, __, __, e, decl2) : rec2NewScope("", e, decl2);
+		WiImport(__, __, __, __, __, decl2) : recNewScope(decl2);
 		WiWaseEmpty() : acc;
-		WiWiseInclude(__, decl2) : rec(decl2);
+		WiWiseInclude(__, decl2) : recNewScope(decl2);
 		WiAdd(exp1, exp2) : rec2(exp1, exp2);
 		WiSub(exp1, exp2) : rec2(exp1, exp2);
 		WiAnd(exp1, exp2) : rec2(exp1, exp2);
@@ -173,7 +207,7 @@ collectPolyCalls(value : WiseAst, declarations : Tree<string, [string]>, acc : T
 		WiLessu(exp1, exp2) : rec2(exp1, exp2);
 		WiIsNull(e) : rec(e);
 		WiTupledot(e, __) : rec(e);
-		WiTypeannotation(e, __) : rec(e);
+		WiTypeannotation(e, __) : recNewScope(e);
 		WiLet(__, __, __, e, brace) : rec2(e, brace);
 		WiWasmOp(__, wargs, exps) : recA(concat(wargs, exps), acc);
 		WiMod(exp1, exp2) : rec2(exp1, exp2);
@@ -191,7 +225,7 @@ collectPolyCalls(value : WiseAst, declarations : Tree<string, [string]>, acc : T
 		WiHexf64(__): acc;
 		WiI64(__): acc;
 		WiIf(exp1, exp2): rec2(exp1, exp2);
-		WiIfelse(exp1, exp2, exp3): collectPolyCalls(exp3, declarations, rec2(exp1, exp2));
+		WiIfelse(exp1, exp2, exp3): collectPolyCallsFromAst(exp3, declarations, rec2(exp1, exp2), scope);
 		WiInt(__): acc;
 		WiReturn(exps): recA(exps, acc);
 		WiSet(id, e): rec(e);
@@ -199,26 +233,26 @@ collectPolyCalls(value : WiseAst, declarations : Tree<string, [string]>, acc : T
 		WiVar(__): acc;
 		WiWhile(exp1, exp2): rec2(exp1, exp2);
 		WiSizeOfType(type): acc;
-		WiPolyCall(e, templateTypes): {
+		WiPolyCall(e, realTypes): {
 			fnName = extractFnName(e);
 			templatesM = lookupTree(declarations, fnName);
 			eitherFn(
 				templatesM,
 				\declTemplates -> {
-					if (length(declTemplates) != length(templateTypes)) {
-						println("ERROR : wrong '" + fnName + "' call. Expected " + toString(length(declTemplates)) + " templates, but got " + toString(length(templateTypes))+". In " + toString(value));
+					if (length(declTemplates) != length(realTypes)) {
+						println("ERROR : wrong '" + fnName + "' call. Expected " + toString(length(declTemplates)) + " templates, but got " + toString(length(realTypes))+". In " + toString(value));
 						acc;
 					} else {
-						oldTypes = lookupTreeDef(acc, fnName, makeTree());
-						newTypes = foldi(templateTypes, oldTypes, \i, acc2, t -> {
-							newTemplateTypes = eitherFn(
-								lookupTree(acc2, declTemplates[i]),
-								\types -> insertSet(types, t),
-								\-> makeSet1(t)
+						oldTypes = lookupTreeDef(acc.first, fnName, makeTree());
+						newTypes = foldi(realTypes, Pair(oldTypes, acc.second), \i, acc2, t -> {
+							usedTypes = collectTemplateRealTypes(t, scope, fnName, Pair(makeSet(), makeSet()));
+							newRealTypes = foldSet(usedTypes.first, lookupTreeDef(acc2.first, declTemplates[i], makeSet()), \acc3, ut -> insertSet(acc3, ut));
+							Pair(
+								setTree(acc2.first, declTemplates[i], newRealTypes),
+								mergeSets(acc2.second, usedTypes.second)
 							);
-							setTree(acc2, declTemplates[i], newTemplateTypes);
 						});
-						setTree(acc, fnName, newTypes);
+						Pair(setTree(acc.first, fnName, newTypes.first), newTypes.second);
 					}
 				},
 				\-> {
@@ -226,6 +260,56 @@ collectPolyCalls(value : WiseAst, declarations : Tree<string, [string]>, acc : T
 					acc
 				}
 			)
+		}
+	}
+}
+
+collectTemplateRealTypes(type : WiType, scope : Tree<string, Set<WiType>>, fnName : string, acc : Pair<Set<WiType>, Set<Pair<string, string>>>) -> Pair<Set<WiType>, Set<Pair<string, string>>> {
+	recA = \types -> {
+		existsChanges = \newType, oldType -> switch (newType.tree) {
+			TreeEmpty() : true;
+			TreeNode(key, __, left, right, depth) : key == oldType && depth == 1;
+		}
+		fixedTypes = map(types, \t -> collectTemplateRealTypes(t, scope, fnName, Pair(makeSet(), makeSet())));
+		newTypes = if (foldi(types, false, \i, isEqual, t -> isEqual && existsChanges((fixedTypes[i]).first, t))) {
+			[];
+		} else {
+			fold(tail(fixedTypes), map(set2array(fixedTypes[0].first), v2a), \tupleTypes, fieldTypes -> {
+				mapConcat(set2array(fieldTypes.first), \ft -> map(tupleTypes, \tt -> arrayPush(tt, ft)))
+			});
+		}
+		Pair(newTypes, fold(fixedTypes, makeSet(), \acc2, p -> mergeSets(acc2, p.second)))
+	}
+
+	rec = \t -> Pair(insertSet(acc.first, t), acc.second);
+	
+	switch (type : WiType) {
+		WiBasictype(s) : if (contains(getSimpleWiseTypes(), s)) {
+			rec(type);
+		} else {
+			eitherFn(
+				lookupTree(scope, s),
+				\ts -> Pair(mergeSets(ts, acc.first), acc.second),
+				\-> Pair(acc.first, insertSet(acc.second, Pair(fnName, s)))
+			);
+		}
+		WiFntype(types, retType): {
+			fixedTypes = recA(concat([retType], types));
+			if (fixedTypes.first == []) {
+				rec(type);
+			} else {
+				Pair(fold(fixedTypes.first, acc.first, \acc2, t -> insertSet(acc2, WiFntype(tail(t), t[0]))), mergeSets(acc.second, fixedTypes.second));
+			}
+		}
+		WiTupletype(types) : if (types == []) {
+			rec(type);
+		} else {
+			fixedTypes = recA(types);
+			if (fixedTypes.first == []) {
+				rec(type);
+			} else {
+				Pair(fold(fixedTypes.first, acc.first, \acc2, t -> insertSet(acc2, WiTupletype(t))), mergeSets(acc.second, fixedTypes.second));
+			}
 		}
 	}
 }
@@ -316,12 +400,10 @@ expandPolyCallsExp(fn : string, templateTypes : [Pair<string, WiType>], value : 
 		WiWhile(exp1, exp2): WiWhile(recExp(exp1), recExp(exp2));
 		WiVar(__): value;
 		WiSizeOfType(type): {
-			typepars = lookupTreeDef(polyVars, fn, makeTree());
 			size = calculateSizeOfType(templateTypes, type);
 			// println("Size of " + toString(type) + " is " + i2s(size));
 			WiInt(size);
 		}
-
 		WiCall(e, exps) : {
 			recFn = \-> WiCall(recExp(e), map(exps, recExp));
 			if (isPolyCall(e)) {
@@ -338,7 +420,23 @@ expandPolyCallsExp(fn : string, templateTypes : [Pair<string, WiType>], value : 
 				);
 			}
 		}
-		WiPolyCall(e, templates): fixPolyFnName(fn, templateTypes, e, templates, polyVars, declarations);
+		WiPolyCall(e, templates): {
+			realTypes = map(templates, \t -> replaceTemplateWitRealType(t, templateTypes));
+			fixPolyFnName(fn, templateTypes, e, realTypes, polyVars, declarations);
+		}
+	}
+}
+
+replaceTemplateWitRealType(type : WiType, scope : [Pair<string, WiType>]) -> WiType {
+	rec = \t -> replaceTemplateWitRealType(t, scope);
+	switch (type : WiType) {
+		WiBasictype(s) : if (contains(getSimpleWiseTypes(), s)) {
+			type
+		} else {
+			either(findmap(scope, unpairC(\tmplName, t -> if (tmplName == s) Some(t) else None())), type);
+		}
+		WiFntype(types, retType) : WiFntype(map(types, rec), rec(retType));
+		WiTupletype(types) : WiTupletype(map(types, rec));
 	}
 }
 
@@ -380,15 +478,17 @@ createPolyFunctions(fn : WiFunction, templates : Tree<string, Set<WiType>>, poly
 	}));
 	fixArgTypes = \types, templTypes -> map(types, \t -> WiIdtype(t.id, wiType2realType(t.type, templTypes))); // templName -> realType
 	fnDecls = expandPolyCallsDecl(fn.decl, declarations, polyVars);
-	map(sfxs, unpairC(\sfx, templTypes : [Pair<string, WiType>] -> WiFunction(
-		fn.optexport,
-		fn.id + sfx,
-		[], // templates
-		fixArgTypes(fn.lambdaargs, templTypes),
-		wiType2realType(fn.type, templTypes),
-		expandPolyCallsExp(fn.id, templTypes, fn.exp, declarations, polyVars),
-		fnDecls
-	)));
+	map(sfxs, unpairC(\sfx, templTypes : [Pair<string, WiType>] -> {
+		WiFunction(
+			fn.optexport,
+			fn.id + sfx,
+			[], // templates
+			fixArgTypes(fn.lambdaargs, templTypes),
+			wiType2realType(fn.type, templTypes),
+			expandPolyCallsExp(fn.id, templTypes, fn.exp, declarations, polyVars),
+			fnDecls
+		)
+	}));
 }
 
 wiType2realType(t : WiType, templTypes : [Pair<string, WiType>]) -> WiType {
@@ -410,7 +510,14 @@ wiType2polySfx(t : WiType) -> string {
 
 // TODO : exp
 // polycall -> fnExp ( == remove polycall)
-fixPolyFnName(fnid : string, templateTypes : [Pair<string, WiType>], fn : WiExp, types : [WiType], polyVars : Tree<string, Tree<string, Set<WiType>>>, declarations : Tree<string, [string]>) -> WiExp {
+fixPolyFnName(
+	fnid : string,
+	templateTypes : [Pair<string, WiType>],
+	fn : WiExp,
+	types : [WiType],
+	polyVars : Tree<string, Tree<string, Set<WiType>>>,
+	declarations : Tree<string, [string]>,
+) -> WiExp {
 	newFn = expandPolyCallsExp(fnid, templateTypes, fn, declarations, polyVars);
 	fnName = extractFnName(fn);
 	orderedTemplates = sortCustom(mapi(lookupTreeDef(declarations, fnName, []), \i, v -> Pair(v, i)), firstOfPair, true);
@@ -460,9 +567,14 @@ calculateSizeOfType(templateVars : [Pair<string, WiType>], t : WiType) -> int {
 					else acc
 				});
 				mtype ?? {
-					calculateSizeOfType(templateVars, mtype)
+					if (mtype == t) {
+						println("ERROR: Unknown template type '" + s + "' in sizeoftype");
+						0
+					} else {
+						calculateSizeOfType(templateVars, mtype)
+					}
 				} : {
-					println("ERROR: Unknown template var " + s + " in sizeof");
+					println("ERROR: Unknown template var " + s + " in sizeoftype");
 					0
 				}
 			}

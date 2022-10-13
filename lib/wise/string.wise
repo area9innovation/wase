@@ -12,7 +12,7 @@
 // FIX IT!!!!!
 // it prints ascii , but we have unicode
 printlnStr(s : i32) -> () {
-	len : i32 = getArrayLength(s);
+	len : i32 = getLengthArray(s);
 	// save the str adr
 	store<>(0, s);
 	// How many bytes to write
@@ -23,13 +23,13 @@ printlnStr(s : i32) -> () {
 }
 
 strlen(s : i32) -> i32 {
-	len : i32 = getArrayLength(s);
+	len : i32 = getLengthArray(s);
 	// drop(s);
 	len;
 }
 
 substring(s : i32, start : i32, length : i32) -> i32 {
-	newStr : i32 = subrangeArray(s, start, length, charSize);
+	newStr : i32 = subrangeArrayE(s, start, length, charSize);
 	// drop(s);
 	newStr;
 }

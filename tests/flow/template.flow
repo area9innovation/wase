@@ -16,7 +16,7 @@ main() {
 	myFnTemplate2(1, 1.1);
 	myFnTemplate2(2.2, 2);
 	// TODO
-	// myFnTemplate2(a, 3.3);
+	myFnTemplate2(a, 3.3);
 
 
 	mapT(10, addT);
