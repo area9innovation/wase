@@ -34,6 +34,9 @@ collectPolyDeclarations(value : WiseAst, acc : Tree<string, [string]>) -> Tree<s
 					\valid, usedTemplates -> 
 						if (valid) {
 							setTree(acc, id, templates)
+						} else if (usedTemplates == [] || forall(usedTemplates, \ut -> contains(templates, ut))) {
+							println("WARNING: declared " + toString(templates) + " templates, but used " + toString(usedTemplates));
+							setTree(acc, id, templates)
 						} else {
 							println("ERROR: wrong declarations of templates " + toString(templates) + " in " + id + ". Used Templates : " + toString(usedTemplates));
 							acc;
@@ -240,7 +243,7 @@ collectPolyCallsFromAst(
 				templatesM,
 				\declTemplates -> {
 					if (length(declTemplates) != length(realTypes)) {
-						println("ERROR : wrong '" + fnName + "' call. Expected " + toString(length(declTemplates)) + " templates, but got " + toString(length(realTypes))+". In " + toString(value));
+						println("ERROR : wrong '" + fnName + "' call. Expected " + toString(length(declTemplates)) + " templates, but got " + toString(length(realTypes))+". In '" + fnName + toString(realTypes) + "'");
 						acc;
 					} else {
 						oldTypes = lookupTreeDef(acc.first, fnName, makeTree());

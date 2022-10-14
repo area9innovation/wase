@@ -20,7 +20,7 @@ fn1[T](v : T) -> () { (); }
 //	()
 //}
 
-
+fn2[T,V](v : T) -> i32 { sizeoftype(V);}
 
  export _start() -> auto {
 	//initMemory();
@@ -32,12 +32,16 @@ fn1[T](v : T) -> () { (); }
 
 	fn[i32, i32](7, 8);
 	fn[i32, f64](7, 2.9);
+
+	fn2[i32,f64](6);
 	
 	//myFnTemplate2[i32, f64](1, 1.1);
 	//myFnTemplate2[f64, i32](2.2, 2);
 	//myFnTemplate2[i32, f64](a, 3.3);
 	//mapT[i32](10, addT[i32]);
 	//mapT[f64](0.45, addT[f64]);
+
+	();
 	
 }
 
