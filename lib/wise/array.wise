@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------------
 
 // result is an address
-createArray[T](length : i32, defValue : T) -> i32 {
+createArray[T](length : i32) -> i32 {
 	typeSize : i32 = sizeoftype(T);
 	adr : i32 = initArray(length, typeSize);
 	// if (adr == 0) printlnStr("error");
@@ -31,7 +31,6 @@ getLengthArray(arrayAdr : i32) -> i32 {
 setValueArray[T](arrayAdr : i32, index : i32, value : T) -> () {
 	// dup(value);
 	setValueArrayE[T](arrayAdr, index, value);
-	//setValueArrayE(arrayAdr, index, value);
 	// drop(arrayAdr);
 	{}
 }
@@ -39,9 +38,9 @@ setValueArray[T](arrayAdr : i32, index : i32, value : T) -> () {
 // dup is in the program (dup(getValueArray()))
 // if it is the last dup, getValueArray()
 // result : value or 0 if error
-getValueArray[T](arrayAdr : i32, index : i32) -> T {
+getValueArray[T](arrayAdr : i32, index : i32, defValue : T) -> T {
 	// dupField(arrayAdr, index);
-	res : (i32, T) = getValueArrayE(arrayAdr, index);
+	res : (i32, T) = getValueArrayE[T](arrayAdr, index, defValue);
 	// dropArray(arrayAdr);
 	errCode : i32 = res.0;
 	// if (res.0 == 0) { // error!
@@ -49,7 +48,7 @@ getValueArray[T](arrayAdr : i32, index : i32) -> T {
 		// dup(res) ??
 		res.1;
 	} else {
-		0; // max/min int ?
+		defValue; // max/min int ?
 	};
 }
 
@@ -62,7 +61,6 @@ arrayPush[T](arrayAdr : i32, value : T) -> i32 {
 	// dropArray(arrayAdr);
 	// drop(value)
 	setArrayItem[T](res, len, value);
-	//setArrayItem(res, len, value);
 	res;
 }
 
@@ -90,7 +88,6 @@ replaceArray[T](arrayAdr : i32, index : i32, value : T) -> i32 {
 			newLen : i32 = if (index >= len) len + 1 else len;
 			arr : i32 = resizeArray(arrayAdr, typeSize, newLen);
 			setArrayItem[T](arr, if (index >= len) len else index, value);
-			//setArrayItem(arr, if (index >= len) len else index, value);
 			arr;
 		//}
 	};
@@ -100,13 +97,11 @@ replaceArray[T](arrayAdr : i32, index : i32, value : T) -> i32 {
 }
 
 //------------------------------------------------------------------------------
-// TODO: think about "typeValue"
-
 // don't do deep copy
 // We can't reuse memory
 // in app : 
 // concat(dup(adr1), dup(adr2)) or concat(adr1, adr2)
-concatArrays[T](adr1 : i32, adr2 : i32, typeValue : T) -> i32 {
+concatArrays[T](adr1 : i32, adr2 : i32) -> i32 {
 	// dupFields(adr1);
 	// dupFields(adr2);
 	adr : i32 = concat2Arrays(adr1, adr2, sizeoftype(T));
@@ -118,7 +113,7 @@ concatArrays[T](adr1 : i32, adr2 : i32, typeValue : T) -> i32 {
 }
 
 // don't do deep copy
-subrangeArray[T](arrayAdr : i32, index : i32, length : i32, typeValue : T) -> i32 {
+subrangeArray[T](arrayAdr : i32, index : i32, length : i32) -> i32 {
 	// dupFields(arrayAdr); in range
 	arr : i32 = subrangeArrayE(arrayAdr, index, length, sizeoftype(T));
 	// dup(arr)
@@ -126,8 +121,8 @@ subrangeArray[T](arrayAdr : i32, index : i32, length : i32, typeValue : T) -> i3
 	arr;
 }
 
-compareArrays[T](adr1 : i32, adr2 : i32, typeValue : T) -> i32 {
-	res : i32 = compareArraysE(adr1, adr2, typeValue);
+compareArrays[T](adr1 : i32, adr2 : i32) -> i32 {
+	res : i32 = compareArraysE[T](adr1, adr2);
 	if (res < -1) -1 else res;
 }
 
@@ -159,7 +154,6 @@ setValueArrayE[T](arrayAdr : i32, index : i32, value : T) -> i32 {
 			len : i32 = getLengthArray(arrayAdr);
 			if (index < len) {
 				setArrayItem[T](arrayAdr, index, value);
-				//setArrayItem(arrayAdr, index, value);
 				0;
 			} else {
 				3;
@@ -179,7 +173,7 @@ setArrayItem[T](arrayAdr : i32, index : i32, value : T) -> () {
 // TODO: unboxing (value = pointer) ?
 // result : (error_code, value)
 // error_code : 0 - ok, 1 - wrong index, 2 - dead array
-getValueArrayE[T](arrayAdr : i32, index : i32) -> (i32, T) {
+getValueArrayE[T](arrayAdr : i32, index : i32, defValue : T) -> (i32, T) {
 	if (index >= 0) {
 		counter : i32 = getArrayCounter(arrayAdr);
 		if (counter > 0) {
@@ -189,13 +183,13 @@ getValueArrayE[T](arrayAdr : i32, index : i32) -> (i32, T) {
 				// (0, load<>(...)) // error
 				(0, element);
 			} else {
-				(1, 0);
+				(1, defValue);
 			}
 		} else {
-			(2, 0);
+			(2, defValue);
 		}
 	} else {
-		(1, 0);
+		(1, defValue);
 	}
 }
 
@@ -230,8 +224,8 @@ getValueArrayE[T](arrayAdr : i32, index : i32) -> (i32, T) {
 
 // TODO: unboxing (value = pointer) ?
 // -1 - a1<a2, 0 - a1==a1, 1 - a1>a2, -2(+) - wrong index
-// compareArraysE[T](adr1 : i32, adr2 : i32, compare : (T, T) -> i32, typeValue : T) -> i32 {
-compareArraysE[T](adr1 : i32, adr2 : i32, typeValue : T) -> i32 {
+// compareArraysE[T](adr1 : i32, adr2 : i32, compare : (T, T) -> i32) -> i32 {
+compareArraysE[T](adr1 : i32, adr2 : i32) -> i32 {
 	len1 : i32 = getLengthArray(adr1);
 	len2 : i32 = getLengthArray(adr2);
 	
@@ -243,20 +237,20 @@ compareArraysE[T](adr1 : i32, adr2 : i32, typeValue : T) -> i32 {
 	minLen : i32 = if (len1 < len2) len1 else len2;
 	var i = 0;
 	while (i < minLen) {
-		v1 : (i32, T) = getValueArrayE(adr1, i);
-		v2 : (i32, T) = getValueArrayE(adr2, i);
-		err1 : i32 = v1.0;
-		err2 : i32 = v2.0;
-		val1 : i32 = v1.1;
-		val2 : i32 = v2.1;
-		if (err1 == 0 && err2 == 0) {
-			if (val1 != val2) {
-				res2 : i32 = (if (val1 < val2) -1 else 1);
-				return res2;
-			}
-		} else {
-			return -3;
-		};
+		//v1 : (i32, T) = getValueArrayE[T](adr1, i);
+		//v2 : (i32, T) = getValueArrayE[T](adr2, i);
+		//err1 : i32 = v1.0;
+		//err2 : i32 = v2.0;
+		//val1 : i32 = v1.1;
+		//val2 : i32 = v2.1;
+		//if (err1 == 0 && err2 == 0) {
+		//	if (val1 != val2) {
+		//		res2 : i32 = (if (val1 < val2) -1 else 1);
+		//		return res2;
+		//	}
+		//} else {
+		//	return -3;
+		//};
 		i := i + 1;
 	};
 	result : i32 = (if (len1 == len2) 0 else if (len1 < len2) -1 else 1);

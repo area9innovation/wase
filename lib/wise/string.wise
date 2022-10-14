@@ -20,6 +20,7 @@ printlnStr(s : i32) -> () {
 	fd_write(1, 0, 1, len * charSize * 8);
 	// drop(s);
 	printByte(10);
+	();
 }
 
 strlen(s : i32) -> i32 {
