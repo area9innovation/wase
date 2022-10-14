@@ -40,16 +40,35 @@ setValueArray[T](arrayAdr : i32, index : i32, value : T) -> () {
 // result : value or 0 if error
 getValueArray[T](arrayAdr : i32, index : i32, defValue : T) -> T {
 	// dupField(arrayAdr, index);
-	res : (i32, T) = getValueArrayE[T](arrayAdr, index, defValue);
+	//res : (i32, T) = getValueArrayE[T](arrayAdr, index, defValue);
 	// dropArray(arrayAdr);
-	errCode : i32 = res.0;
+	//errCode : i32 = res.0;
 	// if (res.0 == 0) { // error!
-	if (errCode == 0) {
+	//if (errCode == 0) {
 		// dup(res) ??
-		res.1;
+	//	res.1;
+	//} else {
+	//	defValue;
+	//};
+
+
+	if (index >= 0) {
+		counter : i32 = getArrayCounter(arrayAdr);
+		if (counter > 0) {
+			len : i32 = getLengthArray(arrayAdr);
+			if (index < len) {
+				element : T = load<>(arrayAdr + sizeoftype(T) * index);
+				// (0, load<>(...)) // error
+				element;
+			} else {
+				defValue;
+			}
+		} else {
+			defValue;
+		}
 	} else {
-		defValue; // max/min int ?
-	};
+		defValue;
+	}
 }
 
 // We can't reuse memory

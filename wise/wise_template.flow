@@ -317,6 +317,8 @@ collectTemplateRealTypes(type : WiType, scope : Tree<string, Set<WiType>>, fnNam
 	}
 }
 
+// TODO: replace tmplAliases with real type everywhere. Example : 
+// a : T = 0;
 expandPolyCalls(value : WiseAst, declarations : Tree<string, [string]>, polyVars : Tree<string, Tree<string, Set<WiType>>>) -> WiseAst {
 	switch(value : WiseAst) {
 		WiseAstList(l) : WiseAstList(mapList(l, \v -> expandPolyCalls(v, declarations, polyVars)));
@@ -374,7 +376,7 @@ expandPolyCallsExp(fn : string, templateTypes : [Pair<string, WiType>], value : 
 				println("ERROR : you cannot use aliases for functions with templates. [Variable '" + id + "'. Value '" + toString(e) + "']");
 				recBrace(brace)
 			} else {
-				WiLet(id, i, opttype, recExp(e), recBrace(brace));
+				WiLet(id, i, fixTemplatesInWiOpttype(opttype, templateTypes), recExp(e), recBrace(brace));
 			}
 		}
 		WiMod(exp1, exp2) : WiMod(recExp(exp1), recExp(exp2));
@@ -427,6 +429,14 @@ expandPolyCallsExp(fn : string, templateTypes : [Pair<string, WiType>], value : 
 			realTypes = map(templates, \t -> replaceTemplateWitRealType(t, templateTypes));
 			fixPolyFnName(fn, templateTypes, e, realTypes, polyVars, declarations);
 		}
+	}
+}
+
+fixTemplatesInWiOpttype(opttype : WiOpttype, templateTypes : [Pair<string, WiType>]) -> WiOpttype {
+	switch (opttype : WiOpttype) {
+		WiBasictype(s) : replaceTemplateWitRealType(opttype, templateTypes);
+		WiFntype(types, retType) : replaceTemplateWitRealType(opttype, templateTypes);
+		WiTupletype(types) : replaceTemplateWitRealType(opttype, templateTypes);
 	}
 }
 
