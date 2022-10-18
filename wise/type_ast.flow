@@ -46,7 +46,7 @@ typeWiseAst(ast : WiseAst) -> string {
 			mtype ?? mtype : ""
 		}
 		WiWhile(exp1, exp2): ""
-		WiFunction(id, optexport, lambdaargs, type, exp, decl): rec(decl)
+		WiFunction(id, optexport, templates, lambdaargs, type, exp, decl): rec(decl)
 		WiGlobal(id, optexport, type, optmutable, exp, decl): rec(decl)
 		WiImport(id1, type, optmutable, id2, id3, decl): rec(decl)
 		WiWaseEmpty(): ""
@@ -84,5 +84,7 @@ typeWiseAst(ast : WiseAst) -> string {
 		WiFntype(types, type): "func"
 		WiTupletype(types): ""
 		WiIdtype(id, type): rec(type)
+		WiSizeOfType(type): "i32";
+        WiPolyCall(exp, types): "";
 	}
 }

@@ -46,7 +46,7 @@ WiDecl2WeDecl(env : LowerWiseAstEnv, w : WiDecl) -> WeDecl {
 	lowerExp = \exp -> WiExp2WeExp(env, exp);
 	lowerDecl = \decl -> WiDecl2WeDecl(env, decl);
 	switch (w : WiDecl) {
-		WiFunction(id, optexport, lambdaargs, type, expr, decl): {
+		WiFunction(id, optexport, templates, lambdaargs, type, expr, decl): {
 			WeFunction(id, optexport, map(lambdaargs, WiIdtype2WeIdtype), WiType2WeTypes(type), lowerExp(expr), lowerDecl(decl))
 		}
 		WiGlobal(id, optexport, type, optmutable, expr, decl): {
@@ -124,7 +124,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		}
 		WiInt(int_0): WeInt(int_0)
 		WiReturn(exps): WeReturn(rec(exps[0]))
-		WiSet(id, exp): WeSet(id, rec(exp))
+		WiSet(id, e): WeSet(id, rec(e))
 		WiTuple(exps): WeTuple(map(exps, rec))
 		WiVar(id): {
 			type = typeWiseAst(w);
@@ -153,22 +153,22 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 			])
 		}
 		WiBoolAnd(exp1, exp2): WeIfelse(rec(exp1), rec(exp2), WeInt(0))
-		WiBoolNot(exp): WeIfelse(rec(exp), WeInt(0), WeInt(1))
+		WiBoolNot(e): WeIfelse(rec(e), WeInt(0), WeInt(1))
 		WiBoolOr(exp1, exp2): WeIfelse(rec(exp1), WeInt(1), rec(exp2))
 		WiBrace(expsemi): WeBrace(map(expsemi, rec))
-		WiCall(exp, exps): {
+		WiCall(e, exps): {
 			indirect = \ -> {
-				fncall = rec(exp);
+				fncall = rec(e);
 				fnargs = map(exps, rec);
 				WeWasmOp("call_indirect", [], concat([fncall], fnargs))
 			};
 
-			switch (exp : WiseAst) {
+			switch (e : WiseAst) {
 				WiVar(id):  {
 					if (containsSet(env.locals, id)) {
 						indirect()
 					} else {
-						WeCall(rec(exp), map(exps, rec))
+						WeCall(rec(e), map(exps, rec))
 					}
 				}
 				default: indirect()
@@ -180,15 +180,15 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiGreaterEqual(exp1, exp2): WeGreaterEqual(rec(exp1), rec(exp2))
 		WiGreaterEqualu(exp1, exp2): WeWasmOp("ge_u", [], [rec(exp1), rec(exp2)])
 		WiGreateru(exp1, exp2): WeWasmOp("gt_u", [], [rec(exp1), rec(exp2)])
-		WiIsNull(exp): WeIsNull(rec(exp))
+		WiIsNull(e): WeIsNull(rec(e))
 		WiLess(exp1, exp2): WeLess(rec(exp1), rec(exp2))
 		WiLessEqual(exp1, exp2): WeLessEqual(rec(exp1), rec(exp2))
 		WiLessEqualu(exp1, exp2): WeWasmOp("le_u", [], [rec(exp1), rec(exp2)])
 		WiLessu(exp1, exp2): WeWasmOp("lt_u", [], [rec(exp1), rec(exp2)])
-		WiLet(id, i, opttype, exp, brace): WeLet(id, i, WiType2WeType(opttype), rec(exp), WeBrace(map(brace.expsemi, rec)))
+		WiLet(id, i, opttype, e, brace): WeLet(id, i, WiType2WeType(opttype), rec(e), WeBrace(map(brace.expsemi, rec)))
 		WiMod(exp1, exp2): WeMod(rec(exp1), rec(exp2))
 		WiMul(exp1, exp2): WeMul(rec(exp1), rec(exp2))
-		WiNegate(exp): WeNegate(rec(exp))
+		WiNegate(e): WeNegate(rec(e))
 		WiNotEqual(exp1, exp2): WeNotEqual(rec(exp1), rec(exp2))
 		WiOr(exp1, exp2): {
 			type = typeWiseAst(w);
@@ -199,7 +199,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		}
 		WiSub(exp1, exp2): WeSub(rec(exp1), rec(exp2))
 		// WiTupledot(exp, int_0): 
-		WiTypeannotation(exp, type): WeTypeAnnotation(rec(exp), WiType2WeTypes(type))
+		WiTypeannotation(e, type): WeTypeAnnotation(rec(e), WiType2WeTypes(type))
 		WiWasmOp(s, wargs, exps): WeWasmOp(s, map(wargs, WiWarg2WeWarg), map(exps, rec))
 		WiXor(exp1, exp2): {
 			type = typeWiseAst(w);
