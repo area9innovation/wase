@@ -1,0 +1,27 @@
+import runtime;
+
+native substring : (s : string, start : int, length : int) -> string = Native.substring;
+native strlen : (string) -> int = Native.strlen;
+
+main() {
+	s = "hello, world!";
+	println(s);
+	println(strlen(s)); // hello, world!
+	println(substring(s, 7, 5)); // world
+
+	println("https://music.youtube.com/channel/UCSaZ0fxvVzTGxmtAQut1tVw");
+	
+	// TODO : unicode
+	println("Danish: Stødgrænsen \"The Stød border\"");
+}
+
+// error in include
+// exmaple:
+// f8.wise :
+// include f1;
+// include f2;
+// 
+// f1.wise :
+// include f2;
+// 
+// -> error

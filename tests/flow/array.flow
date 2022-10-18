@@ -1,0 +1,97 @@
+
+import runtime;
+
+printArr(a : [int]) -> void {
+	if (a != []) {
+		println(a[0]);
+		printArr(subrange(a, 1, length(a) - 1));
+	}
+}
+
+main() {
+	a = [10, 20, 30];
+	println(a[-1]); // 0
+	println(a[3]); // 0
+	printArr(a); // 10\n20\n30
+
+	println(length(a)); // 3
+	println(length([])); // 0
+
+	b = [400, 500];
+	printArr(concat(a, b)); // 10\n20\n30\n400\n500
+	c = arrayPush(b, 600);
+	printArr(c); // 400\n500\n600
+	e = arrayPush([], 2);
+	printArr(e); // 2
+
+	println(length(concat([], []))); // 0
+
+	printArr(subrange([], 0, 1)); // []
+	printArr(subrange(a, 0, 2)); // [10, 20]
+	printArr(subrange(a, 0, 4)); // [10, 20, 30] ?
+	printArr(subrange(a, -1, 2)); // []
+	printArr(subrange(a, 0, 0)); // []
+	printArr(subrange(a, 5, 2)); // []
+
+
+	printArr(replace(a, -1, 2)); // [10, 20, 30]
+	printArr(replace(a, 0, 100)); // [100, 20, 30]
+	printArr(replace(a, 1, 200)); // [10, 200, 30]
+	printArr(replace(a, 2, 300)); // [10, 20, 300]
+	printArr(replace(a, 3, 400)); // [10, 20, 30, 400]
+
+
+	println([] == []); // true
+	println([] != []); // false
+	println([] < []); // false
+	println([] > []); // false
+	println([] >= []); // true
+	println([] <= []); // true
+	println ([1] == [1]); // true
+	println ([1] != [1]); // false
+	println([1] < [1]); // false
+	println([1] > [1]); // false
+	println([1] >= [1]); // true
+	println([1] <= [1]); // true
+	println ([] == [1]); // false
+	println ([] != [1]); // true
+	println([] < [1]); // true
+	println([] > [1]); // false
+	println([] >= [1]); // false
+	println([] <= [1]); // true 
+	println([1, 2] == [1, 3]); // false
+	println([1, 2] != [1, 3]); // true
+	println([1, 2] > [1, 3]); // false
+	println([1, 2] < [1, 3]); // true
+	println([1, 2] >= [1, 3]); // false
+	println([1, 2] <= [1, 3]); // true
+	println([1, 3] == [1, 2]); // false
+	println([1, 3] != [1, 2]); // true
+	println([1, 3] > [1, 2]); // true
+	println([1, 3] < [1, 2]); // false
+	println([1, 3] >= [1, 2]); // true
+	println([1, 3] <= [1, 2]); // false
+	println([1, 2, 3] == [1, 3]); // false
+	println([1, 2, 3] != [1, 3]); // true
+	println([1, 2, 3] > [1, 3]); // false
+	println([1, 2, 3] < [1, 3]); // true
+	println([1, 2, 3] >= [1, 3]); // false
+	println([1, 2, 3] <= [1, 3]); // true
+	println([1, 3] == [1, 2, 4]); // false
+	println([1, 3] != [1, 2, 4]); // true
+	println([1, 3] > [1, 2, 4]); // true
+	println([1, 3] < [1, 2, 4]); // false
+	println([1, 3] >= [1, 2, 4]); // true
+	println([1, 3] <= [1, 2, 4]); // false
+	a1 = [1, 2, 3];
+	a2 = [1, 3, 3];
+	println(a1 <= a2); // true
+	println(a1 >= a2); // false
+	println(a1 == a2); // false
+	println(a1 != a2); // true
+	println(a1 <= [1, 4]); // true
+	println([1,2,3,4] <= a1); // false
+
+
+	// s = [4, b]; // dup inside
+}

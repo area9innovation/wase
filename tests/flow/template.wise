@@ -1,0 +1,47 @@
+//include lib/wise/runtime;
+//include lib/wise/string;
+//include lib/wise/array;
+
+ //addT[A](v : A) -> A { v }
+ //mapT[A](arr : A, fn : (A) -> A) -> A { fn(arr) }
+ //myFnTemplate2[A,B](value1 : A, value2 : B) -> auto { () }
+
+fn[T, V](v : T, v2 : V) -> () { 
+	fn1[T](v);
+	fn1[V](v2);
+	();
+}
+	
+fn1[T](v : T) -> () { (); }
+
+
+// TODO : error -> warning
+//fn[T](v : i32) -> () { // warning
+//	()
+//}
+
+fn2[T,V](v : T) -> i32 { sizeoftype(V);}
+
+ export _start() -> auto {
+	//initMemory();
+	//a : i32 = {
+	//	tmp0 : i32 = createArray[i32](1, 0);
+		//setValueArray[i32](tmp0, 0, 1);
+	//	tmp0;
+	//};
+
+	fn[i32, i32](7, 8);
+	fn[i32, f64](7, 2.9);
+
+	fn2[i32,f64](6);
+	
+	//myFnTemplate2[i32, f64](1, 1.1);
+	//myFnTemplate2[f64, i32](2.2, 2);
+	//myFnTemplate2[i32, f64](a, 3.3);
+	//mapT[i32](10, addT[i32]);
+	//mapT[f64](0.45, addT[f64]);
+
+	();
+	
+}
+

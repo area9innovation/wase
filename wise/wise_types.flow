@@ -11,9 +11,9 @@ export {
 	WiseAstDouble(value : double);
 	WiseAstString(value : string);
 
-	WiAtom ::= WiBool, WiBreak, WiContinue, WiDouble, WiHex32, WiHex64, WiHexf32, WiHexf64, WiI64, WiIf, WiIfelse, WiInt, WiReturn, WiSet, WiTuple, WiVar, WiWhile;
+	WiAtom ::= WiBool, WiBreak, WiContinue, WiDouble, WiHex32, WiHex64, WiHexf32, WiHexf64, WiI64, WiIf, WiIfelse, WiInt, WiReturn, WiSet, WiSizeOfType, WiTuple, WiVar, WiWhile;
 	WiDecl ::= WiFunction, WiGlobal, WiImport, WiWaseEmpty, WiWiseInclude;
-	WiExp ::= WiAdd, WiAnd, WiAtom, WiBoolAnd, WiBoolNot, WiBoolOr, WiBrace, WiCall, WiDiv, WiEqual, WiGreater, WiGreaterEqual, WiGreaterEqualu, WiGreateru, WiIsNull, WiLess, WiLessEqual, WiLessEqualu, WiLessu, WiLet, WiMod, WiMul, WiNegate, WiNotEqual, WiOr, WiSub, WiTupledot, WiTypeannotation, WiWasmOp, WiXor;
+	WiExp ::= WiAdd, WiAnd, WiAtom, WiBoolAnd, WiBoolNot, WiBoolOr, WiBrace, WiCall, WiPolyCall, WiDiv, WiEqual, WiGreater, WiGreaterEqual, WiGreaterEqualu, WiGreateru, WiIsNull, WiLess, WiLessEqual, WiLessEqualu, WiLessu, WiLet, WiMod, WiMul, WiNegate, WiNotEqual, WiOr, WiSub, WiTupledot, WiTypeannotation, WiWasmOp, WiXor;
 	WiOpttype ::= WiBasictype, WiType;
 	WiType ::= WiBasictype, WiFntype, WiTupletype;
 	WiWarg ::= WiInt, WiVar, WiType;
@@ -27,12 +27,13 @@ export {
 	WiBrace(expsemi : [WiExp]);
 	WiBreak();
 	WiCall(exp : WiExp, exps : [WiExp]);
+	WiPolyCall(exp : WiExp, types : [WiType]);
 	WiContinue();
 	WiDiv(exp1 : WiExp, exp2 : WiExp);
 	WiDouble(double_0 : double);
 	WiEqual(exp1 : WiExp, exp2 : WiExp);
 	WiFntype(types : [WiType], type : WiType);
-	WiFunction(id : string, optexport : string, lambdaargs : [WiIdtype], type : WiType, exp : WiExp, decl : WiDecl);
+	WiFunction(optexport : string, id : string, templates : [string], lambdaargs : [WiIdtype], type : WiType, exp : WiExp, decl : WiDecl);
 	WiGlobal(id : string, optexport : string, type : WiType, optmutable : int, exp : WiExp, decl : WiDecl);
 	WiGreater(exp1 : WiExp, exp2 : WiExp);
 	WiGreaterEqual(exp1 : WiExp, exp2 : WiExp);
@@ -61,6 +62,7 @@ export {
 	WiOr(exp1 : WiExp, exp2 : WiExp);
 	WiReturn(exps : [WiExp]);
 	WiSet(id : string, exp : WiExp);
+	WiSizeOfType(type : WiType);
 	WiSub(exp1 : WiExp, exp2 : WiExp);
 	WiTuple(exps : [WiExp]);
 	WiTupledot(exp : WiExp, int_0 : int);

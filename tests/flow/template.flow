@@ -1,0 +1,25 @@
+// TODO: template in struct ? 
+// 1) Tuple(v : ?);
+// 2) isSome : (m : Maybe<?>) -> bool;
+
+myFnTemplate2(value1: ?, value2 : ??) -> void { }
+
+//import runtime;
+// TODO array
+mapT(arr : ?, fn : (?) -> ?) -> ? { fn(arr); }
+addT(v : ?) -> ? { v }
+
+
+main() {
+	a = [1];
+	//b = [2.71];
+	myFnTemplate2(1, 1.1);
+	myFnTemplate2(2.2, 2);
+	// TODO
+	myFnTemplate2(a, 3.3);
+
+
+	mapT(10, addT);
+	mapT(0.45, addT);
+}
+
