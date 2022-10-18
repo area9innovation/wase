@@ -2,8 +2,6 @@ import tools/dsl/dsl_ast;
 import ds/array;
 import runtime;
 import wase/compile;
-import wise/wise_types;
-import wase/wase_types;
 import wise/wise_dot;
 
 export {

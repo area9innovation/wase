@@ -198,7 +198,6 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 			WeOr(rec(exp1), rec(exp2))
 		}
 		WiSub(exp1, exp2): WeSub(rec(exp1), rec(exp2))
-		// WiTupledot(exp, int_0): 
 		WiTypeannotation(e, type): WeTypeAnnotation(rec(e), WiType2WeTypes(type))
 		WiWasmOp(s, wargs, exps): WeWasmOp(s, map(wargs, WiWarg2WeWarg), map(exps, rec))
 		WiXor(exp1, exp2): {
@@ -208,7 +207,9 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 			}
 			WeXor(rec(exp1), rec(exp2))
 		}
-		default: WeInt(0)
+		WiSizeOfType(type): WeInt(0);
+		WiPolyCall(e, types): rec(e);
+		WiTupledot(e, int_0): rec(e);
 	}
 }
 
