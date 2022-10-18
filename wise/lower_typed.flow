@@ -218,7 +218,7 @@ WiType2WeType(w : WiType) -> WeType {
 	switch (w : WiType) {
 		WiBasictype(s): WeType(s)
 		WiFntype(types, type): rec(type)
-		WiTupletype(types): rec(types[0])
+		WiTupletype(types): if (types == []) WeType("") else rec(types[0])
 	}
 }
 
