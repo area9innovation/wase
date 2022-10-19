@@ -85,6 +85,7 @@ typeWiseAst(ast : WiseAst) -> string {
 		WiTupletype(types): ""
 		WiIdtype(id, type): rec(type)
 		WiSizeOfType(type): "i32";
-        WiPolyCall(exp, types): "";
+		WiPolyCall(exp, types): "";
+		WiDefValueOfType(type) : rec(type);
 	}
 }

@@ -210,6 +210,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiSizeOfType(type): WeInt(0);
 		WiPolyCall(e, types): rec(e);
 		WiTupledot(e, int_0): rec(e);
+		WiDefValueOfType(type): WeInt(0);
 	}
 }
 
