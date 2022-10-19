@@ -11,7 +11,7 @@ export {
 	WiseAstDouble(value : double);
 	WiseAstString(value : string);
 
-	WiAtom ::= WiBool, WiBreak, WiContinue, WiDouble, WiHex32, WiHex64, WiHexf32, WiHexf64, WiI64, WiIf, WiIfelse, WiInt, WiReturn, WiSet, WiSizeOfType, WiTuple, WiVar, WiWhile;
+	WiAtom ::= WiBool, WiBreak, WiContinue, WiDouble, WiHex32, WiHex64, WiHexf32, WiHexf64, WiI64, WiIf, WiIfelse, WiInt, WiReturn, WiSet, WiSizeOfType, WiDefValueOfType, WiTuple, WiVar, WiWhile;
 	WiDecl ::= WiFunction, WiGlobal, WiImport, WiWaseEmpty, WiWiseInclude;
 	WiExp ::= WiAdd, WiAnd, WiAtom, WiBoolAnd, WiBoolNot, WiBoolOr, WiBrace, WiCall, WiPolyCall, WiDiv, WiEqual, WiGreater, WiGreaterEqual, WiGreaterEqualu, WiGreateru, WiIsNull, WiLess, WiLessEqual, WiLessEqualu, WiLessu, WiLet, WiMod, WiMul, WiNegate, WiNotEqual, WiOr, WiSub, WiTupledot, WiTypeannotation, WiWasmOp, WiXor;
 	WiOpttype ::= WiBasictype, WiType;
@@ -63,6 +63,7 @@ export {
 	WiReturn(exps : [WiExp]);
 	WiSet(id : string, exp : WiExp);
 	WiSizeOfType(type : WiType);
+	WiDefValueOfType(type : WiType);
 	WiSub(exp1 : WiExp, exp2 : WiExp);
 	WiTuple(exps : [WiExp]);
 	WiTupledot(exp : WiExp, int_0 : int);

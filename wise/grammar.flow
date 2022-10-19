@@ -75,7 +75,8 @@ defineWise() -> DslGrammar {
 				| "while"  !letterOrDigit ws "(" ws exp ")" ws exp $"while_2"
 				| "break" !letterOrDigit ws $"break_0"
 				| "continue" !letterOrDigit ws $"continue_0" 
-				| "sizeoftype"  !letterOrDigit ws "(" ws type ")" ws $"sizeoftype_1" 
+				| "sizeoftype"  !letterOrDigit ws "(" ws type ")" ws $"sizeoftype_1"
+				| "defoftype"  !letterOrDigit ws "(" ws type ")" ws $"defoftype_1"
 				| id ":=" ws exp $"set_2"
 				| id $"var_1"
 
