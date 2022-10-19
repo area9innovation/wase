@@ -35,7 +35,7 @@ collectPolyDeclarations(value : WiseAst, acc : Tree<string, [string]>) -> Tree<s
 						if (valid) {
 							setTree(acc, id, templates)
 						} else if (usedTemplates == [] || forall(usedTemplates, \ut -> contains(templates, ut))) {
-							println("WARNING: declared " + toString(templates) + " templates, but used " + toString(usedTemplates));
+							println("WARNING:  " + id + ": declared " + toString(templates) + " templates, but used " + toString(usedTemplates));
 							setTree(acc, id, templates)
 						} else {
 							println("ERROR: wrong declarations of templates " + toString(templates) + " in " + id + ". Used Templates : " + toString(usedTemplates));
@@ -101,6 +101,7 @@ collectPolyDeclarations(value : WiseAst, acc : Tree<string, [string]>) -> Tree<s
 		WiReturn(exps): fold(exps, acc, \acc2, e -> collectPolyDeclarations(e, acc2));
 		WiSet(id, e): collectPolyDeclarations(e, acc);
 		WiSizeOfType(type): acc;
+		WiDefValueOfType(type): acc;
 		WiTuple(exps): fold(exps, acc, \acc2, e -> collectPolyDeclarations(e, acc2));
 		WiVar(__): acc;
 		WiWhile(exp1, exp2): collectPolyDeclarations(exp2, collectPolyDeclarations(exp1, acc));
@@ -236,6 +237,7 @@ collectPolyCallsFromAst(
 		WiVar(__): acc;
 		WiWhile(exp1, exp2): rec2(exp1, exp2);
 		WiSizeOfType(type): acc;
+		WiDefValueOfType(type): acc;
 		WiPolyCall(e, realTypes): {
 			fnName = extractFnName(e);
 			templatesM = lookupTree(declarations, fnName);
@@ -404,11 +406,13 @@ expandPolyCallsExp(fn : string, templateTypes : [Pair<string, WiType>], value : 
 		WiTuple(exps): WiTuple(map(exps, recExp));
 		WiWhile(exp1, exp2): WiWhile(recExp(exp1), recExp(exp2));
 		WiVar(__): value;
+		// TODO : move next 2 types
 		WiSizeOfType(type): {
 			size = calculateSizeOfType(templateTypes, type);
 			// println("Size of " + toString(type) + " is " + i2s(size));
 			WiInt(size);
 		}
+		WiDefValueOfType(type): makeDefaultValueForType(templateTypes, type);
 		WiCall(e, exps) : {
 			recFn = \-> WiCall(recExp(e), map(exps, recExp));
 			if (isPolyCall(e)) {
@@ -562,8 +566,8 @@ replaceFnName(fn : WiExp, oldName : string, newName : string) -> WiExp {
 }
 
 // size in bytes
-calculateSizeOfType(templateVars : [Pair<string, WiType>], t : WiType) -> int {
-	switch (t) {
+calculateSizeOfType(templateVars : [Pair<string, WiType>], type : WiType) -> int {
+	switch (type) {
 		WiBasictype(s): {
 			if (s == "i32") 4
 			else if (s == "i64") 8
@@ -572,27 +576,57 @@ calculateSizeOfType(templateVars : [Pair<string, WiType>], t : WiType) -> int {
 			else if (s == "v128") 16
 			else if (s == "bool") 4 // TODO
 			else if (s == "auto") {
-				println("ERROR: Can not determine size of auto type");
+				println("ERROR: Can not determine size of 'auto' type");
 				0
 			} else {
-				mtype = fold(templateVars, None(), \acc, p -> {
-					if (p.first == s) Some(p.second)
-					else acc
-				});
-				mtype ?? {
-					if (mtype == t) {
-						println("ERROR: Unknown template type '" + s + "' in sizeoftype");
-						0
-					} else {
-						calculateSizeOfType(templateVars, mtype)
-					}
-				} : {
-					println("ERROR: Unknown template var " + s + " in sizeoftype");
-					0
-				}
+				applyTypeFn(templateVars, type, 0, "sizeoftype", \t -> calculateSizeOfType(templateVars, t));
 			}
 		}
-		WiFntype(types, type): 4;
-		WiTupletype(types): fold(types, 0, \acc, type -> acc + calculateSizeOfType(templateVars, type));
+		WiFntype(types, retType): 4;
+		WiTupletype(types): fold(types, 0, \acc, t -> acc + calculateSizeOfType(templateVars, t));
+	}
+}
+
+makeDefaultValueForType(templateVars : [Pair<string, WiType>], type : WiType) -> WiExp {
+	switch (type) {
+		WiBasictype(s): {
+			if (s == "i32") WiInt(0)
+			else if (s == "i64") WiInt(0) // TODO ?
+			else if (s == "f32") WiDouble(0.0) // TODO ?
+			else if (s == "f64") WiDouble(0.0)
+			else if (s == "v128") {
+				println("ERROR: Can not determine default value of 'v128' type");
+				WiInt(0)
+			}
+			else if (s == "bool") WiBool(false)
+			else if (s == "auto") {
+				println("ERROR: Can not determine default value of 'auto' type");
+				WiInt(0)
+			} else {
+				applyTypeFn(templateVars, type, WiInt(0), "defoftype", \t -> makeDefaultValueForType(templateVars, t));
+			}
+		}
+		WiFntype(types, retType): {
+			println("ERROR: Default Value of the function is unknown " + toString(type));
+			WiInt(0);
+		}
+		WiTupletype(types): WiTuple(map(types, \t -> makeDefaultValueForType(templateVars, t)));
+	}
+}
+
+applyTypeFn(templateVars : [Pair<string, WiType>], type : WiBasictype, defVal : ?, fnName : string, fn : (WiType) -> ?) -> ? {
+	mtype = fold(templateVars, None(), \acc, p -> {
+		if (p.first == type.s) Some(p.second) else acc
+	});
+	mtype ?? {
+		if (mtype == type) {
+			println("ERROR: Unknown template type '" + type.s + "' in " + fnName);
+			defVal
+		} else {
+			fn(mtype)
+		}
+	} : {
+		println("ERROR: Unknown template var " + type.s + " in " + fnName);
+		defVal
 	}
 }

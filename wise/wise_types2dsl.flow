@@ -67,6 +67,7 @@ wiseAst2DslAst(wal : WiseAst) -> DslAst {
 		}
 		WiSet(a0, a1): DslNode("set", [DslString(a0), wiseAst2DslAst(a1)], 0);
 		WiSizeOfType(a0): DslNode("sizeoftype", [wiseAst2DslAst(a0)], 0);
+		WiDefValueOfType(a0): DslNode("defoftype", [wiseAst2DslAst(a0)], 0);
 		WiSub(a0, a1): DslNode("sub", [wiseAst2DslAst(a0), wiseAst2DslAst(a1)], 0);
 		WiTuple(a0): DslNode("tuple", [DslList(fold(a0, makeList(), \acc, e -> Cons(wiseAst2DslAst(e), acc)))], 0);
 		WiTupledot(a0, a1): DslNode("tupledot", [wiseAst2DslAst(a0), DslInt(a1)], 0);
@@ -250,6 +251,8 @@ dslAst2WiAtom(d : DslAst) -> WiAtom {
 		WiSet(getDslString(args[0]), dslAst2WiExp(args[1]))
 	} else if (name == "sizeoftype") {
 		WiSizeOfType(dslAst2WiType(args[0]))
+	} else if (name == "defoftype") {
+		WiDefValueOfType(dslAst2WiType(args[0]))
 	} else if (name == "tuple") {
 		WiTuple((\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[0]))
 	} else if (name == "var") {
@@ -360,6 +363,8 @@ dslAst2WiExp(d : DslAst) -> WiExp {
 		WiSet(getDslString(args[0]), dslAst2WiExp(args[1]))
 	} else if (name == "sizeoftype") {
 		WiSizeOfType(dslAst2WiType(args[0]))
+	} else if (name == "defoftype") {
+		WiDefValueOfType(dslAst2WiType(args[0]))
 	} else if (name == "sub") {
 		WiSub(dslAst2WiExp(args[0]), dslAst2WiExp(args[1]))
 	} else if (name == "tuple") {
