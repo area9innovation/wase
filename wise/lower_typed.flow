@@ -46,7 +46,7 @@ WiDecl2WeDecl(env : LowerWiseAstEnv, w : WiDecl) -> WeDecl {
 	lowerExp = \exp -> WiExp2WeExp(env, exp);
 	lowerDecl = \decl -> WiDecl2WeDecl(env, decl);
 	switch (w : WiDecl) {
-		WiFunction(id, optexport, templates, lambdaargs, type, expr, decl): {
+		WiFunction(optexport, id, templates, lambdaargs, type, expr, decl): {
 			WeFunction(id, optexport, map(lambdaargs, WiIdtype2WeIdtype), WiType2WeTypes(type), lowerExp(expr), lowerDecl(decl))
 		}
 		WiGlobal(id, optexport, type, optmutable, expr, decl): {

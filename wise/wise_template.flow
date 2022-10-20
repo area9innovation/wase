@@ -5,15 +5,21 @@ import text/blueprint;
 
 // TODO: remove [templates] from call()
 export {
-	decomposePolyWise(program : DslAst) -> DslAst;
+	decomposePolyWise2(program : DslAst) -> DslAst;
+
+	decomposePolyWise(program : WiseAst) -> WiseAst;
 }
 
-decomposePolyWise(program : DslAst) -> DslAst {
+decomposePolyWise2(program : DslAst) -> DslAst {
 	wiseCode = dslAst2WiseAst(program);
-	declarations = collectPolyDeclarations(wiseCode, makeTree());
-	polyVars = collectPolyCalls(wiseCode, declarations);
-	wiseProgram = expandPolyCalls(wiseCode, declarations, polyVars);
+	wiseProgram = decomposePolyWise(wiseCode);
 	wiseAst2DslAst(wiseProgram);
+}
+
+decomposePolyWise(program : WiseAst) -> WiseAst {
+	declarations = collectPolyDeclarations(program, makeTree());
+	polyVars = collectPolyCalls(program, declarations);
+	expandPolyCalls(program, declarations, polyVars);
 }
 
 // result - Tree<fnName, [templName]>
