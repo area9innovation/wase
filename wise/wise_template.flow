@@ -100,12 +100,12 @@ collectPolyDeclarations(value : WiseAst, acc : Tree<string, [string]>) -> Tree<s
 		WiInt(__): acc;
 		WiReturn(exps): fold(exps, acc, \acc2, e -> collectPolyDeclarations(e, acc2));
 		WiSet(id, e): collectPolyDeclarations(e, acc);
-		WiSizeOfType(type): acc;
-		WiDefValueOfType(type): acc;
+		WiSizeoftype(type): acc;
+		WiDefoftype(type): acc;
 		WiTuple(exps): fold(exps, acc, \acc2, e -> collectPolyDeclarations(e, acc2));
 		WiVar(__): acc;
 		WiWhile(exp1, exp2): collectPolyDeclarations(exp2, collectPolyDeclarations(exp1, acc));
-		WiPolyCall(e, templates): collectPolyDeclarations(e, acc);
+		WiPolycall(e, templates): collectPolyDeclarations(e, acc);
 	}
 }
 
@@ -236,9 +236,9 @@ collectPolyCallsFromAst(
 		WiTuple(exps): recA(exps, acc);
 		WiVar(__): acc;
 		WiWhile(exp1, exp2): rec2(exp1, exp2);
-		WiSizeOfType(type): acc;
-		WiDefValueOfType(type): acc;
-		WiPolyCall(e, realTypes): {
+		WiSizeoftype(type): acc;
+		WiDefoftype(type): acc;
+		WiPolycall(e, realTypes): {
 			fnName = extractFnName(e);
 			templatesM = lookupTree(declarations, fnName);
 			eitherFn(
@@ -351,7 +351,7 @@ expandPolyCallsExp(fn : string, templateTypes : [Pair<string, WiType>], value : 
 	recExp = \v -> expandPolyCallsExp(fn, templateTypes, v, declarations, polyVars);
 	recBrace = \v -> WiBrace(map(v.expsemi, recExp));
 	recArg = \v -> expandPolyCallsWargs(v, polyVars);
-	isPolyCall = \e -> isSameStructType(e, WiPolyCall(e, []));
+	isPolyCall = \e -> isSameStructType(e, WiPolycall(e, []));
 	switch (value : WiExp) {
 		WiAdd(exp1, exp2) : WiAdd(recExp(exp1), recExp(exp2));
 		WiSub(exp1, exp2) : WiSub(recExp(exp1), recExp(exp2));
@@ -407,12 +407,12 @@ expandPolyCallsExp(fn : string, templateTypes : [Pair<string, WiType>], value : 
 		WiWhile(exp1, exp2): WiWhile(recExp(exp1), recExp(exp2));
 		WiVar(__): value;
 		// TODO : move next 2 types
-		WiSizeOfType(type): {
+		WiSizeoftype(type): {
 			size = calculateSizeOfType(templateTypes, type);
 			// println("Size of " + toString(type) + " is " + i2s(size));
 			WiInt(size);
 		}
-		WiDefValueOfType(type): makeDefaultValueForType(templateTypes, type);
+		WiDefoftype(type): makeDefaultValueForType(templateTypes, type);
 		WiCall(e, exps) : {
 			recFn = \-> WiCall(recExp(e), map(exps, recExp));
 			if (isPolyCall(e)) {
@@ -429,7 +429,7 @@ expandPolyCallsExp(fn : string, templateTypes : [Pair<string, WiType>], value : 
 				);
 			}
 		}
-		WiPolyCall(e, templates): {
+		WiPolycall(e, templates): {
 			realTypes = map(templates, \t -> replaceTemplateWitRealType(t, templateTypes));
 			fixPolyFnName(fn, templateTypes, e, realTypes, polyVars, declarations);
 		}
