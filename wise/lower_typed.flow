@@ -79,7 +79,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiAdd(exp1, exp2): WeAdd(rec(exp1), rec(exp2))
 		WiAnd(exp1, exp2): {
 			type = typeWiseAst(w);
-			if (type != "i32" && type != "i64") {
+			if (type != WiWeI32() && type != WiWeI64()) {
 				env.onError(w, "bitwise operation only works on i32 and i64")
 			}
 			WeAnd(rec(exp1), rec(exp2))
@@ -128,7 +128,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiTuple(exps): WeTuple(map(exps, rec))
 		WiVar(id): {
 			type = typeWiseAst(w);
-			if (type == "func" && containsSet(env.locals, id)) {
+			if (isSameStructType(type, WiWeFunc([], WiWeEmpty())) && containsSet(env.locals, id)) {
 				WeWasmOp("fn", [WeString(id)], [])
 			} else {
 				WeVar(id)
@@ -192,7 +192,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiNotEqual(exp1, exp2): WeNotEqual(rec(exp1), rec(exp2))
 		WiOr(exp1, exp2): {
 			type = typeWiseAst(w);
-			if (type != "i32" && type != "i64") {
+			if (type != WiWeI32() && type != WiWeI64()) {
 				env.onError(w, "bitwise operation only works on i32 and i64")
 			}
 			WeOr(rec(exp1), rec(exp2))
@@ -202,7 +202,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiWasmOp(s, wargs, exps): WeWasmOp(s, map(wargs, WiWarg2WeWarg), map(exps, rec))
 		WiXor(exp1, exp2): {
 			type = typeWiseAst(w);
-			if (type != "i32" && type != "i64") {
+			if (type != WiWeI32() && type != WiWeI64()) {
 				env.onError(w, "bitwise operation only works on i32 and i64")
 			}
 			WeXor(rec(exp1), rec(exp2))
