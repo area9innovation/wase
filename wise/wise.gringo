@@ -7,7 +7,7 @@ global = optexport id $"swap"
 		"=" ws exp ";" ws decl $"global_6"; // (id, export : bool, type, mutable : bool, exp, body, scope)
 
 templates = ("[" ws templateName "]" ws) | $"nil";
-templateName = $"nil" $templateid $"cons"("," ws $templateid $"cons")* | $"nil";
+templateName = $"nil" $templateid $"cons"("," ws $templateid $"cons")*;
 templateid = ('A'-'Z' | 'a'-'z') letterOrDigit*;
 templateValue = ("[" ws types "]" ws);
 

@@ -33,7 +33,7 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 			println(t);
 		}
 
-		gringoParser = true;//isUrlParameterTrue("gringo");
+		gringoParser = !isUrlParameterFalse("gringo");
 
 		combinedProgram = if (gringoParser) {
 			program = parseWiDecl(code, \err -> println("Error in '" + filename + "': " + err));
@@ -66,7 +66,9 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 			// TODO: Tuples!!
 			loweredAst = waseAst2DslAst(loweredWase);
 			// typeWise makes type duplicates(?) what necessary for dsl2wase
+// auto == () doesn't work. FIX IT!
 			typed = typeWise(loweredAst); // TODO: wase typecheck ?
+
 			Pair(makeSet(), typed);
 		} else {
 			// typed -> lowered

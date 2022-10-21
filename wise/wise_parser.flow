@@ -83,10 +83,8 @@ parse_templateName(acc : DParseAcc<?>) -> bool {
 	{
 		pushDCheckpoint(acc);
 		addVerbatim(acc, "nil");
-		pushDCheckpoint(acc);
-		pushDCheckpoint(acc);
 		acc.starti ::= acc.i;
-		if (if (if (parse_templateid(acc)) {
+		if (if (parse_templateid(acc)) {
 			addMatched(acc, substring(acc.input, acc.starti, acc.i - acc.starti))
 		} else {
 			false
@@ -121,12 +119,7 @@ parse_templateName(acc : DParseAcc<?>) -> bool {
 			}
 		} else {
 			restoreDCheckpoint(acc)
-		}) {
-			discardDCheckpoint(acc)
-		} else {
-			restoreDCheckpoint(acc)
-		};
-		discardDCheckpoint(acc)
+		}
 	}
 }
 
