@@ -109,11 +109,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 					// OK, safe the environment so we do not pollute it
 					safeEnv = ^(acc.env);
 
-					if (countList(rets) == 1) {
-						acc.blocks := [list2array(rets)[0]];
-					} else {
-						acc.blocks := [rettypes];
-					}
+					acc.blocks := [returnType];
 
 					// OK, define the types of the arguments in the scope
 					fargs = list2array(getDslList(args[2]));

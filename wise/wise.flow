@@ -33,64 +33,68 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 			println(t);
 		}
 
-		//if (true) {
-println("\n--------------------------------------------------");
-			program1 = parseWiDecl(code, \err -> println("Error: " + err));
-println("parsed WiAst:: "+toString(program1));
-			// TODO: includes
-			extended2 = program1;//decomposePolyWise(program1);
-println("\ntemplated WiAst:: "+toString(extended2));
-			// TODO: typecheck ? typeWise
-			env1 = makeLowerWiseAstEnv(\ast, error -> println(error + " at: " + toString(ast)));
-			loweredAst = lowerWiseAst2WaseAst(env1, extended2);
-println("\nWaseAst : " + toString(loweredAst));
-			// TODO
-			// add dot* functions
-			// lowered1 = addDotNFunctions(^(env.dots), lowered0);
-			// Add exported memory
-			// lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered1], 0);
-			// println("DslAst  : " + toString(dslAst2WaseAst(lowerWise2Wase(env, typed))));
+		gringoParser = true;//isUrlParameterTrue("gringo");
 
-			// TODO waseAst2Wase
-			lowered0 = waseAst2DslAst(loweredAst);
-println("\ndsl : " + toString(lowered0));
-			lowered = typeWise(lowered0);
-println("\nlowered : " + toString(lowered));
-println("--------------------------------------------------\n");
-		//}
-
-// println(toString(decomposePolyWise2(parseWise(filename, code))));
-		/*program = parseWise(filename, code);
-		include = DslInclude(includes, [".wise"], "wise_include", "wase_empty", \path, file, content -> {
-			parseWise(path, content);
-		}, ref makeSet());
-		combined = processDslIncludes(include, program);
-		extended = decomposePolyWise2(combined);
-		typed = typeWise(extended);
-		if (isUrlParameterTrue("debug-type")) {
-			println("Typed '" + filename + "'':");
-			println(prettyDsl(typed));
+		combinedProgram = if (gringoParser) {
+			program = parseWiDecl(code, \err -> println("Error in '" + filename + "': " + err));
+			// TODO: don't use transformations (wise->dsl->wise->...)
+			dslProgram = wiseAst2DslAst(program);
+			include = DslInclude(includes, [".wise"], "wise_include", "wase_empty", \path, file, content -> {
+				wiProgram = parseWiDecl(content, \err -> println("Error in '" + path + "': " + err));
+				// TODO: don't use transformations
+				wiseAst2DslAst(wiProgram)
+			}, ref makeSet());
+			processDslIncludes(include, dslProgram);
+		} else {
+			program = parseWise(filename, code);
+			include = DslInclude(includes, [".wise"], "wise_include", "wase_empty", \path, file, content -> {
+				parseWise(path, content);
+			}, ref makeSet());
+			processDslIncludes(include, program);
 		}
 
+		extended = decomposePolyWise2(combinedProgram);
+
 		// Here, we should lower Wise constructs to Wase constructs
-		env = makeLowerWiseEnv(\node, error -> {
-			println(error + " at " + summarizeDsl(node));
-		});
-		lowered0 = lowerWise2Wase(env, typed);
+		lowered0 = if (gringoParser) {
+			// lowered -> typed
+			env1 = makeLowerWiseAstEnv(\ast, error -> println(error + " at: " + toString(ast)));
+			// TODO: don't use transformations (dsl->wise->...; waseast->dsl->...)
+			wiseProgram = dslAst2WiseAst(extended);
+			loweredWase = lowerWiseAst2WaseAst(env1, wiseProgram);
+			// TODO: WaseAst2Wase
+			// TODO: Tuples!!
+			loweredAst = waseAst2DslAst(loweredWase);
+			// typeWise makes type duplicates(?) what necessary for dsl2wase
+			typed = typeWise(loweredAst); // TODO: wase typecheck ?
+			Pair(makeSet(), typed);
+		} else {
+			// typed -> lowered
+			typed = typeWise(extended);
+			if (isUrlParameterTrue("debug-type")) {
+				println("Typed '" + filename + "'':");
+				println(prettyDsl(typed));
+			}
+			env = makeLowerWiseEnv(\node, error -> {
+				println(error + " at " + summarizeDsl(node));
+			});
+			Pair(^(env.dots), lowerWise2Wase(env, typed));
+		}
+
 		// add dot* functions
-		lowered1 = addDotNFunctions(^(env.dots), lowered0);
+		lowered1 = unpair(lowered0, addDotNFunctions);
 		// Add exported memory
 		lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered1], 0);
 
 		if (isUrlParameterTrue("debug-lower")) {
 			println("Wase '" + filename + "'':");
 			println(prettyDsl(lowered));
-		} */
+		}
 
 		wase = dsl2wase(\node, error -> {
 			println(filename + ": " + error)
 		}, lowered);
-println("\nWASE : " + toString(wase));
+
 		if (isUrlParameterTrue("debug-wase")) {
 			println("\nAs wase:");
 			println(prettyWase(wase));
