@@ -4,7 +4,7 @@ import string;
 
 export {
 	// is it typecheck ? the function doesn't have any checks. and result maybe wrong
-	typeWiseAst(ast : WiseAst) -> WiWeType;
+	typeWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiWeType;
 
 	WiWeType ::= WiWeI32, WiWeI64, WiWeF32, WiWeF64, WiWeSIMD, WiWeFunc, WiWeExtern,
 					WiWeBool, WiWeString, WiWeTuple, WiWeEmpty;
@@ -21,24 +21,26 @@ export {
 		WiWeTuple(fields : [WiWeType]);
 		// it should't exist
 		WiWeEmpty();
+
+	makeTypeWiseAstState(onError : (WiseAst, string) -> void) -> TypeWiseAstState;
 }
 
-typeWiseAst(ast : WiseAst) -> WiWeType {
-	typeWiseAst2(TypeWiseAstState(makeTree(), makeTree()), ast);
+makeTypeWiseAstState(onError : (WiseAst, string) -> void) -> TypeWiseAstState {
+	TypeWiseAstState(makeTree(), makeTree(), onError);
 }
 
-// TODO: it should be variables of the scope
 TypeWiseAstState(
 	vars : Tree<string, WiWeType>,
 	fns : Tree<string, WiWeFunc>,
+	onError : (WiseAst, string) -> void,
 );
 
 
 // TODO: ??
 // 1) type check of all elements
 // 2) find the real type result (for example, WiCall, WiWasmOp, WiTupledot)
-typeWiseAst2(state : TypeWiseAstState, ast : WiseAst) -> WiWeType {
-	rec = \a -> typeWiseAst2(state, a);
+typeWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiWeType {
+	rec = \a -> typeWiseAst(state, a);
 	rec2e = \e1, e2 -> {
 		// t1 = rec(e1);
 		t2 = rec(e2);
@@ -62,6 +64,14 @@ typeWiseAst2(state : TypeWiseAstState, ast : WiseAst) -> WiWeType {
 			WiWeEmpty();
 		}
 	}
+	checkBitwiseOp = \exp1, exp2 -> {
+		type = rec2e(exp1, exp2);
+		if (type != WiWeI32() && type != WiWeI64()) {
+			state.onError(ast, "bitwise operation only works on i32 and i64")
+		}
+		type;
+	}
+
 	switch (ast : WiseAst) {
 		WiseAstList(value): {
 			rec(headList(value, WiWaseEmpty()));
@@ -124,32 +134,29 @@ typeWiseAst2(state : TypeWiseAstState, ast : WiseAst) -> WiWeType {
 			if (cond != WiWeBool()) println("Type mismatch in While condition, expected bool, got " + toString(cond));
 			rec(exp2);
 		}
-		WiFunction(id, optexport, templates, lambdaargs, type, exp, decl): {
+		WiFunction(optexport, id, templates, lambdaargs, type, exp, decl): {
 			// ? check types
-			fnType = rec(type);
-			newState = switch (fnType : WiWeType) {
-				WiWeFunc(__, __): TypeWiseAstState(state with fns = setTree(state.fns, id, fnType));
-				default : {
-					println("ERROR: wrong fn type '" + id + "' " + toString(fnType));
-					state;
-				}
-			}
-			typeWiseAst2(newState, decl);
+			fnType = WiWeFunc(map(lambdaargs, \a -> rec(a.type)), rec(type));
+			newState = TypeWiseAstState(state with 
+				fns = setTree(state.fns, id, fnType),
+				vars = fold(lambdaargs, state.vars, \acc, t -> setTree(acc, t.id, typeWiseAst(state, t.type)))
+			);
+			typeWiseAst(newState, decl);
 		}
 		WiGlobal(id, optexport, type, optmutable, exp, decl): rec(decl); // ? check types
 		WiImport(id1, type, optmutable, id2, id3, decl): rec(decl); // ? check types
 		WiWaseEmpty(): WiWeEmpty();
 		WiWiseInclude(s, decl): rec(decl);
 		WiAdd(exp1, exp2): rec2e(exp1, exp2);
-		WiAnd(exp1, exp2): rec2e(exp1, exp2);
+		WiAnd(exp1, exp2): checkBitwiseOp(exp1, exp2);
 		WiBoolAnd(exp1, exp2): rec2e(exp1, exp2);
 		WiDiv(exp1, exp2): rec2e(exp1, exp2);
 		WiMod(exp1, exp2): rec2e(exp1, exp2);
 		WiMul(exp1, exp2): rec2e(exp1, exp2);
 		WiBoolOr(exp1, exp2): rec2e(exp1, exp2);
-		WiOr(exp1, exp2): rec2e(exp1, exp2);
+		WiOr(exp1, exp2): checkBitwiseOp(exp1, exp2);
 		WiSub(exp1, exp2): rec2e(exp1, exp2);
-		WiXor(exp1, exp2): rec2e(exp1, exp2);
+		WiXor(exp1, exp2): checkBitwiseOp(exp1, exp2);
 		WiBrace(expsemi): {
 			// ? check exps ?
 			// iter(expsemi, rec)
@@ -188,7 +195,7 @@ typeWiseAst2(state : TypeWiseAstState, ast : WiseAst) -> WiWeType {
 			varType = rec(opttype);
 			newState = TypeWiseAstState(state with vars = setTree(state.vars, id, varType));
 			// typeWiseAst(newState, exp) // ?
-			typeWiseAst2(newState, brace);
+			typeWiseAst(newState, brace);
 		}
 		WiNegate(exp): rec(exp);
 		
