@@ -53,7 +53,7 @@ WiDecl2WeDecl(env : LowerWiseAstEnv, w : WiDecl) -> WeDecl {
 	switch (w : WiDecl) {
 		WiFunction(optexport, id, templates, lambdaargs, type, expr, decl): {
 			newEnv = LowerWiseAstEnv(env with locals = fold(lambdaargs, env.locals, \acc, t -> insertSet(acc, t.id)));
-			WeFunction(optexport, id, map(lambdaargs, WiIdtype2WeIdtype), WiType2WeTypes(type), WiExp2WeExp(newEnv, expr), lowerDecl(decl));
+			WeFunction(id, optexport, map(lambdaargs, WiIdtype2WeIdtype), WiType2WeTypes(type), WiExp2WeExp(newEnv, expr), lowerDecl(decl));
 		}
 		WiGlobal(id, optexport, type, optmutable, expr, decl): {
 			WeGlobal(id, optexport, WiType2WeType(type), optmutable, lowerExp(expr), lowerDecl(decl));
