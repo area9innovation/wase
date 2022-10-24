@@ -59,15 +59,15 @@ WiDecl2WeDecl(env : LowerWiseAstEnv, w : WiDecl) -> WeDecl {
 			WeGlobal(id, optexport, WiType2WeType(type), optmutable, lowerExp(expr), lowerDecl(decl));
 		}
 		WiImport(id1, type, optmutable, id2, id3, decl): {
+			makeGlobalImport = \-> WeImportGlobal(id1, WiType2WeType(type), optmutable, id2, id3, lowerDecl(decl));
 			switch(type : WiType) {
-				WiFntype(types, type0): {
-					WeImportFun(id1, WeFnType(map(types, WiType2WeType), WiType2WeTypes(type0)), id2, id3, lowerDecl(decl));
-				}
-				default: WeImportGlobal(id1, WiType2WeType(type), optmutable, id2, id3, lowerDecl(decl));
+				WiFntype(types, type0): WeImportFun(id1, WeFnType(map(types, WiType2WeType), WiType2WeTypes(type0)), id2, id3, lowerDecl(decl));
+				WiBasictype(__) : makeGlobalImport();
+				WiTupletype(__) : makeGlobalImport();
 			}
 		}
-		WiWaseEmpty(): WeWaseEmpty();
 		WiWiseInclude(s, decl): WeWaseInclude(s, lowerDecl(decl));
+		WiWaseEmpty(): WeWaseEmpty();
 	}
 }
 
@@ -81,25 +81,26 @@ WiWarg2WeWarg(w : WiWarg) -> WeWarg {
 
 WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 	rec = \w1 -> WiExp2WeExp(env, w1);
+	// TODO : (1>0 && 4>0) -> bool!=i32 (greater - bool, boolean - i32)
+	makeFalse = \-> WeInt(0); // WeEqual(WeInt(0), WeInt(1));
+	makeTrue = \-> WeInt(1); // WeEqual(WeInt(1), WeInt(1));
 	switch (w : WiExp) {
 		WiAdd(exp1, exp2): WeAdd(rec(exp1), rec(exp2));
 		WiAnd(exp1, exp2): WeAnd(rec(exp1), rec(exp2));
-		WiBool(b): {
-			if (b) WeInt(1) else WeInt(0)
-		}
+		WiBool(b): WeInt(if (b) 1 else 0);
 		WiBreak(): {
 			depth = (env.blocks - 1) - (if (env.loops == []) {
 				env.onError(w, "break only in while");
 				0;
 			} else lastElement(env.loops, 0));
-			WeWasmOp("break", [WeInt(depth)], [])
+			WeWasmOp("break", [WeInt(depth)], []); // exps?
 		}
 		WiContinue(): {
 			depth = (env.blocks - 2) - (if (env.loops == []) {
 				env.onError(w, "continue only in while");
 				0;
 			} else lastElement(env.loops, 0));
-			WeWasmOp("continue", [WeInt(depth)], [])
+			WeWasmOp("continue", [WeInt(depth)], []); // exps?
 		}
 		WiDouble(double_0): WeDouble(double_0);
 		WiHex32(s): WeHex32(s);
@@ -151,9 +152,9 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 				])
 			])
 		}
-		WiBoolAnd(exp1, exp2): WeIfelse(rec(exp1), rec(exp2), WeInt(0));
-		WiBoolNot(e): WeIfelse(rec(e), WeInt(0), WeInt(1));
-		WiBoolOr(exp1, exp2): WeIfelse(rec(exp1), WeInt(1), rec(exp2));
+		WiBoolAnd(exp1, exp2): WeIfelse(rec(exp1), rec(exp2), makeFalse()); // TODO: If a does not have side-effects, we can do a bitwise and
+		WiBoolNot(e): WeIfelse(rec(e), makeFalse(), makeTrue());
+		WiBoolOr(exp1, exp2): WeIfelse(rec(exp1), makeTrue(), rec(exp2)); // TODO: If a does not have side-effects, we can do a bitwise or
 		WiBrace(expsemi): WeBrace(map(expsemi, rec));
 		WiCall(e, exps): {
 			indirect = \ -> {
@@ -187,7 +188,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiLet(id, i, opttype, e, brace): {
 			newEnv = LowerWiseAstEnv(env with locals = insertSet(env.locals, id));
 			recE = \w1 -> WiExp2WeExp(newEnv, w1);
-			WeLet(id, i, WiType2WeType(opttype), rec(e), WeBrace(map(brace.expsemi, recE)));
+			WeLet(id, i, WiType2WeType(opttype), recE(e), WeBrace(map(brace.expsemi, rec)));
 		}
 		WiMod(exp1, exp2): WeMod(rec(exp1), rec(exp2));
 		WiMul(exp1, exp2): WeMul(rec(exp1), rec(exp2));
