@@ -129,7 +129,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiSet(id, e): WeSet(id, rec(e))
 		WiTuple(exps): WeTuple(map(exps, rec))
 		WiVar(id): {
-			if (containsSet(env.fns, id) && containsSet(env.locals, id)) {
+			if (containsSet(env.fns, id) && !containsSet(env.locals, id)) {
 				WeWasmOp("fn", [WeString(id)], [])
 			} else {
 				WeVar(id)
