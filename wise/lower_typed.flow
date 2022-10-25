@@ -158,21 +158,21 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiBoolOr(exp1, exp2): WeIfelse(rec(exp1), makeTrue(), rec(exp2)); // TODO: If a does not have side-effects, we can do a bitwise or
 		WiBrace(expsemi): WeBrace(map(expsemi, rec));
 		WiCall(e, exps): {
-			indirect = \ -> {
-				fncall = rec(e);
+			indirect = \fncall -> {
 				fnargs = map(exps, rec);
 				WeWasmOp("call_indirect", [], concat([fncall], fnargs))
 			};
 
 			switch (e : WiseAst) {
 				WiVar(id):  {
+					fnId = WeVar(id);
 					if (containsSet(env.locals, id)) {
-						indirect()
+						indirect(fnId)
 					} else {
-						WeCall(rec(e), map(exps, rec))
+						WeCall(fnId, map(exps, rec))
 					}
 				}
-				default: indirect()
+				default: indirect(rec(e))
 			}
 		}
 		WiDiv(exp1, exp2): WeDiv(rec(exp1), rec(exp2));
@@ -226,7 +226,7 @@ WiType2WeTypes(w : WiType) -> [WeType] {
 
 extractFnNamesFromWiseAst(w : WiseAst, acc : Set<string>) -> Set<string> {
 	switch (w) {
-		WiseAstList(value): foldList(value, acc, \acc2, v -> extractFnNamesFromWiseAst(v, acc));
+		WiseAstList(value): foldList(value, acc, \acc2, v -> extractFnNamesFromWiseAst(v, acc2));
 		WiseAstBool(__): acc;
 		WiseAstInt(__): acc;
 		WiseAstDouble(__): acc;
@@ -234,7 +234,7 @@ extractFnNamesFromWiseAst(w : WiseAst, acc : Set<string>) -> Set<string> {
 		WiExp(): acc;
 		WiType(): acc;
 		WiIdtype(__, __): acc;
-		WiFunction(optexport, id, templates, lambdaargs, type, expr, decl): insertSet(acc, id);
+		WiFunction(optexport, id, templates, lambdaargs, type, expr, decl): extractFnNamesFromWiseAst(decl, insertSet(acc, id));
 		WiGlobal(id, optexport, type, optmutable, expr, decl): extractFnNamesFromWiseAst(decl, acc);
 		WiImport(id1, type, optmutable, id2, id3, decl): extractFnNamesFromWiseAst(decl, acc);
 		WiWaseEmpty(): acc;
