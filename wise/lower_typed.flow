@@ -189,7 +189,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiLet(id, i, opttype, e, brace): {
 			newEnv = LowerWiseAstEnv(env with locals = insertSet(env.locals, id));
 			recE = \w1 -> WiExp2WeExp(newEnv, w1);
-			WeLet(id, i, WiType2WeType(opttype), recE(e), WeBrace(map(brace.expsemi, rec)));
+			WeLet(id, i, WiType2WeType(opttype), rec(e), WeBrace(map(brace.expsemi, recE)));
 		}
 		WiMod(exp1, exp2): WeMod(rec(exp1), rec(exp2));
 		WiMul(exp1, exp2): WeMul(rec(exp1), rec(exp2));
