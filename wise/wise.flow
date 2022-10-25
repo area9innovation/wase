@@ -71,8 +71,8 @@ println("LOWERED WISE: "+toString(loweredWase));
 			loweredAst = waseAst2DslAst(loweredWase);
 println("LOWERED AST: "+toString(loweredAst));
 			// typeWise makes type duplicates(?) what necessary for dsl2wase
-// auto == () doesn't work. FIX IT!
-			//typed = typeWise(loweredAst); // TODO: wase typecheck ?
+			// waseAst2DslAst doesn't have the real types. We have to fix it
+			// auto == () doesn't work. greate = bool type (should be int)
 			typed = typeWase(loweredAst);
 println("CHECKED TYPE");
 			Pair(makeSet(), typed);
@@ -86,6 +86,8 @@ println("CHECKED TYPE");
 			env = makeLowerWiseEnv(\node, error -> {
 				println(error + " at " + summarizeDsl(node));
 			});
+println("TYPED AST: "+toString(typed));
+println("LWD AST: "+toString(lowerWise2Wase(env, typed)));
 			Pair(^(env.dots), lowerWise2Wase(env, typed));
 		}
 
@@ -107,7 +109,7 @@ println("CHECKED TYPE");
 			println("\nAs wase:");
 			println(prettyWase(wase));
 		}
-
+println("\n"+toString(wase));
 		wasm = wase2wasm(wase);
 		bytes = wasmModule2bytes(wasm);
 

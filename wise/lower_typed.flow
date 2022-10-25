@@ -1,7 +1,7 @@
 import wise/wise_types;
 import wase/wase_types;
 import wise/type_ast;
-import ds/set;
+import wise/wiseast_dot;
 
 export {
 	lowerWiseAst2WaseAst(w : WiseAst) -> WaseAst;
@@ -12,11 +12,12 @@ LowerWiseAstEnv(
 	loops : [int],
 	locals : Set<string>,
 	fns : Set<string>,
+	dots : ref Set<WaseDotFn>,
 	onError : (WiseAst, string) -> void, 
 );
 
 makeLowerWiseAstEnv() -> LowerWiseAstEnv {
-	LowerWiseAstEnv(0, [], makeSet(), makeSet(), nop2);
+	LowerWiseAstEnv(0, [], makeSet(), makeSet(), ref makeSet(), nop2);
 }
 
 lowerWiseAst2WaseAst(w : WiseAst) -> WaseAst {
@@ -201,7 +202,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiXor(exp1, exp2): WeXor(rec(exp1), rec(exp2));
 		WiSizeoftype(type): WeInt(0);
 		WiPolycall(e, types): rec(e);
-		WiTupledot(e, int_0): rec(e);
+		WiTupledot(e, int_0): tupledot2WeAst(env, w);
 		WiDefoftype(type): WeInt(0);
 	}
 }
@@ -209,9 +210,9 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 WiType2WeType(w : WiType) -> WeType {
 	rec = \w1 -> WiType2WeType(w1);
 	switch (w : WiType) {
-		WiBasictype(s): WeType(s)
-		WiFntype(types, type): rec(type)
-		WiTupletype(types): if (types == []) WeType("") else rec(types[0])
+		WiBasictype(s): WeType(s);
+		WiFntype(types, type): WeType("i32");//rec(type); // HERE ERROR
+		WiTupletype(types): if (types == []) WeType("") else rec(types[0]); // TODO
 	}
 }
 
@@ -240,3 +241,138 @@ extractFnNamesFromWiseAst(w : WiseAst, acc : Set<string>) -> Set<string> {
 		WiWiseInclude(s, decl): extractFnNamesFromWiseAst(decl, acc);
 	}
 }
+
+// TupleDot
+
+/* extractVarInfo(arg : DslNode, indexes : [int]) -> Triple<Maybe<string>, DslAst, [int]> {
+	if (arg.name == "var") {
+		if (length(arg.args) >= 2) {
+			Triple(Some(getDslString(arg.args[0])), arg.args[1], indexes);
+		} else {
+			Triple(None(), arg.args[1], indexes);
+		}
+	} else if (arg.name == "tupledot") {
+		extractVarInfo(getDslNode(arg.args[0]), concat([getDslInt(arg.args[1])], indexes));
+	} else if (arg.name == "tuple") {
+		Triple(None(), arg.args[1], indexes);
+	} else if (arg.name == "call") {
+		Triple(None(), arg.args[2], indexes);
+	} else {
+		Triple(None(), arg, indexes);
+	}
+}
+
+fieldPath2index(route : [int], types : DslAst, acc : int) -> int {
+	if (route == []) {
+		acc;
+	} else {
+		pathLength = ref -1;
+		foundItem = findItemInDslAst(types, [], \itemPath, item -> {
+			pathLength := ^pathLength + 1;
+			itemPath == route;
+		});
+		if (foundItem) ^pathLength else -1;
+	}
+}
+
+// todo: tail recursion
+findItemInDslAst(v : DslAst, route : [int], fn : ([int], DslAst) -> bool) -> bool {
+	switch (v : DslAst) {
+		DslBool(__) : fn(route, v);
+		DslInt(__) : fn(route, v);
+		DslDouble(__) : fn(route, v);
+		DslString(__) : fn(route, v);
+		DslList(l) : foldiList(l, false, \i, acc, item ->
+			acc || findItemInDslAst(item, arrayPush(route, i), fn)
+		);
+		DslNode(__, __, __) : fn(route, v);
+	}
+} */
+
+tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
+	WeBrace([])
+	/* arg = getDslNode(d.args[0]);
+	
+	onErrorTupledot = \val -> {
+		env.onError(d, ". only for tuples " + prettyDsl(val));
+		d;
+	}
+	makeDotFnAndPushToEnv = \value, index, types  -> {
+		dot = makeDotFn(value, index, types, d.pos);
+		env.dots := insertSet(^(env.dots), dot.fn);
+		dot.value;
+	}
+	makeNestedDotFn = \index, dotIndex, primTypes -> makeDotFnAndPushToEnv(
+		lowerWise2Wase(env, extractTupldotValue(d.args[0])),
+		if (index >= 0) DslInt(index) else dotIndex,
+		getDslTupleTypes(primTypes)
+	);
+	// tuple construction
+	makeTupleConstructExp = \index, primTypes -> {
+		loweredValue = lowerWise2Wase(env, d.args[0]);
+		dotIndex = lowerWise2Wase(env, d.args[1]);
+		varType = wiseType(loweredValue);
+		switch (varType) {
+			DslList(t): {
+				types = getDslTupleTypes(varType);
+				if (exists(types, \v -> !isPrimitiveDslType(v))) {
+					makeNestedDotFn(index, dotIndex, primTypes); // nested dot for construction
+				} else {
+					makeDotFnAndPushToEnv(loweredValue, dotIndex, orderDotFnTypes(arg, types));
+				}
+			}
+			DslNode(name, __, __) : if (name == "call") {
+				makeNestedDotFn(index, dotIndex, primTypes);
+			} else {
+				onErrorTupledot(varType);
+			}
+			default: onErrorTupledot(varType);
+		}
+	}
+	if (arg.name == "var" || arg.name == "tupledot") {
+		untriple(
+			if (arg.name == "var") extractVarInfo(d, []) else extractVarInfo(arg, [getDslInt(d.args[1])]),
+			\varNameM, types, path -> {
+				index = fieldPath2index(path, types, -1);
+				eitherFn(
+					varNameM,
+					\varName -> {
+						// do not fall below. stop tree traversal
+						// varName.field1.field2;
+						if (index > -1) {
+							DslNode("var", [DslString(varName + "." + i2s(index))], d.pos);
+						} else {
+							env.onError(d, "wrong index of tuple " + prettyDsl(d));
+							d;
+						}
+					},
+					\-> makeTupleConstructExp(index, types)
+				)
+			}
+		);
+	} else {
+		makeTupleConstructExp(-1, DslList(makeList()))
+	} */
+}
+
+/* extractTupldotValue(d : DslAst) -> DslAst {
+	switch (d) {
+		DslNode(name, args, __): if (name == "tupledot") extractTupldotValue(args[0]) else d;
+		default: d;
+	}
+}
+
+// TODO: think about the order
+// example : 
+// Tuple(i32, f64);
+// makeTuple() -> Tuple;
+// Tuple(1, 1.1) == [f64, i32]
+// makeTuple() == [i32, f64]
+orderDotFnTypes(node : DslNode, types : [DslAst]) -> [DslAst] {
+	if (node.name == "tuple") {
+		// tuples have reversed types
+		reverseA(types)
+	} else {
+		types;
+	}
+} */
