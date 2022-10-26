@@ -185,16 +185,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiLessEqual(exp1, exp2): WeLessEqual(rec(exp1), rec(exp2));
 		WiLessEqualu(exp1, exp2): WeWasmOp("le_u", [], [rec(exp1), rec(exp2)]);
 		WiLessu(exp1, exp2): WeWasmOp("lt_u", [], [rec(exp1), rec(exp2)]);
-		WiLet(id, i, opttype, e, brace): {
-			newEnv = LowerWiseAstEnv(env with locals = insertSet(env.locals, id));
-			recE = \w1 -> WiExp2WeExp(newEnv, w1);
-			makeLetVar = \-> WeLet(id, i, WiType2WeType(opttype), rec(e), WeBrace(map(brace.expsemi, recE)));
-			switch (opttype : WiType) {
-				WiBasictype(__): makeLetVar();
-				WiFntype(__, __): makeLetVar();
-				WiTupletype(types): WeLettuple(id, i, map(types, WiType2WeType), rec(e), WeBrace(map(brace.expsemi, recE)));// todo: tuple of tuples ?
-			}
-		}
+		WiLet(id, i, opttype, e, brace): wiLet2weLet(env, w);
 		WiMod(exp1, exp2): WeMod(rec(exp1), rec(exp2));
 		WiMul(exp1, exp2): WeMul(rec(exp1), rec(exp2));
 		WiNegate(e): WeNegate(rec(e));
@@ -265,6 +256,28 @@ WiType2WeTypes(w : WiType) -> [WeType] {
 		WiBasictype(s): [WeType(s)]
 		WiFntype(types, type): concat(fold(types, [], \acc, t -> concat(acc, WiType2WeTypes(t))), WiType2WeTypes(type))
 		WiTupletype(types): fold(types, [], \acc, t -> concat(acc, WiType2WeTypes(t)))
+	}
+}
+
+wiLet2weLet(env : LowerWiseAstEnv, w : WiLet) -> WeExp {
+	newEnv = LowerWiseAstEnv(env with locals = insertSet(env.locals, w.id));
+	recE = \w1 -> WiExp2WeExp(newEnv, w1);
+	rec = \w1 -> WiExp2WeExp(env, w1);
+	makeLetVar = \-> WeLet(w.id, w.i, WiType2WeType(w.opttype), rec(w.exp), WeBrace(map(w.brace.expsemi, recE)));
+	recTuple = \e -> { // fns ? 
+		rec(WiTuple(extractTupleExps(e, [])));
+	}
+	switch (w.opttype : WiType) {
+		WiBasictype(__): makeLetVar();
+		WiFntype(__, __): makeLetVar();
+		WiTupletype(__): WeLettuple(w.id, w.i, WiType2WeTypes(w.opttype), recTuple(w.exp), WeBrace(map(w.brace.expsemi, recE)));
+	}
+}
+
+extractTupleExps(e : WiExp, acc : [WiExp]) -> [WiExp] {
+	switch (e : WiExp) {
+		WiTuple(exps): fold(exps, acc, \acc2, e1 -> extractTupleExps(e1, acc2));
+		default : arrayPush(acc, e);
 	}
 }
 
