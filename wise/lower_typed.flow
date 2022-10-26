@@ -158,7 +158,8 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiCall(e, exps): {
 			indirect = \fncall -> {
 				fnargs = map(exps, rec);
-				WeWasmOp("call_indirect", [], concat([fncall], fnargs))
+				// swap fnargs and fnname (due to DSL ?)
+				WeWasmOp("call_indirect", [], arrayPush(fnargs, fncall))
 			};
 
 			switch (e : WiseAst) {
@@ -249,7 +250,7 @@ WiType2WeType(w : WiType) -> WeType {
 	rec = \w1 -> WiType2WeType(w1);
 	switch (w : WiType) {
 		WiBasictype(s): WeType(s);
-		WiFntype(types, type): WeType("i32"); 
+		WiFntype(types, type): WeType("i32");
 		WiTupletype(types): if (types == []) WeType("") else rec(types[0]); // TODO
 	}
 }
