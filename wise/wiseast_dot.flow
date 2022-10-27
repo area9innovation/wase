@@ -1,0 +1,106 @@
+import wise/wise_types;
+import ds/set;
+
+export {
+
+	makeWeTupleDotFn(e : WiExp, index : int, types : WiType) -> WaseTupledotFn;
+	WaseTupledotFn(
+		value : WiExp,
+		fn : WaseDotFn,
+	);
+	WaseDotFn(
+		name : string,  // format : dot_type[_type]_index
+		argTypes : WiType,
+		index : int,
+	);
+	// isDotCallFn(v : WaseAst) -> bool;
+
+	// addDotNFunctions(fns : Set<WaseDotFn>, d : WaseAst) -> WaseAst;
+
+}
+
+makeWeTupleDotFn(e : WiExp, index : int, types : WiType) -> WaseTupledotFn {
+	dotFn = makeTupledotFnName(types, index);
+	value = WiCall(WiVar(dotFn), [e]);
+	WaseTupledotFn(
+		value,
+		WaseDotFn(dotFn, types, index)
+	);
+}
+
+makeTupledotFnName(types : WiType, index : int) -> string {
+	"dot_"
+	//+ superglue(types, type2dotname, "_") + "_" // TODO
+	+ (if (index >= 0) i2s(index) else "");
+}
+
+// type2dotname(type : WaseAst) -> string {
+// 	/* switch (type) {
+// 		DslBool(value): b2s(value);
+// 		DslInt(value): i2s(value);
+// 		DslDouble(value): d2s(value);
+// 		DslString(value): value;
+// 		DslList(value): {
+// 			arr = reverseA(list2array(value));
+// 			"[" + superglue(arr, type2dotname, ",") + "]";
+// 		}
+// 		DslNode(name, args, pos): {
+// 			children = map(args, type2dotname);
+// 			name + "(" + strGlue(children, ",") + ")"
+// 		}
+// 	} */""
+// }
+
+// extractDotFnName(v : WaseAst) -> string {
+// 	/* switch (v) {
+// 		DslNode(name, largs, pos) : {
+// 			if (name == "var" && largs != []) {
+// 				varName = getDslString(largs[0]);
+// 				if (startsWith(varName, "dot")) varName else "";
+// 			} else {
+// 				"";
+// 			}
+// 		}
+// 		default: "";
+// 	} */""
+// }
+
+// isDotCallFn(v : WaseAst) -> bool {
+// 	/* switch (v) {
+// 		DslNode(name, largs, pos) : {
+// 			name == "call"
+// 			&& largs != []
+// 			&& extractDotFnName(largs[0]) != "";
+// 		}
+// 		default: false;
+// 	} */false
+// }
+
+// addDotNFunctions(fns : Set<WaseDotFn>, d : WaseAst) -> WaseAst {
+// 	/* foldSet(fns, d, \acc, fn -> {
+// 		returnType = elementAt(fn.argTypes, fn.index, DslList(makeList()));
+// 		DslNode(
+// 			"function",
+// 			[
+// 				DslString(fn.name),
+// 				DslString(""), // export
+// 				DslList(array2list(mapi(fn.argTypes, \i, argType -> DslNode(
+// 					"idtype",
+// 					[DslString("v" + i2s(i)), DslNode("type", [argType, argType], 0), argType],
+// 					0
+// 				)))),
+// 				returnType,
+// 				DslNode( // body
+// 					"brace", 
+// 					[
+// 						DslList(makeList1(DslNode("var", [DslString("v" + i2s(fn.index)), returnType], 0))),
+// 						returnType
+// 					],
+// 					0
+// 				),
+// 				acc, // scope
+// 				DslList(makeList())],
+// 			0
+// 		)
+// 	}); */d
+// }
