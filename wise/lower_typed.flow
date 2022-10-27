@@ -10,14 +10,14 @@ export {
 LowerWiseAstEnv(
 	blocks : int,
 	loops : [int],
-	locals : Set<string>,
+	locals : Tree<string, WiType>,
 	fns : Set<string>,
 	dots : ref Set<WaseDotFn>,
 	onError : (WiseAst, string) -> void, 
 );
 
 makeLowerWiseAstEnv() -> LowerWiseAstEnv {
-	LowerWiseAstEnv(0, [], makeSet(), makeSet(), ref makeSet(), nop2);
+	LowerWiseAstEnv(0, [], makeTree(), makeSet(), ref makeSet(), nop2);
 }
 
 lowerWiseAst2WaseAst(w : WiseAst) -> WaseAst {
@@ -53,7 +53,7 @@ WiDecl2WeDecl(env : LowerWiseAstEnv, w : WiDecl) -> WeDecl {
 	lowerDecl = \decl -> WiDecl2WeDecl(env, decl);
 	switch (w : WiDecl) {
 		WiFunction(optexport, id, templates, lambdaargs, type, expr, decl): {
-			newEnv = LowerWiseAstEnv(env with locals = fold(lambdaargs, env.locals, \acc, t -> insertSet(acc, t.id)));
+			newEnv = LowerWiseAstEnv(env with locals = fold(lambdaargs, env.locals, \acc, t -> setTree(acc, t.id, t.type)));
 			WeFunction(id, optexport, map(lambdaargs, WiIdtype2WeIdtype), WiType2WeTypes(type), WiExp2WeExp(newEnv, expr), lowerDecl(decl));
 		}
 		WiGlobal(id, optexport, type, optmutable, expr, decl): {
@@ -127,7 +127,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 		WiSet(id, e): WeSet(id, rec(e))
 		WiTuple(exps): WeTuple(map(exps, rec))
 		WiVar(id): {
-			if (containsSet(env.fns, id) && !containsSet(env.locals, id)) {
+			if (containsSet(env.fns, id) && !containsKeyTree(env.locals, id)) {
 				WeWasmOp("fn", [WeString(id)], [])
 			} else {
 				WeVar(id)
@@ -165,7 +165,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 			switch (e : WiseAst) {
 				WiVar(id):  {
 					fnId = WeVar(id);
-					if (containsSet(env.locals, id)) {
+					if (containsKeyTree(env.locals, id)) {
 						indirect(fnId)
 					} else {
 						WeCall(fnId, map(exps, rec))
@@ -260,12 +260,13 @@ WiType2WeTypes(w : WiType) -> [WeType] {
 }
 
 wiLet2weLet(env : LowerWiseAstEnv, w : WiLet) -> WeExp {
-	newEnv = LowerWiseAstEnv(env with locals = insertSet(env.locals, w.id));
+	newEnv = LowerWiseAstEnv(env with locals = setTree(env.locals, w.id, w.opttype));
 	recE = \w1 -> WiExp2WeExp(newEnv, w1);
 	rec = \w1 -> WiExp2WeExp(env, w1);
 	makeLetVar = \-> WeLet(w.id, w.i, WiType2WeType(w.opttype), rec(w.exp), WeBrace(map(w.brace.expsemi, recE)));
 	recTuple = \e -> { // fns ? 
-		rec(WiTuple(extractTupleExps(e, [])));
+		plainTuple = WiTuple(extractTupleExps(env, e, []));
+		rec(plainTuple);
 	}
 	switch (w.opttype : WiType) {
 		WiBasictype(__): makeLetVar();
@@ -274,10 +275,22 @@ wiLet2weLet(env : LowerWiseAstEnv, w : WiLet) -> WeExp {
 	}
 }
 
-extractTupleExps(e : WiExp, acc : [WiExp]) -> [WiExp] {
+extractTupleExps(env : LowerWiseAstEnv, e : WiExp, acc : [WiExp]) -> [WiExp] {
+	makeDef = \-> arrayPush(acc, e);
 	switch (e : WiExp) {
-		WiTuple(exps): fold(exps, acc, \acc2, e1 -> extractTupleExps(e1, acc2));
-		default : arrayPush(acc, e);
+		WiTuple(exps): fold(exps, acc, \acc2, e1 -> extractTupleExps(env, e1, acc2));
+		WiVar(id) : eitherFn(
+			lookupTree(env.locals, id),
+			\type -> switch (type : WiType) {
+				WiTupletype(__) : {
+					types = WiType2WeTypes(type);
+					concat(acc, mapi(reverseA(types), \i, __ -> WiTupledot(e, i)));
+				}
+				default : makeDef();
+			},
+			makeDef
+		);
+		default : makeDef();
 	}
 }
 
@@ -347,7 +360,15 @@ findItemInDslAst(v : DslAst, route : [int], fn : ([int], DslAst) -> bool) -> boo
 } */
 
 tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
-	WeBrace([])
+	unpair(getTupleVarName(d.exp), \name, beforeInstructions -> {
+		if (name == "") println("Can't convert WiTupledot ''" + toString(d.exp) + "' to WeExp");
+		tdot = WeVar(name + "." + i2s(d.int_0));
+		if (beforeInstructions == []) {
+			tdot
+		} else {
+			WeBrace(arrayPush(map(beforeInstructions, \v -> WiExp2WeExp(env, v)), tdot));
+		}
+	});
 	/* arg = getDslNode(d.args[0]);
 	
 	onErrorTupledot = \val -> {
@@ -410,6 +431,14 @@ tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 	} else {
 		makeTupleConstructExp(-1, DslList(makeList()))
 	} */
+}
+
+// TODO: construct?, fnResult
+getTupleVarName(e : WiExp) -> Pair<string, [WiExp]> {
+	switch (e : WiExp) {
+		WiVar(id): Pair(id, []);
+		default : Pair("", []); // TODO
+	}
 }
 
 /* extractTupldotValue(d : DslAst) -> DslAst {
