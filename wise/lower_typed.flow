@@ -264,9 +264,12 @@ wiLet2weLet(env : LowerWiseAstEnv, w : WiLet) -> WeExp {
 	recE = \w1 -> WiExp2WeExp(newEnv, w1);
 	rec = \w1 -> WiExp2WeExp(env, w1);
 	makeLetVar = \-> WeLet(w.id, w.i, WiType2WeType(w.opttype), rec(w.exp), WeBrace(map(w.brace.expsemi, recE)));
-	recTuple = \e -> { // fns ? 
-		plainTuple = WiTuple(extractTupleExps(env, e, []));
-		rec(plainTuple);
+	recTuple = \e -> {
+		values = map(extractTupleExps(env, e, []), rec);
+		switch (e : WiExp) {
+			WiTuple(__): WeTuple(values);
+			default : if (length(values) == 1) values[0] else WeBrace(values);
+		}
 	}
 	switch (w.opttype : WiType) {
 		WiBasictype(__): makeLetVar();
