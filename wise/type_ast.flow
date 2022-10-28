@@ -1,46 +1,33 @@
 import wise/wise_types;
-import ds/tree;
-import string;
+import wise/wiseast_types;
+import ds/union_find_map;
+import algorithms;
 
 export {
-	// is it typecheck ? the function doesn't have any checks. and result maybe wrong
-	typeWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiWeType;
-
-	WiWeType ::= WiWeI32, WiWeI64, WiWeF32, WiWeF64, WiWeSIMD, WiWeFunc, WiWeExtern,
-					WiWeBool, WiWeString, WiWeTuple, WiWeEmpty;
-		WiWeI32();
-		WiWeI64();
-		WiWeF32();
-		WiWeF64();
-		WiWeSIMD();
-		WiWeFunc(args : [WiWeType], ret : WiWeType);
-		WiWeExtern();
-		// next 3 don't exist in Wase
-		WiWeBool();
-		WiWeString();
-		WiWeTuple(fields : [WiWeType]);
-		// it should't exist
-		WiWeEmpty();
+	typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType;
 
 	makeTypeWiseAstState(onError : (WiseAst, string) -> void) -> TypeWiseAstState;
 }
 
 makeTypeWiseAstState(onError : (WiseAst, string) -> void) -> TypeWiseAstState {
-	TypeWiseAstState(makeTree(), makeTree(), onError);
+	TypeWiseAstState(makeTree(), makeTree(), onError, makeUnionFindMap([], \l, r -> { sortUnique(concat(l, r)) }), ref 0);
 }
 
 TypeWiseAstState(
-	vars : Tree<string, WiWeType>,
-	fns : Tree<string, WiWeFunc>,
+	vars : Tree<string, WiseAstType>,
+	fns : Tree<string, WiseAstTypeFunc>,
 	onError : (WiseAst, string) -> void,
+
+	unionFindMap : UnionFindMap<[WiseAstType]>, // types tree
+	unique : ref int, // the last type id
 );
 
 
 // TODO: ??
 // 1) type check of all elements
 // 2) find the real type result (for example, WiCall, WiWasmOp, WiTupledot)
-typeWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiWeType {
-	rec = \a -> typeWiseAst(state, a);
+typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType {
+	rec = \a -> typecheckWiseAst(state, a);
 	rec2e = \e1, e2 -> {
 		// t1 = rec(e1);
 		t2 = rec(e2);
@@ -51,186 +38,184 @@ typeWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiWeType {
 		// t1 = rec(e1);
 		// t2 = rec(e2);
 		// if (t1 != t2) println("Type mismatch in " + ast.structname + " : " + toString(t1) + " and " + toString(t2));
-		WiWeBool() // WiWeI32();  - wase
+		WiseAstTypeBool() // WiseAstTypeInt();  - wase
 	}
-	basicType2wiWeType = \s -> {
-		if (s == "i32") WiWeI32()
-		else if (s == "i64") WiWeI64()
-		else if (s == "f32") WiWeF32()
-		else if (s == "f64") WiWeF64()
-		else if (s == "v128") WiWeSIMD()
+	basicType2WiseAstType = \s -> {
+		if (s == "i32") WiseAstTypeInt()
+		else if (s == "i64") WiseAstTypeInt()
+		else if (s == "f32") WiseAstTypeFloat()
+		else if (s == "f64") WiseAstTypeFloat()
+		//else if (s == "v128") WiseAstTypeVector()
 		else {
 			println("ERROR: unknown basic type " + s);
-			WiWeEmpty();
+			WiseAstTypeUnknown(-1);
 		}
 	}
 	checkBitwiseOp = \exp1, exp2 -> {
 		type = rec2e(exp1, exp2);
-		if (type != WiWeI32() && type != WiWeI64()) {
+		if (type != WiseAstTypeInt() && type != WiseAstTypeInt()) {
 			state.onError(ast, "bitwise operation only works on i32 and i64")
 		}
 		type;
 	}
 
 	switch (ast : WiseAst) {
-		WiseAstList(value): {
-			rec(headList(value, WiWaseEmpty()));
-		}
-		WiseAstBool(__): WiWeBool(); // WiWeI32();  - wase
-		WiseAstInt(__): WiWeI32();
-		WiseAstDouble(__): WiWeF64();
-		WiseAstString(__): WiWeString();// WiWeI32() - wase
-		WiBool(__): WiWeBool(); // WiWeI32();  - wase
-		WiBreak(): WiWeEmpty();
-		WiContinue(): WiWeEmpty();
-		WiDouble(__): WiWeF64();
-		WiHex32(__): WiWeI32();
-		WiHex64(__): WiWeI64();
-		WiHexf32(__): WiWeF32();
-		WiHexf64(__): WiWeF64();
-		WiI64(__): WiWeI64();
-		WiIf(exp1, exp2): {
+		WiseAstList(value): foldList(value, WiseAstTypeUnknown(-1), \__, v -> rec(v));
+		WiseAstBool(__): WiseAstTypeBool();
+		WiseAstInt(__): WiseAstTypeInt();
+		WiseAstDouble(__): WiseAstTypeFloat();
+		WiseAstString(__): WiseAstTypeString();
+		WiBool(__, __): WiseAstTypeBool();
+		WiBreak(eclass): WiseAstTypeUnknown(eclass);
+		WiContinue(eclass): WiseAstTypeUnknown(eclass);
+		WiDouble(__, __): WiseAstTypeFloat();
+		WiHex32(__, __): WiseAstTypeInt();
+		WiHex64(__, __): WiseAstTypeInt();
+		WiHexf32(__, __): WiseAstTypeFloat();
+		WiHexf64(__, __): WiseAstTypeFloat();
+		WiI64(__, __): WiseAstTypeInt();
+		WiInt(__, __): WiseAstTypeInt();
+		WiIf(exp1, exp2, eclass): {
 			cond = rec(exp1);
-			if (cond != WiWeBool()) println("Type mismatch in If condition, expected bool, got " + toString(cond));
+			if (cond != WiseAstTypeBool()) println("Type mismatch in If condition, expected bool, got " + toString(cond));
 			rec(exp2);
 		}
-		WiIfelse(exp1, exp2, exp3): {
+		WiIfelse(exp1, exp2, exp3, eclass): {
 			cond = rec(exp1);
-			if (cond != WiWeBool()) println("Type mismatch in If condition, expected bool, got " + toString(cond));
+			if (cond != WiseAstTypeBool()) println("Type mismatch in If condition, expected bool, got " + toString(cond));
 			then = rec(exp2);
 			elsec = rec(exp3);
 			if (then != elsec) println("Type mismatch in If false branch, expected " + toString(then) + ", got " + toString(elsec));
 			then;
 		}
-		WiInt(__): WiWeI32();
-		WiReturn(exps): {
+		WiReturn(exps, eclass): {
 			if (exps == []) {
 				println("ERROR : WiReturn doesn't containt values");
-				WiWeEmpty();
+				WiseAstTypeUnknown(eclass);
 			} else {
-				rec(lastElement(exps, WiWaseEmpty()))
+				fold(exps, WiseAstTypeUnknown(eclass), \__, v -> rec(v));
 			}
 		}
-		WiSet(id, exp): {
+		WiSet(id, e, eclass): {
 			// ?
 			// vtype = lookupTree(state.vars, id);
 			// etype = rec(exp);
 			// if (eitherMap(vtype, \t -> t != etype, true)) println("ERROR : type mismatch. Expected '" + toString(vtype) + "', got '" + toString(etype) + "' in " + toString(ast));
-			WiWeEmpty();
+			WiseAstTypeUnknown(eclass);
 		}
-		WiTuple(exps): WiWeTuple(map(exps, rec)); //rec(exps[0])
-		WiVar(id): {
+		WiTuple(exps, eclass): WiseAstTypeTuple(map(exps, rec)); //rec(exps[0])
+		WiVar(id, eclass): {
 			eitherFn(
 				eitherFn(lookupTree(state.vars, id), \t -> Some(t), \-> lookupTree(state.fns, id)),
 				idfn,
 				\-> {
 					println("ERROR : variable type is not found : " + id);
-					WiWeEmpty();
+					WiseAstTypeUnknown(eclass);
 				}
 			);
 		}
-		WiWhile(exp1, exp2): {
+		WiWhile(exp1, exp2, eclass): {
 			cond = rec(exp1);
-			if (cond != WiWeBool()) println("Type mismatch in While condition, expected bool, got " + toString(cond));
+			if (cond != WiseAstTypeBool()) println("Type mismatch in While condition, expected bool, got " + toString(cond));
 			rec(exp2);
 		}
-		WiFunction(optexport, id, templates, lambdaargs, type, exp, decl): {
+		WiFunction(optexport, id, templates, lambdaargs, type, e, decl, eclass): {
 			// ? check types
-			fnType = WiWeFunc(map(lambdaargs, \a -> rec(a.type)), rec(type));
+			fnType = WiseAstTypeFunc(map(lambdaargs, \a -> rec(a.type)), rec(type));
 			newState = TypeWiseAstState(state with 
 				fns = setTree(state.fns, id, fnType),
-				vars = fold(lambdaargs, state.vars, \acc, t -> setTree(acc, t.id, typeWiseAst(state, t.type)))
+				vars = fold(lambdaargs, state.vars, \acc, t -> setTree(acc, t.id, typecheckWiseAst(state, t.type)))
 			);
-			typeWiseAst(newState, decl);
+			typecheckWiseAst(newState, decl);
 		}
-		WiGlobal(id, optexport, type, optmutable, exp, decl): rec(decl); // ? check types
-		WiImport(id1, type, optmutable, id2, id3, decl): rec(decl); // ? check types
-		WiWaseEmpty(): WiWeEmpty();
-		WiWiseInclude(s, decl): rec(decl);
-		WiAdd(exp1, exp2): rec2e(exp1, exp2);
-		WiAnd(exp1, exp2): checkBitwiseOp(exp1, exp2);
-		WiBoolAnd(exp1, exp2): rec2e(exp1, exp2);
-		WiDiv(exp1, exp2): rec2e(exp1, exp2);
-		WiMod(exp1, exp2): rec2e(exp1, exp2);
-		WiMul(exp1, exp2): rec2e(exp1, exp2);
-		WiBoolOr(exp1, exp2): rec2e(exp1, exp2);
-		WiOr(exp1, exp2): checkBitwiseOp(exp1, exp2);
-		WiSub(exp1, exp2): rec2e(exp1, exp2);
-		WiXor(exp1, exp2): checkBitwiseOp(exp1, exp2);
-		WiBrace(expsemi): {
+		WiGlobal(id, optexport, type, optmutable, e, decl, eclass): rec(decl); // ? check types
+		WiImport(id1, type, optmutable, id2, id3, decl, eclass): rec(decl); // ? check types
+		WiWaseEmpty(eclass): WiseAstTypeUnknown(eclass);
+		WiWiseInclude(s, decl, eclass): rec(decl);
+		WiAdd(exp1, exp2, eclass): rec2e(exp1, exp2);
+		WiAnd(exp1, exp2, eclass): checkBitwiseOp(exp1, exp2);
+		WiBoolAnd(exp1, exp2, eclass): rec2e(exp1, exp2);
+		WiDiv(exp1, exp2, eclass): rec2e(exp1, exp2);
+		WiMod(exp1, exp2, eclass): rec2e(exp1, exp2);
+		WiMul(exp1, exp2, eclass): rec2e(exp1, exp2);
+		WiBoolOr(exp1, exp2, eclass): rec2e(exp1, exp2);
+		WiOr(exp1, exp2, eclass): checkBitwiseOp(exp1, exp2);
+		WiSub(exp1, exp2, eclass): rec2e(exp1, exp2);
+		WiXor(exp1, exp2, eclass): checkBitwiseOp(exp1, exp2);
+		WiBrace(expsemi, eclass): {
 			// ? check exps ?
 			// iter(expsemi, rec)
 			if (expsemi == []) {
-				WiWeEmpty();
+				WiseAstTypeUnknown(eclass);
 			} else {
-				rec(lastElement(expsemi, WiWaseEmpty()))
+				rec(lastElement(expsemi, WiWaseEmpty(eclass)))
 			}
 			//rec(expsemi[0]) // ????????????
 		}
-		WiCall(exp, exps): {
+		WiCall(e, exps, eclass): {
 			// exp == fn. find fn result.
 			println("TODO: type of WiCall");
-			WiWeEmpty();
+			WiseAstTypeUnknown(eclass);
 		}
-		WiEqual(exp1, exp2): rec2b(exp1, exp2);
-		WiGreater(exp1, exp2): rec2b(exp1, exp2);
-		WiGreaterEqual(exp1, exp2): rec2b(exp1, exp2);
-		WiGreaterEqualu(exp1, exp2): rec2b(exp1, exp2);
-		WiGreateru(exp1, exp2): rec2b(exp1, exp2);
-		WiIsNull(exp): {
-			// rec(exp);
-			WiWeBool(); // WiWeI32();  - wase
+		WiEqual(exp1, exp2, eclass): rec2b(exp1, exp2);
+		WiGreater(exp1, exp2, eclass): rec2b(exp1, exp2);
+		WiGreaterEqual(exp1, exp2, eclass): rec2b(exp1, exp2);
+		WiGreaterEqualu(exp1, exp2, eclass): rec2b(exp1, exp2);
+		WiGreateru(exp1, exp2, eclass): rec2b(exp1, exp2);
+		WiIsNull(e, eclass): {
+			rec(e);
+			WiseAstTypeBool();
 		}
-		WiLess(exp1, exp2): rec2b(exp1, exp2);
-		WiLessEqual(exp1, exp2): rec2b(exp1, exp2);
-		WiLessEqualu(exp1, exp2): rec2b(exp1, exp2);
-		WiLessu(exp1, exp2): rec2b(exp1, exp2);
-		WiNotEqual(exp1, exp2): rec2b(exp1, exp2);
-		WiBoolNot(exp): {
-			t = rec(exp);
-			if (t != WiWeBool()) println("ERROR : wrong type in " + toString(ast)); // WiWeI32();  - wase
+		WiLess(exp1, exp2, eclass): rec2b(exp1, exp2);
+		WiLessEqual(exp1, exp2, eclass): rec2b(exp1, exp2);
+		WiLessEqualu(exp1, exp2, eclass): rec2b(exp1, exp2);
+		WiLessu(exp1, exp2, eclass): rec2b(exp1, exp2);
+		WiNotEqual(exp1, exp2, eclass): rec2b(exp1, exp2);
+		WiBoolNot(e, eclass): {
+			t = rec(e);
+			if (t != WiseAstTypeBool()) println("ERROR : wrong type in " + toString(ast));
 			t;
 		}
-		WiLet(id, i, opttype, exp, brace): {
+		WiLet(id, i, opttype, e, brace, eclass): {
 			varType = rec(opttype);
 			newState = TypeWiseAstState(state with vars = setTree(state.vars, id, varType));
-			// typeWiseAst(newState, exp) // ?
-			typeWiseAst(newState, brace);
+			// typecheckWiseAst(newState, e) // ?
+			typecheckWiseAst(newState, brace);
 		}
-		WiNegate(exp): rec(exp);
+		WiNegate(e, eclass): rec(e);
 		
-		WiTupledot(exp, ind): {
-			et = rec(exp);
-			switch (et : WiWeType) {
-				WiWeTuple(types): {
+		WiTupledot(e, ind, eclass): {
+			et = rec(e);
+			switch (et : WiseAstType) {
+				WiseAstTypeTuple(types): {
 					if (existsIndex(types, ind)) {
 						types[ind]
 					} else {
 						println("ERROR : can't find field " + i2s(ind) + " in Tuple : " + toString(types));
-						WiWeEmpty();
+						WiseAstTypeUnknown(eclass);
 					}
 				}
 				default : {
 					println("ERROR : can't extract field type from Tuple : " + toString(et));
-					WiWeEmpty();
+					WiseAstTypeUnknown(eclass);
 				}
 			}
 		}
-		WiTypeannotation(exp, type): {
-			// rec(exp);
+		WiTypeannotation(e, type, eclass): {
+			rec(e);
 			rec(type)
 		}
-		WiWasmOp(s, wargs, exps): rec(exps[0]);
-		WiBasictype(s): basicType2wiWeType(s);
-		WiFntype(types, type): WiWeFunc(map(types, rec), rec(type));
-		WiTupletype(types): WiWeTuple(map(types, rec));
-		WiIdtype(id, type): rec(type);
-		WiSizeoftype(type): WiWeI32();
-		WiPolycall(exp, types): {
-			// exp == fn. find fn result.
+		WiWasmOp(s, wargs, exps, eclass): rec(exps[0]);
+		WiBasictype(s, eclass): basicType2WiseAstType(s);
+		WiFntype(types, type, eclass): WiseAstTypeFunc(map(types, rec), rec(type));
+		WiTupletype(types, eclass): WiseAstTypeTuple(map(types, rec));
+		WiIdtype(id, type, eclass): rec(type);
+		WiSizeoftype(type, eclass): WiseAstTypeInt();
+		WiPolycall(e, types, eclass): {
+			// e == fn. find fn result.
 			println("WiPolycall is not implemented"); // decomposition should be done before
-			WiWeEmpty();
+			WiseAstTypeUnknown(eclass);
 		}
-		WiDefoftype(type) : rec(type);
+		WiDefoftype(type, eclass) : rec(type);
 	}
 }

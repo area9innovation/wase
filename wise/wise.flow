@@ -63,7 +63,7 @@ println("extended: "+toString(extended));
 			wiseProgram = dslAst2WiseAst(extended);
 println("from DSL: "+toString(wiseProgram));
 			// TODO: instead of typeWise(waseAst2DslAst(loweredWase));
-			typeWiseAst(makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast))), wiseProgram);
+			//typecheckWiseAst(makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast))), wiseProgram);
 			loweredWase = lowerWiseAst2WaseAst(wiseProgram);
 println("LOWERED WISE: "+toString(loweredWase));
 			// TODO: WaseAst2Wase

@@ -1,0 +1,16 @@
+export {
+
+	// TODO: unions ?
+	WiseAstType ::= WiseAstTypeInt, WiseAstTypeFloat, WiseAstTypeFunc, WiseAstTypeBool, WiseAstTypeString, WiseAstTypeTuple, WiseAstTypeUnknown;
+		WiseAstTypeInt(); // wise, wase
+		WiseAstTypeFloat(); // wise, wase
+		WiseAstTypeFunc(args : [WiseAstType], ret : WiseAstType);  // wise, ~wase
+		WiseAstTypeBool(); // wise
+		WiseAstTypeString(); // wise
+		WiseAstTypeTuple(fields : [WiseAstType]); // wise
+
+		WiseAstTypeUnknown(eclass : int);
+		// WiseAstTypeExtern(); // ?
+		// WiseAstTypeVector(); // ?
+
+}
