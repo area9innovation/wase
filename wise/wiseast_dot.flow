@@ -21,7 +21,7 @@ export {
 
 makeWeTupleDotFn(e : WiExp, index : int, types : WiType) -> WaseTupledotFn {
 	dotFn = makeTupledotFnName(types, index);
-	value = WiCall(WiVar(dotFn), [e]);
+	value = WiCall(WiVar(dotFn, 0), [e], 0); // ? eclass
 	WaseTupledotFn(
 		value,
 		WaseDotFn(dotFn, types, index)
