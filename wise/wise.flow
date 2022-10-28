@@ -62,8 +62,8 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 println("extended: "+toString(extended));
 			wiseProgram = dslAst2WiseAst(extended);
 println("from DSL: "+toString(wiseProgram));
-			// TODO: instead of typeWise(waseAst2DslAst(loweredWase));
-			//typecheckWiseAst(makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast))), wiseProgram);
+			typeEnv = makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast)));
+			checkedTypes = typecheckWiseAst(typeEnv, wiseProgram);
 			loweredWase = lowerWiseAst2WaseAst(wiseProgram);
 println("LOWERED WISE: "+toString(loweredWase));
 			// TODO: WaseAst2Wase

@@ -23,29 +23,27 @@ TypeWiseAstState(
 );
 
 
-// TODO: ??
-// 1) type check of all elements
-// 2) find the real type result (for example, WiCall, WiWasmOp, WiTupledot)
 typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType {
-	rec = \a -> typecheckWiseAst(state, a);
+	rec2 = \value, ltype -> {
+		t = typecheckWiseAst(state, value);
+		unifyWiseAstTypes(state, ltype, t);
+		t;
+	}
+	rec = \value -> rec2(value, getNewEclassType(state));
 	rec2e = \e1, e2 -> {
-		// t1 = rec(e1);
-		t2 = rec(e2);
-		// if (t1 != t2) println("Type mismatch in " + ast.structname + " : " + toString(t1) + " and " + toString(t2));
-		t2;
+		e1type = rec(e1);
+		rec2(e2, e1type);
 	}
 	rec2b = \e1, e2 -> {
-		// t1 = rec(e1);
-		// t2 = rec(e2);
-		// if (t1 != t2) println("Type mismatch in " + ast.structname + " : " + toString(t1) + " and " + toString(t2));
-		WiseAstTypeBool() // WiseAstTypeInt();  - wase
+		rec2e(e1, e2);
+		WiseAstTypeBool();
 	}
 	basicType2WiseAstType = \s -> {
 		if (s == "i32") WiseAstTypeI32()
 		else if (s == "i64") WiseAstTypeI64()
 		else if (s == "f32") WiseAstTypeF32()
 		else if (s == "f64") WiseAstTypeF64()
-		//else if (s == "v128") WiseAstTypeVector()
+		else if (s == "v128") WiseAstTypeSIMD()
 		else {
 			println("ERROR: unknown basic type " + s);
 			WiseAstTypeEclass(-1);
@@ -75,18 +73,14 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType {
 		WiHexf64(__, __): WiseAstTypeF64();
 		WiI64(__, __): WiseAstTypeI64();
 		WiInt(__, __): WiseAstTypeI32();
-		WiIf(exp1, exp2, eclass): {
-			cond = rec(exp1);
-			if (cond != WiseAstTypeBool()) println("Type mismatch in If condition, expected bool, got " + toString(cond));
-			rec(exp2);
+		WiIf(cond, val, __): {
+			rec2(cond, WiseAstTypeBool());
+			rec(val);
 		}
-		WiIfelse(exp1, exp2, exp3, eclass): {
-			cond = rec(exp1);
-			if (cond != WiseAstTypeBool()) println("Type mismatch in If condition, expected bool, got " + toString(cond));
-			then = rec(exp2);
-			elsec = rec(exp3);
-			if (then != elsec) println("Type mismatch in If false branch, expected " + toString(then) + ", got " + toString(elsec));
-			then;
+		WiIfelse(cond, ifval, elseval, __): {
+			rec2(cond, WiseAstTypeBool());
+			iftype = rec(ifval);
+			rec2(elseval, iftype);
 		}
 		WiReturn(exps, eclass): {
 			if (exps == []) {
@@ -97,39 +91,49 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType {
 			}
 		}
 		WiSet(id, e, eclass): {
-			// ?
-			// vtype = lookupTree(state.vars, id);
-			// etype = rec(exp);
-			// if (eitherMap(vtype, \t -> t != etype, true)) println("ERROR : type mismatch. Expected '" + toString(vtype) + "', got '" + toString(etype) + "' in " + toString(ast));
-			WiseAstTypeEclass(eclass);
+			vtype = lookupTree(state.vars, id);
+			vtype ?? {
+				rec2(e, vtype)
+			} : {
+				state.onError(ast, "can't find variable '" + id + "' to check types");
+				WiseAstTypeEclass(eclass);
+			}
 		}
-		WiTuple(exps, eclass): WiseAstTypeTuple(map(exps, rec)); //rec(exps[0])
+		WiTuple(exps, __): WiseAstTypeTuple(map(exps, rec));
 		WiVar(id, eclass): {
-			eitherFn(
-				eitherFn(lookupTree(state.vars, id), \t -> Some(t), \-> lookupTree(state.fns, id)),
-				idfn,
-				\-> {
-					println("ERROR : variable type is not found : " + id);
-					WiseAstTypeEclass(eclass);
-				}
-			);
+			vtype = eitherFn(lookupTree(state.vars, id), \t -> Some(t), \-> lookupTree(state.fns, id));
+			vtype ?? {
+				vtype
+			} : {
+				state.onError(ast, "ERROR : variable type is not found : " + id);
+				WiseAstTypeEclass(eclass);
+			}
 		}
-		WiWhile(exp1, exp2, eclass): {
-			cond = rec(exp1);
-			if (cond != WiseAstTypeBool()) println("Type mismatch in While condition, expected bool, got " + toString(cond));
-			rec(exp2);
+		WiWhile(cond, body, __): {
+			rec2(cond, WiseAstTypeBool());
+			rec(body);
 		}
 		WiFunction(optexport, id, templates, lambdaargs, type, e, decl, eclass): {
-			// ? check types
-			fnType = WiseAstTypeFunc(map(lambdaargs, \a -> rec(a.type)), rec(type));
+			retType = rec(type);
+			fnType = WiseAstTypeFunc(map(lambdaargs, \a -> rec(a.type)), retType);
 			newState = TypeWiseAstState(state with 
 				fns = setTree(state.fns, id, fnType),
 				vars = fold(lambdaargs, state.vars, \acc, t -> setTree(acc, t.id, typecheckWiseAst(state, t.type)))
 			);
-			typecheckWiseAst(newState, decl);
+			bodyType = typecheckWiseAst(newState, e);
+			unifyWiseAstTypes(state, bodyType, retType);
+			declType = typecheckWiseAst(newState, decl);
+			unifyWiseAstTypes(state, getNewEclassType(state), declType);
+			fnType;
 		}
-		WiGlobal(id, optexport, type, optmutable, e, decl, eclass): rec(decl); // ? check types
-		WiImport(id1, type, optmutable, id2, id3, decl, eclass): rec(decl); // ? check types
+		WiGlobal(id, optexport, type, optmutable, e, decl, eclass): {
+			rec(decl);
+			rec(e);
+		}
+		WiImport(id1, type, optmutable, id2, id3, decl, eclass): {
+			rec(decl);
+			rec(type);
+		}
 		WiWaseEmpty(eclass): WiseAstTypeEclass(eclass);
 		WiWiseInclude(s, decl, eclass): rec(decl);
 		WiAdd(exp1, exp2, eclass): rec2e(exp1, exp2);
@@ -143,19 +147,30 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType {
 		WiSub(exp1, exp2, eclass): rec2e(exp1, exp2);
 		WiXor(exp1, exp2, eclass): checkBitwiseOp(exp1, exp2);
 		WiBrace(expsemi, eclass): {
-			// ? check exps ?
-			// iter(expsemi, rec)
 			if (expsemi == []) {
 				WiseAstTypeEclass(eclass);
 			} else {
-				rec(lastElement(expsemi, WiWaseEmpty(eclass)))
+				fold(expsemi, WiseAstTypeEclass(eclass), \__, v -> rec(v));
 			}
-			//rec(expsemi[0]) // ????????????
 		}
-		WiCall(e, exps, eclass): {
-			// exp == fn. find fn result.
-			println("TODO: type of WiCall");
-			WiseAstTypeEclass(eclass);
+		WiCall(fn, args, eclass): {
+			targs = map(args, \a -> typecheckWiseAst(state, a));
+			result = getNewEclassType(state);
+			callType = WiseAstTypeFunc(targs, result);
+
+			/* tfn = switch (fn : WiExp) {
+				WiVar(id, __): {
+					mtype = typeBuiltin(env, id); // native
+					mtype ?? {
+						unifyTypes(env, mtype, tv);
+						mtype
+					} : {
+						typecheckWiseAst(state, fn);
+					}
+				}
+				default: typecheckWiseAst(state, fn);
+			}; */
+			rec2(fn, callType);
 		}
 		WiEqual(exp1, exp2, eclass): rec2b(exp1, exp2);
 		WiGreater(exp1, exp2, eclass): rec2b(exp1, exp2);
@@ -179,7 +194,9 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType {
 		WiLet(id, i, opttype, e, brace, eclass): {
 			varType = rec(opttype);
 			newState = TypeWiseAstState(state with vars = setTree(state.vars, id, varType));
-			// typecheckWiseAst(newState, e) // ?
+			eType = typecheckWiseAst(newState, e);
+			unifyWiseAstTypes(state, eType, varType);
+
 			typecheckWiseAst(newState, brace);
 		}
 		WiNegate(e, eclass): rec(e);
@@ -202,20 +219,121 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType {
 			}
 		}
 		WiTypeannotation(e, type, eclass): {
-			rec(e);
-			rec(type)
+			ttype= rec(type);
+			rec2(e, ttype);
 		}
-		WiWasmOp(s, wargs, exps, eclass): rec(exps[0]);
+		WiWasmOp(s, wargs, exps, eclass): {
+			iter(wargs, \v -> rec(v)|> ignore);
+			fold(exps, WiseAstTypeEclass(eclass), \__, v -> rec(v));
+		}
 		WiBasictype(s, eclass): basicType2WiseAstType(s);
 		WiFntype(types, type, eclass): WiseAstTypeFunc(map(types, rec), rec(type));
 		WiTupletype(types, eclass): WiseAstTypeTuple(map(types, rec));
 		WiIdtype(id, type, eclass): rec(type);
 		WiSizeoftype(type, eclass): WiseAstTypeI32();
 		WiPolycall(e, types, eclass): {
-			// e == fn. find fn result.
 			println("WiPolycall is not implemented"); // decomposition should be done before
-			WiseAstTypeEclass(eclass);
+			rec(e);
 		}
 		WiDefoftype(type, eclass) : rec(type);
+	}
+}
+
+getNewEclassType(env : TypeWiseAstState) -> WiseAstType {
+	id = ^(env.unique);
+	env.unique := id + 1;
+	WiseAstTypeEclass(id);
+}
+
+unifyWiseAstTypes(env : TypeWiseAstState, left : WiseAstType, right : WiseAstType) -> void {
+	if (left != right) {
+		onError = \ -> {
+			env.onError(WiWaseEmpty(0), "ERROR: " + toString(left) + " is not compatible with " + toString(right));
+		};
+		doRight = \ -> {
+			switch (right : WiseAstType) {
+				WiseAstTypeEclass(rid): {
+					unifyWiseAstTypes(env, right, left)
+				}
+				default: onError();
+			}
+		};
+		bindTyvar = \tyvar, type -> {
+			types = getUnionMapValue(env.unionFindMap, tyvar);
+			ntypes = sortUnique(arrayPush(types, type));
+			setUnionMapValue(env.unionFindMap, tyvar, ntypes);
+		}
+		switch (left : WiseAstType) {
+			WiseAstTypeEclass(lid): {
+				switch (right : WiseAstType) {
+					WiseAstTypeEclass(rid): {
+						// println("Unifying " + i2s(lid) + " and " + i2s(rid));
+						root = unionUnionMap(env.unionFindMap, lid, rid);
+					}
+					WiseAstTypeFunc(__, __): {
+						unifyWiseAstTypes(env, right, left);
+					}
+					WiseAstTypeTuple(__): {
+						unifyWiseAstTypes(env, right, left); // ?
+					}
+					default: {
+						bindTyvar(lid, right);
+					}
+				}
+			}
+			WiseAstTypeBool(): doRight();
+			WiseAstTypeI32(): doRight();
+			WiseAstTypeI64(): doRight();
+			WiseAstTypeF32(): doRight();
+			WiseAstTypeF64(): doRight();
+			WiseAstTypeString(): doRight();
+			WiseAstTypeSIMD(): doRight();
+			WiseAstTypeTuple(ltypes): {
+				switch (right : WiseAstType) {
+					WiseAstTypeTuple(rtypes): {
+						if (length(ltypes) != length(rtypes)) {
+							onError();
+						} else {
+							iteri(ltypes, \i, ltype -> unifyWiseAstTypes(env, ltype, rtypes[i]));
+						}
+					}
+					WiseAstTypeEclass(id): {
+						rtypes = mapi(ltypes, \i, ltype -> {
+							tyvar = getNewEclassType(env);
+							bindTyvar(id, tyvar);
+							unifyWiseAstTypes(env, ltype, tyvar);
+							tyvar;
+						});
+						tyvar = getNewEclassType(env);
+						rt = WiseAstTypeTuple(rtypes);
+						bindTyvar(id, rt);
+					}
+					default: onError();
+				}
+			}
+			WiseAstTypeFunc(largs, lreturnType): {
+				switch (right : WiseAstType) {
+					WiseAstTypeFunc(rargs, rreturnType): {
+						if (length(largs) != length(rargs)) {
+							onError();
+						} else {
+							iteri(largs, \i, larg -> {
+								unifyWiseAstTypes(env, larg, rargs[i]);
+							});
+						}
+						unifyWiseAstTypes(env, lreturnType, rreturnType);
+					}
+					WiseAstTypeEclass(id): {
+						retTyvar = getNewEclassType(env);
+						argTyvars = map(largs, \__ -> getNewEclassType(env));
+						rt = WiseAstTypeFunc(argTyvars, retTyvar);
+
+						bindTyvar(id, rt);
+						unifyWiseAstTypes(env, left, rt)
+					}
+					default: onError();
+				}
+			}
+		}
 	}
 }
