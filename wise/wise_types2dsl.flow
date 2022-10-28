@@ -166,11 +166,11 @@ dslAst2WiseAst(d : DslAst) -> WiseAst {
 			} else if (name == "brace") {
 				WiBrace((\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[0]), 0)
 			} else if (name == "break") {
-				WiBreak(, 0)
+				WiBreak(0)
 			} else if (name == "call") {
 				WiCall(dslAst2WiExp(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[1]), 0)
 			} else if (name == "continue") {
-				WiContinue(, 0)
+				WiContinue(0)
 			} else if (name == "defoftype") {
 				WiDefoftype(dslAst2WiType(args[0]), 0)
 			} else if (name == "div") {
@@ -256,7 +256,7 @@ dslAst2WiseAst(d : DslAst) -> WiseAst {
 			} else if (name == "var") {
 				WiVar(getDslString(args[0]), 0)
 			} else if (name == "wase_empty") {
-				WiWaseEmpty(, 0)
+				WiWaseEmpty(0)
 			} else if (name == "wasm_op") {
 				WiWasmOp(getDslString(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WiWarg))(args[1]), (\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[2]), 0)
 			} else if (name == "while") {
@@ -278,9 +278,9 @@ dslAst2WiAtom(d : DslAst) -> WiAtom {
 	if (name == "bool") {
 		WiBool(getDslBool(args[0]), 0)
 	} else if (name == "break") {
-		WiBreak(, 0)
+		WiBreak(0)
 	} else if (name == "continue") {
-		WiContinue(, 0)
+		WiContinue(0)
 	} else if (name == "defoftype") {
 		WiDefoftype(dslAst2WiType(args[0]), 0)
 	} else if (name == "double") {
@@ -327,7 +327,7 @@ dslAst2WiDecl(d : DslAst) -> WiDecl {
 	} else if (name == "import") {
 		WiImport(getDslString(args[0]), dslAst2WiType(args[1]), getDslInt(args[2]), getDslString(args[3]), getDslString(args[4]), dslAst2WiDecl(args[5]), 0)
 	} else if (name == "wase_empty") {
-		WiWaseEmpty(, 0)
+		WiWaseEmpty(0)
 	} else if (name == "wise_include") {
 		WiWiseInclude(getDslString(args[0]), dslAst2WiDecl(args[1]), 0)
 	} else { println("ERROR: Could not convert " + name + " in WiDecl"); WiFunction("", "", [], [], WiTupletype([], 0), WiBool(false, 0), WiWaseEmpty(0), 0) }
@@ -352,11 +352,11 @@ dslAst2WiExp(d : DslAst) -> WiExp {
 	} else if (name == "brace") {
 		WiBrace((\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[0]), 0)
 	} else if (name == "break") {
-		WiBreak(, 0)
+		WiBreak(0)
 	} else if (name == "call") {
 		WiCall(dslAst2WiExp(args[0]), (\t -> map(list2array(getDslList(t)), dslAst2WiExp))(args[1]), 0)
 	} else if (name == "continue") {
-		WiContinue(, 0)
+		WiContinue(0)
 	} else if (name == "defoftype") {
 		WiDefoftype(dslAst2WiType(args[0]), 0)
 	} else if (name == "div") {
@@ -524,7 +524,7 @@ dslAst2WiBrace(d : DslAst) -> WiBrace {
 dslAst2WiBreak(d : DslAst) -> WiBreak {
 	node = getDslNode(d);
 	args = node.args;
-	WiBreak(, 0)
+	WiBreak(0)
 }
 dslAst2WiCall(d : DslAst) -> WiCall {
 	node = getDslNode(d);
@@ -534,7 +534,7 @@ dslAst2WiCall(d : DslAst) -> WiCall {
 dslAst2WiContinue(d : DslAst) -> WiContinue {
 	node = getDslNode(d);
 	args = node.args;
-	WiContinue(, 0)
+	WiContinue(0)
 }
 dslAst2WiDefoftype(d : DslAst) -> WiDefoftype {
 	node = getDslNode(d);
@@ -749,7 +749,7 @@ dslAst2WiVar(d : DslAst) -> WiVar {
 dslAst2WiWaseEmpty(d : DslAst) -> WiWaseEmpty {
 	node = getDslNode(d);
 	args = node.args;
-	WiWaseEmpty(, 0)
+	WiWaseEmpty(0)
 }
 dslAst2WiWasmOp(d : DslAst) -> WiWasmOp {
 	node = getDslNode(d);
