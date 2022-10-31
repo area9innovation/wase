@@ -63,8 +63,9 @@ println("extended: "+toString(extended));
 			wiseProgram = dslAst2WiseAst(extended);
 println("from DSL: "+toString(wiseProgram));
 			typeEnv = makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast)));
-			checkedTypes = typecheckWiseAst(typeEnv, wiseProgram);
-			loweredWase = lowerWiseAst2WaseAst(wiseProgram);
+			checkedTypes = typeWiseAst(typeEnv, wiseProgram);
+			// typedWise = resolveWiseAstType(typeEnv, wiseProgram);
+			loweredWase = lowerWiseAst2WaseAst(checkedTypes, typeEnv.unionFindMap);
 println("LOWERED WISE: "+toString(loweredWase));
 			// TODO: WaseAst2Wase
 			// TODO: Tuples!!

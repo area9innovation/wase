@@ -5,7 +5,7 @@ import algorithms;
 
 export {
 	typeWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAst;
-	resolveWiseAst(env : TypeWiseAstState, t : WiseAst) -> WiseAst;
+	resolveWiseAstType(unionFindMap : UnionFindMap<[WiseAstType]>, t : WiseAst, onError : (WiseAst, string) -> void) -> WiseAstType;
 
 	makeTypeWiseAstState(onError : (WiseAst, string) -> void) -> TypeWiseAstState;
 }
@@ -193,14 +193,7 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 			t = checkBitwiseOp(exp1, exp2);
 			bindNewEclassToType(state, t.first, \id -> WiXor(t.second, t.third, id));
 		}
-		WiBrace(expsemi, eclass): {
-			if (expsemi == []) {
-				def(WiseAstTypeEclass(eclass));
-			} else {
-				t = map(expsemi, rec);
-				bindNewEclassToType(state, t[0].first, \id -> WiBrace(map(t, secondOfPair), id));
-			}
-		}
+		WiBrace(expsemi, eclass): typecheckWiBrace(state, ast);
 		WiCall(fn, args, __): {
 			targs = map(args, rec);
 			result = getNewEclassType(state);
@@ -257,7 +250,7 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 			t = rec2b(exp1, exp2);
 			bindNewEclassToType(state, t.first, \id -> WiLessEqualu(t.second, t.third, id));
 		}
-		WiLessu(exp1, exp2, eclass): {
+		WiLessu(exp1, exp2, __): {
 			t = rec2b(exp1, exp2);
 			bindNewEclassToType(state, t.first, \id -> WiLessu(t.second, t.third, id));
 		}
@@ -362,7 +355,7 @@ typecheckWiType(state : TypeWiseAstState, t : WiType) -> Pair<WiseAstType, WiTyp
 			tt = WiseAstTypeFunc(map(newTypes, firstOfPair), retType.first);
 			bindNewEclassToType(state, tt, \id -> WiFntype(map(newTypes, secondOfPair), retType.second, id));
 		}
-		WiTupletype(types, eclass): {
+		WiTupletype(types, __): {
 			newTypes = map(types, rec);
 			tt = WiseAstTypeTuple(map(newTypes, firstOfPair));
 			bindNewEclassToType(state, tt, \id -> WiTupletype(map(newTypes, secondOfPair), id));
@@ -502,52 +495,93 @@ unifyWiseAstTypes(env : TypeWiseAstState, left : WiseAstType, right : WiseAstTyp
 }
 
 
-resolveWiseAst(env : TypeWiseAstState, t : WiseAst) -> WiseAst {
-	resolve = \ty -> resolveType(env, ty);
-	rec = \ee -> resolveWiseAst(env, ee);
-	/* switch (t) {
-		TValue(): resolveTValue(env, t)
-		TLet(id, value, body): TLet(id, rec(value), rec(body));
-		TVar(id, type): TVar(id, resolve(type));
-		TIf(cond, then, else_, type): TIf(rec(cond), rec(then), rec(else_), resolve(type));
-		TCall(fn, args, type): TCall(rec(fn), map(args, rec), resolve(type));
-		TArray(values, type): TArray(map(values, rec), resolve(type));
-		TSequence(values, type): TSequence(map(values, rec), resolve(type));
-	} */t
-}
-
-resolveTValue(env : TypeWiseAstState, t : WiExp) -> WiExp {
-	resolve = \ty -> resolveType(env, ty);
-	rec = \ee -> resolveTValue(env, ee);
-	/* switch (t) {
-		TBool(b): t;
-		TInt(i): t;
-		TString(s): t;
-		TArrayValue(values, type): TArrayValue(map(values, rec), resolve(type)); 
-		TLambda(args, body, type): TLambda(args, resolveWiseAst(env, body), resolve(type));
-	} */t
-}
-
-resolveType(env : TypeWiseAstState, type : WiType) -> WiType {
-	/* switch (type) {
-		TTypeBool(): type;
-		TTypeInt(): type;
-		TTypeString(): type;
-		TTypeArray(atype): TTypeArray(resolveType(env, atype));
-		TTypeFunction(args, returnType): TTypeFunction(map(args, \a -> resolveType(env, a)), resolveType(env, returnType));
-		TTypeVar(id): {
-			types = getUnionMapValue(env.unionFindMap, id);
+resolveWiseAstType(unionFindMap : UnionFindMap<[WiseAstType]>, ast : WiseAst, onError : (WiseAst, string) -> void) -> WiseAstType {
+	def = \id -> {
+		types = getUnionMapValue(unionFindMap, id);
 			if (length(types) == 0) {
-				type
+				onError(ast, "ERROR: Could not find a type: " + toString(ast));
+				WiseAstTypeEclass(-1);
 			} else {
-				rtypes = sortUnique(map(types, \tt -> resolveType(env, tt)));
+				rtypes = sortUnique(types/* map(types, \tt -> resolveWiseAstType(env, tt)) */);
 				if (length(rtypes) == 1) {
 					rtypes[0];
 				} else {
-					println("ERROR: Could not find unique type: " + prettyTType(env, type));
+					onError(ast, "ERROR: Could not find unique type: " + toString(ast));
 					rtypes[0];
 				}
 			}
+	}
+	switch (ast : WiseAst) {
+		WiseAstList(value): {
+			if (isEmptyList(value)) {
+				onError(ast, "ERROR: list type is empty: " + toString(ast));
+				WiseAstTypeEclass(-1);
+			} else {
+				maxInd = countList(value) - 1;
+				foldiList(value, WiseAstTypeEclass(-1), \i, acc, v -> if (i == maxInd) resolveWiseAstType(unionFindMap, v, onError) else acc);
+			}
 		}
-	} */type
+		WiseAstBool(__): WiseAstTypeBool();
+		WiseAstInt(__): WiseAstTypeI32();
+		WiseAstDouble(__): WiseAstTypeF64();
+		WiseAstString(__): WiseAstTypeString();
+		WiBool(b, eclass): def(eclass);
+		WiBreak(eclass): def(eclass);
+		WiContinue(eclass): def(eclass);
+		WiDefoftype(type, eclass): def(eclass);
+		WiDouble(double_0, eclass): def(eclass);
+		WiHex32(s, eclass): def(eclass);
+		WiHex64(s, eclass): def(eclass);
+		WiHexf32(s, eclass): def(eclass);
+		WiHexf64(s, eclass): def(eclass);
+		WiI64(s, eclass): def(eclass);
+		WiIf(exp1, exp2, eclass): def(eclass);
+		WiIfelse(exp1, exp2, exp3, eclass): def(eclass);
+		WiInt(int_0, eclass): def(eclass);
+		WiReturn(exps, eclass): def(eclass);
+		WiSet(id, e, eclass): def(eclass);
+		WiSizeoftype(type, eclass): def(eclass);
+		WiTuple(exps, eclass): def(eclass);
+		WiVar(id, eclass): def(eclass);
+		WiWhile(exp1, exp2, eclass): def(eclass);
+		WiFunction(optexport, id, templates, lambdaargs, type, e, decl, eclass): def(eclass);
+		WiGlobal(id, optexport, type, optmutable, e, decl, eclass): def(eclass);
+		WiImport(id1, type, optmutable, id2, id3, decl, eclass): def(eclass);
+		WiWaseEmpty(eclass): def(eclass);
+		WiWiseInclude(s, decl, eclass): def(eclass);
+		WiAdd(exp1, exp2, eclass): def(eclass);
+		WiAnd(exp1, exp2, eclass): def(eclass);
+		WiBoolAnd(exp1, exp2, eclass): def(eclass);
+		WiBoolNot(e, eclass): def(eclass);
+		WiBoolOr(exp1, exp2, eclass): def(eclass);
+		WiBrace(expsemi, eclass): def(eclass);
+		WiCall(e, exps, eclass): def(eclass);
+		WiDiv(exp1, exp2, eclass): def(eclass);
+		WiEqual(exp1, exp2, eclass): def(eclass);
+		WiGreater(exp1, exp2, eclass): def(eclass);
+		WiGreaterEqual(exp1, exp2, eclass): def(eclass);
+		WiGreaterEqualu(exp1, exp2, eclass): def(eclass);
+		WiGreateru(exp1, exp2, eclass): def(eclass);
+		WiIsNull(e, eclass): def(eclass);
+		WiLess(exp1, exp2, eclass): def(eclass);
+		WiLessEqual(exp1, exp2, eclass): def(eclass);
+		WiLessEqualu(exp1, exp2, eclass): def(eclass);
+		WiLessu(exp1, exp2, eclass): def(eclass);
+		WiLet(id, i, opttype, e, brace, eclass): def(eclass);
+		WiMod(exp1, exp2, eclass): def(eclass);
+		WiMul(exp1, exp2, eclass): def(eclass);
+		WiNegate(e, eclass): def(eclass);
+		WiNotEqual(exp1, exp2, eclass): def(eclass);
+		WiOr(exp1, exp2, eclass): def(eclass);
+		WiPolycall(e, templateValue, eclass): def(eclass);
+		WiSub(exp1, exp2, eclass): def(eclass);
+		WiTupledot(e, int_0, eclass): def(eclass);
+		WiTypeannotation(e, type, eclass): def(eclass);
+		WiWasmOp(s, wargs, exps, eclass): def(eclass);
+		WiXor(exp1, exp2, eclass): def(eclass);
+		WiBasictype(s, eclass): def(eclass);
+		WiFntype(types, type, eclass): def(eclass);
+		WiTupletype(types, eclass): def(eclass);
+		WiIdtype(id, type, eclass): def(eclass);
+	}
 }

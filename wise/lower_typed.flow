@@ -4,7 +4,7 @@ import wise/type_ast;
 import wise/wiseast_dot;
 
 export {
-	lowerWiseAst2WaseAst(w : WiseAst) -> WaseAst;
+	lowerWiseAst2WaseAst(w : WiseAst, unionFindMap : UnionFindMap<[WiseAstType]>,) -> WaseAst;
 }
 
 LowerWiseAstEnv(
@@ -13,16 +13,18 @@ LowerWiseAstEnv(
 	locals : Tree<string, WiType>,
 	fns : Tree<string, WiType>, // returnType
 	dots : ref Set<WaseDotFn>,
+	unionFindMap : UnionFindMap<[WiseAstType]>,
 	onError : (WiseAst, string) -> void, 
 );
 
 makeLowerWiseAstEnv() -> LowerWiseAstEnv {
-	LowerWiseAstEnv(0, [], makeTree(), makeTree(), ref makeSet(), nop2);
+	LowerWiseAstEnv(0, [], makeTree(), makeTree(), ref makeSet(), makeUnionFindMap([], \v1, v2 -> v1), nop2);
 }
 
-lowerWiseAst2WaseAst(w : WiseAst) -> WaseAst {
+lowerWiseAst2WaseAst(w : WiseAst, unionFindMap : UnionFindMap<[WiseAstType]>,) -> WaseAst {
 	env = LowerWiseAstEnv(makeLowerWiseAstEnv() with
 		fns = extractFnNamesFromWiseAst(w, makeTree()),
+		unionFindMap = unionFindMap,
 		onError = \ast, error -> println(error + " at: " + toString(ast))
 	);
 	lowerWiseAstToWaseAst(env, w);
@@ -380,7 +382,8 @@ makeTupledotData(env : LowerWiseAstEnv, e : WiExp, indexes : [int]) -> Triple<Ma
 		WiTupledot(e1, ind, __): makeTupledotData(env, e1, concat([ind], indexes));
 		WiTuple(exps, eclass) : {
 			// TODO: we need real types here. can we use Templates somehow? or it will be too complicated?
-			Triple(None(), WiTupletype(map(exps, \__ -> WiBasictype("", 0)), eclass), indexes);
+			realTypes = map(exps, \e2 -> WiseAstType2WiType(resolveWiseAstType(env.unionFindMap, e2, env.onError)));
+			Triple(None(), WiTupletype(realTypes, eclass), indexes);
 		}
 		WiVar(id, __) : Triple(Some(id), either(lookupTree(env.locals, id), WiBasictype("", 0)), indexes); // eclass
 		WiCall(e1, __, __) : Triple(None(), either(lookupTree(env.fns, getWiVarId(e1)), WiBasictype("", 0)), indexes); // eclass
@@ -388,6 +391,25 @@ makeTupledotData(env : LowerWiseAstEnv, e : WiExp, indexes : [int]) -> Triple<Ma
 			env.onError(e, "		TODO: types for tupledot from " + toString(e));
 			Triple(None(), WiBasictype("", 0), indexes) // eclass
 		};
+	}
+}
+
+// do we really need this converter?
+WiseAstType2WiType(t : WiseAstType) -> WiType {
+	switch (t : WiseAstType) {
+		WiseAstTypeI32() : WiBasictype("i32", 0);
+		WiseAstTypeI64() : WiBasictype("i64", 0);
+		WiseAstTypeF32() : WiBasictype("f32", 0);
+		WiseAstTypeF64() : WiBasictype("f64", 0);
+		WiseAstTypeFunc(args, ret) : WiFntype(map(args, WiseAstType2WiType), WiseAstType2WiType(ret), 0);
+		WiseAstTypeSIMD() : WiBasictype("v128", 0);
+		WiseAstTypeBool() : WiBasictype("i32", 0);
+		WiseAstTypeString() : WiBasictype("i32", 0);
+		WiseAstTypeTuple(types) : WiTupletype(map(types, WiseAstType2WiType), 0);
+		WiseAstTypeEclass(id) : {
+			println("ERROR : unknown type " + toString(t));
+			WiBasictype("", 0);
+		}
 	}
 }
 
