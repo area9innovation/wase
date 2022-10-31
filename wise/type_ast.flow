@@ -79,8 +79,7 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType {
 		}
 		WiIfelse(cond, ifval, elseval, __): {
 			rec2(cond, WiseAstTypeBool());
-			iftype = rec(ifval);
-			rec2(elseval, iftype);
+			rec2e(elseval, ifval);
 		}
 		WiReturn(exps, eclass): {
 			if (exps == []) {
@@ -118,7 +117,7 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType {
 			fnType = WiseAstTypeFunc(map(lambdaargs, \a -> rec(a.type)), retType);
 			newState = TypeWiseAstState(state with 
 				fns = setTree(state.fns, id, fnType),
-				vars = fold(lambdaargs, state.vars, \acc, t -> setTree(acc, t.id, typecheckWiseAst(state, t.type)))
+				vars = fold(lambdaargs, state.vars, \acc, t -> setTree(acc, t.id, rec(t.type)))
 			);
 			bodyType = typecheckWiseAst(newState, e);
 			unifyWiseAstTypes(state, bodyType, retType);
@@ -154,7 +153,7 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType {
 			}
 		}
 		WiCall(fn, args, eclass): {
-			targs = map(args, \a -> typecheckWiseAst(state, a));
+			targs = map(args, rec);
 			result = getNewEclassType(state);
 			callType = WiseAstTypeFunc(targs, result);
 
@@ -186,11 +185,7 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType {
 		WiLessEqualu(exp1, exp2, eclass): rec2b(exp1, exp2);
 		WiLessu(exp1, exp2, eclass): rec2b(exp1, exp2);
 		WiNotEqual(exp1, exp2, eclass): rec2b(exp1, exp2);
-		WiBoolNot(e, eclass): {
-			t = rec(e);
-			if (t != WiseAstTypeBool()) println("ERROR : wrong type in " + toString(ast));
-			t;
-		}
+		WiBoolNot(e, eclass): rec2(e, WiseAstTypeBool());
 		WiLet(id, i, opttype, e, brace, eclass): {
 			varType = rec(opttype);
 			newState = TypeWiseAstState(state with vars = setTree(state.vars, id, varType));
@@ -219,7 +214,7 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAstType {
 			}
 		}
 		WiTypeannotation(e, type, eclass): {
-			ttype= rec(type);
+			ttype = rec(type);
 			rec2(e, ttype);
 		}
 		WiWasmOp(s, wargs, exps, eclass): {
@@ -252,9 +247,7 @@ unifyWiseAstTypes(env : TypeWiseAstState, left : WiseAstType, right : WiseAstTyp
 		};
 		doRight = \ -> {
 			switch (right : WiseAstType) {
-				WiseAstTypeEclass(rid): {
-					unifyWiseAstTypes(env, right, left)
-				}
+				WiseAstTypeEclass(__): unifyWiseAstTypes(env, right, left);
 				default: onError();
 			}
 		};
@@ -298,15 +291,10 @@ unifyWiseAstTypes(env : TypeWiseAstState, left : WiseAstType, right : WiseAstTyp
 						}
 					}
 					WiseAstTypeEclass(id): {
-						rtypes = mapi(ltypes, \i, ltype -> {
-							tyvar = getNewEclassType(env);
-							bindTyvar(id, tyvar);
-							unifyWiseAstTypes(env, ltype, tyvar);
-							tyvar;
-						});
-						tyvar = getNewEclassType(env);
+						rtypes = mapi(ltypes, \i, ltype -> getNewEclassType(env));
 						rt = WiseAstTypeTuple(rtypes);
 						bindTyvar(id, rt);
+						unifyWiseAstTypes(env, left, rt)
 					}
 					default: onError();
 				}
@@ -327,7 +315,6 @@ unifyWiseAstTypes(env : TypeWiseAstState, left : WiseAstType, right : WiseAstTyp
 						retTyvar = getNewEclassType(env);
 						argTyvars = map(largs, \__ -> getNewEclassType(env));
 						rt = WiseAstTypeFunc(argTyvars, retTyvar);
-
 						bindTyvar(id, rt);
 						unifyWiseAstTypes(env, left, rt)
 					}
