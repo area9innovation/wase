@@ -56,8 +56,10 @@ WiDecl2WeDecl(env : LowerWiseAstEnv, w : WiDecl) -> WeDecl {
 	lowerDecl = \decl -> WiDecl2WeDecl(env, decl);
 	switch (w : WiDecl) {
 		WiFunction(optexport, id, templates, lambdaargs, type, expr, decl, __): {
+			// TODO: tuple -> vars
+			args = unrollWiTupletype(lambdaargs);
 			newEnv = LowerWiseAstEnv(env with locals = fold(lambdaargs, env.locals, \acc, t -> setTree(acc, t.id, t.type)));
-			WeFunction(id, optexport, map(lambdaargs, WiIdtype2WeIdtype), WiType2WeTypes(type), WiExp2WeExp(newEnv, expr), lowerDecl(decl));
+			WeFunction(id, optexport, map(args, WiIdtype2WeIdtype), WiType2WeTypes(type), WiExp2WeExp(newEnv, expr), lowerDecl(decl));
 		}
 		WiGlobal(id, optexport, type, optmutable, expr, decl, __): {
 			WeGlobal(id, optexport, WiType2WeType(type), optmutable, lowerExp(expr), lowerDecl(decl));
@@ -72,6 +74,20 @@ WiDecl2WeDecl(env : LowerWiseAstEnv, w : WiDecl) -> WeDecl {
 		}
 		WiWiseInclude(s, decl, __): WeWaseInclude(s, lowerDecl(decl));
 		WiWaseEmpty(__): WeWaseEmpty();
+	}
+}
+
+// TODO "When a function takes a tuple argument, it should expand to multiple arguments:"
+unrollWiTupletype(types : [WiType], acc : [WiType]) -> [WiType] {
+	if (types == []) {
+		acc
+	} else {
+		newVals = switch (types[0] : WiType) {
+			WiBasictype(s, __) : Pair([], arrayPush(acc, types[0]));
+			WiFntype(at, rt, eclass) : Pair([], arrayPush(acc, WiFntype(at, rt, eclass)));
+			WiTupletype(tt, __) : Pair(tt, acc);
+		}
+		unrollWiTupletype(concat(tail(types), newVals.first), newVals.second);
 	}
 }
 
@@ -365,13 +381,11 @@ tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 		eitherFn(
 			varNameM,
 			\varName -> {
-				// do not fall below. stop tree traversal
-				// varName.field1.field2;
 				if (index > -1) {
 					WeVar(varName + "." + i2s(index));
 				} else {
-					env.onError(d, "wrong index of tuple " + toString(d));
-					WiExp2WeExp(env, d);
+					env.onError(d, "ERROR: wrong index of tuple " + toString(d));
+					WiExp2WeExp(env, d.exp);
 				}
 			},
 			\-> makeDotFnAndPushToEnv(d.exp, index, types)
@@ -393,25 +407,3 @@ makeTupledotData(env : LowerWiseAstEnv, e : WiExp, indexes : [int]) -> Triple<Ma
 		};
 	}
 }
-
-/* extractTupldotValue(d : DslAst) -> DslAst {
-	switch (d) {
-		DslNode(name, args, __): if (name == "tupledot") extractTupldotValue(args[0]) else d;
-		default: d;
-	}
-}
-
-// TODO: think about the order
-// example : 
-// Tuple(i32, f64);
-// makeTuple() -> Tuple;
-// Tuple(1, 1.1) == [f64, i32]
-// makeTuple() == [i32, f64]
-orderDotFnTypes(node : DslNode, types : [DslAst]) -> [DslAst] {
-	if (node.name == "tuple") {
-		// tuples have reversed types
-		reverseA(types)
-	} else {
-		types;
-	}
-} */

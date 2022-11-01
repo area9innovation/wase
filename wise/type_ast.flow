@@ -212,7 +212,7 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 				default: typecheckWiExp(state, fn);
 			}; */
 			t = rec2(fn, callType);
-			bindNewEclassToType(state, t.first, \id -> WiCall(t.second, map(targs, secondOfPair), id));
+			bindNewEclassToType(state, result/* t.first */, \id -> WiCall(t.second, map(targs, secondOfPair), id));
 		}
 		WiEqual(exp1, exp2, __): {
 			t = rec2b(exp1, exp2);
@@ -487,6 +487,7 @@ unifyWiseAstTypes(env : TypeWiseAstState, left : WiseAstType, right : WiseAstTyp
 						bindTyvar(id, rt);
 						unifyWiseAstTypes(env, left, rt)
 					}
+					WiseAstTypeTuple(fields) : onError();
 					default: onError();
 				}
 			}
