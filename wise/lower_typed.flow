@@ -322,12 +322,12 @@ extractFnNamesFromWiseAst(w : WiseAst, acc : Tree<string, WiType>,) -> Tree<stri
 	}
 }
 
-wiFieldPath2index(route : [int], types : WiType, acc : int) -> int {
+wiFieldPath2index(route : [int], types : WiseAstType, acc : int) -> int {
 	if (route == []) {
 		acc;
 	} else {
 		pathLength = ref -1;
-		foundItem = findItemInWiTypes(types, [], \itemPath, item -> {
+		foundItem = findItemInWiTypes(types, [], \itemPath, __ -> {
 			pathLength := ^pathLength + 1;
 			itemPath == route;
 		});
@@ -336,11 +336,18 @@ wiFieldPath2index(route : [int], types : WiType, acc : int) -> int {
 }
 
 // todo: tail recursion
-findItemInWiTypes(v : WiType, route : [int], fn : ([int], WiType) -> bool) -> bool {
-	switch (v : WiType) {
-		WiBasictype(__, __) : fn(route, v);
-		WiFntype(__, __, __) : fn(route, v);
-		WiTupletype(types, __) : foldi(types, false, \i, acc, item ->
+findItemInWiTypes(v : WiseAstType, route : [int], fn : ([int], WiseAstType) -> bool) -> bool {
+	switch (v : WiseAstType) {
+		WiseAstTypeI32() : fn(route, v);
+		WiseAstTypeI64() : fn(route, v);
+		WiseAstTypeF32() : fn(route, v);
+		WiseAstTypeF64() : fn(route, v);
+		WiseAstTypeFunc(__, __) : fn(route, v);
+		WiseAstTypeSIMD() : fn(route, v);
+		WiseAstTypeBool() : fn(route, v);
+		WiseAstTypeString() : fn(route, v);
+		WiseAstTypeEclass(__) : fn(route, v);
+		WiseAstTypeTuple(types) : foldi(types, false, \i, acc, item ->
 			acc || findItemInWiTypes(item, arrayPush(route, i), fn)
 		);
 	}
@@ -351,11 +358,6 @@ tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 		dot = makeWeTupleDotFn(value, index, types);
 		env.dots := insertSet(^(env.dots), dot.fn);
 		WiExp2WeExp(env, dot.value);
-	}
-	// tuple construction
-	makeTupleConstructExp = \index, primTypes -> {
-		println("		TODO makeTupleConstructExp : "+i2s(index)+" "+toString(primTypes));
-		makeDotFnAndPushToEnv(d.exp, index, primTypes);
 	}
 	untriple(makeTupledotData(env, d, []), \varNameM, types, path -> {
 		index = wiFieldPath2index(path, types, -1);
@@ -371,45 +373,23 @@ tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 					WiExp2WeExp(env, d);
 				}
 			},
-			\-> makeTupleConstructExp(index, types)
-		)
+			\-> makeDotFnAndPushToEnv(d.exp, index, types)
+		);
 	});
 }
 
 // TODO: construct?, fnResult
-makeTupledotData(env : LowerWiseAstEnv, e : WiExp, indexes : [int]) -> Triple<Maybe<string>, WiType, [int]> {
+makeTupledotData(env : LowerWiseAstEnv, e : WiExp, indexes : [int]) -> Triple<Maybe<string>, WiseAstType, [int]> {
+	rec = \e2 -> resolveWiseAst(env.unionFindMap, e2, env.onError);
 	switch (e : WiExp) {
 		WiTupledot(e1, ind, __): makeTupledotData(env, e1, concat([ind], indexes));
-		WiTuple(exps, eclass) : {
-			// TODO: we need real types here. can we use Templates somehow? or it will be too complicated?
-			realTypes = map(exps, \e2 -> WiseAstType2WiType(resolveWiseAstType(env.unionFindMap, e2, env.onError)));
-			Triple(None(), WiTupletype(realTypes, eclass), indexes);
-		}
-		WiVar(id, __) : Triple(Some(id), either(lookupTree(env.locals, id), WiBasictype("", 0)), indexes); // eclass
-		WiCall(e1, __, __) : Triple(None(), either(lookupTree(env.fns, getWiVarId(e1)), WiBasictype("", 0)), indexes); // eclass
+		WiTuple(exps, eclass) : Triple(None(), rec(e), indexes);
+		WiVar(id, __) : Triple(Some(id), eitherMap(lookupTree(env.locals, id), rec, WiseAstTypeEclass(-1)), indexes); // eclass
+		WiCall(e1, __, __) : Triple(None(), eitherMap(lookupTree(env.fns, getWiVarId(e1)), rec, WiseAstTypeEclass(-1)), indexes); // eclass
 		default : {
 			env.onError(e, "		TODO: types for tupledot from " + toString(e));
-			Triple(None(), WiBasictype("", 0), indexes) // eclass
+			Triple(None(), WiseAstTypeEclass(-1), indexes) // eclass
 		};
-	}
-}
-
-// do we really need this converter?
-WiseAstType2WiType(t : WiseAstType) -> WiType {
-	switch (t : WiseAstType) {
-		WiseAstTypeI32() : WiBasictype("i32", 0);
-		WiseAstTypeI64() : WiBasictype("i64", 0);
-		WiseAstTypeF32() : WiBasictype("f32", 0);
-		WiseAstTypeF64() : WiBasictype("f64", 0);
-		WiseAstTypeFunc(args, ret) : WiFntype(map(args, WiseAstType2WiType), WiseAstType2WiType(ret), 0);
-		WiseAstTypeSIMD() : WiBasictype("v128", 0);
-		WiseAstTypeBool() : WiBasictype("i32", 0);
-		WiseAstTypeString() : WiBasictype("i32", 0);
-		WiseAstTypeTuple(types) : WiTupletype(map(types, WiseAstType2WiType), 0);
-		WiseAstTypeEclass(id) : {
-			println("ERROR : unknown type " + toString(t));
-			WiBasictype("", 0);
-		}
 	}
 }
 

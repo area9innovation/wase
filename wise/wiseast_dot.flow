@@ -1,16 +1,18 @@
+import wise/wiseast_types;
 import wise/wise_types;
 import ds/set;
+import text/blueprint;
 
 export {
 
-	makeWeTupleDotFn(e : WiExp, index : int, types : WiType) -> WaseTupledotFn;
+	makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType) -> WaseTupledotFn;
 	WaseTupledotFn(
 		value : WiExp,
 		fn : WaseDotFn,
 	);
 	WaseDotFn(
 		name : string,  // format : dot_type[_type]_index
-		argTypes : WiType,
+		argTypes : [WiseAstType],
 		index : int,
 	);
 	// isDotCallFn(v : WaseAst) -> bool;
@@ -19,8 +21,11 @@ export {
 
 }
 
-makeWeTupleDotFn(e : WiExp, index : int, types : WiType) -> WaseTupledotFn {
-	dotFn = makeTupledotFnName(types, index);
+makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType) -> WaseTupledotFn {
+	types = extractTupleTypesFromWiseAstTypes([type]);
+	dotFn = "dot_"
+			+ superglue(types, wiseAstType2dotname, "_") + "_"
+			+ (if (index >= 0) i2s(index) else "");
 	value = WiCall(WiVar(dotFn, 0), [e], 0); // ? eclass
 	WaseTupledotFn(
 		value,
@@ -28,28 +33,35 @@ makeWeTupleDotFn(e : WiExp, index : int, types : WiType) -> WaseTupledotFn {
 	);
 }
 
-makeTupledotFnName(types : WiType, index : int) -> string {
-	"dot_"
-	//+ superglue(types, type2dotname, "_") + "_" // TODO
-	+ (if (index >= 0) i2s(index) else "");
+extractTupleTypesFromWiseAstTypes(types : [WiseAstType]) -> [WiseAstType] {
+	mapConcat(types, \t -> switch (t : WiseAstType) {
+		WiseAstTypeI32() : [t];
+		WiseAstTypeI64() : [t];
+		WiseAstTypeF32() : [t];
+		WiseAstTypeF64() : [t];
+		WiseAstTypeFunc(__, __) : [t];
+		WiseAstTypeSIMD() : [t];
+		WiseAstTypeBool() : [t];
+		WiseAstTypeString() : [t];
+		WiseAstTypeTuple(fields) : extractTupleTypesFromWiseAstTypes(fields);
+		WiseAstTypeEclass(__) : [t];
+	});
 }
 
-// type2dotname(type : WaseAst) -> string {
-// 	/* switch (type) {
-// 		DslBool(value): b2s(value);
-// 		DslInt(value): i2s(value);
-// 		DslDouble(value): d2s(value);
-// 		DslString(value): value;
-// 		DslList(value): {
-// 			arr = reverseA(list2array(value));
-// 			"[" + superglue(arr, type2dotname, ",") + "]";
-// 		}
-// 		DslNode(name, args, pos): {
-// 			children = map(args, type2dotname);
-// 			name + "(" + strGlue(children, ",") + ")"
-// 		}
-// 	} */""
-// }
+wiseAstType2dotname(type : WiseAstType) -> string {
+	switch (type) {
+		WiseAstTypeI32() : "i32";
+		WiseAstTypeI64() : "i64";
+		WiseAstTypeF32() : "f32";
+		WiseAstTypeF64() : "f64";
+		WiseAstTypeFunc(tt, rt) : "fn_" + superglue(tt, wiseAstType2dotname, "-") + "--" + wiseAstType2dotname(rt);
+		WiseAstTypeSIMD() : "v128";
+		WiseAstTypeBool() : "b";
+		WiseAstTypeString() : "s";
+		WiseAstTypeTuple(fields) : "t_" + superglue(fields, wiseAstType2dotname, "-");
+		WiseAstTypeEclass(id) : "e" + i2s(id);
+	}
+}
 
 // extractDotFnName(v : WaseAst) -> string {
 // 	/* switch (v) {

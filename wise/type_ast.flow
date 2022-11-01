@@ -5,7 +5,7 @@ import algorithms;
 
 export {
 	typeWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAst;
-	resolveWiseAstType(unionFindMap : UnionFindMap<[WiseAstType]>, t : WiseAst, onError : (WiseAst, string) -> void) -> WiseAstType;
+	resolveWiseAst(unionFindMap : UnionFindMap<[WiseAstType]>, t : WiseAst, onError : (WiseAst, string) -> void) -> WiseAstType;
 
 	makeTypeWiseAstState(onError : (WiseAst, string) -> void) -> TypeWiseAstState;
 }
@@ -495,22 +495,8 @@ unifyWiseAstTypes(env : TypeWiseAstState, left : WiseAstType, right : WiseAstTyp
 }
 
 
-resolveWiseAstType(unionFindMap : UnionFindMap<[WiseAstType]>, ast : WiseAst, onError : (WiseAst, string) -> void) -> WiseAstType {
-	def = \id -> {
-		types = getUnionMapValue(unionFindMap, id);
-			if (length(types) == 0) {
-				onError(ast, "ERROR: Could not find a type: " + toString(ast));
-				WiseAstTypeEclass(-1);
-			} else {
-				rtypes = sortUnique(types/* map(types, \tt -> resolveWiseAstType(env, tt)) */);
-				if (length(rtypes) == 1) {
-					rtypes[0];
-				} else {
-					onError(ast, "ERROR: Could not find unique type: " + toString(ast));
-					rtypes[0];
-				}
-			}
-	}
+resolveWiseAst(unionFindMap : UnionFindMap<[WiseAstType]>, ast : WiseAst, onError : (WiseAst, string) -> void) -> WiseAstType {
+	def = \id -> resolveWiseAstTypeByEclass(unionFindMap, id, onError);
 	switch (ast : WiseAst) {
 		WiseAstList(value): {
 			if (isEmptyList(value)) {
@@ -518,7 +504,7 @@ resolveWiseAstType(unionFindMap : UnionFindMap<[WiseAstType]>, ast : WiseAst, on
 				WiseAstTypeEclass(-1);
 			} else {
 				maxInd = countList(value) - 1;
-				foldiList(value, WiseAstTypeEclass(-1), \i, acc, v -> if (i == maxInd) resolveWiseAstType(unionFindMap, v, onError) else acc);
+				foldiList(value, WiseAstTypeEclass(-1), \i, acc, v -> if (i == maxInd) resolveWiseAst(unionFindMap, v, onError) else acc);
 			}
 		}
 		WiseAstBool(__): WiseAstTypeBool();
@@ -583,5 +569,37 @@ resolveWiseAstType(unionFindMap : UnionFindMap<[WiseAstType]>, ast : WiseAst, on
 		WiFntype(types, type, eclass): def(eclass);
 		WiTupletype(types, eclass): def(eclass);
 		WiIdtype(id, type, eclass): def(eclass);
+	}
+}
+
+resolveWiseAstTypeByEclass(unionFindMap : UnionFindMap<[WiseAstType]>, eclass : int, onError : (WiseAst, string) -> void) -> WiseAstType {
+	types = getUnionMapValue(unionFindMap, eclass);
+	if (length(types) == 0) {
+		println("ERROR: Could not find a type: " + toString(eclass));
+		WiseAstTypeEclass(-1);
+	} else {
+		rtypes = sortUnique(map(types, \tt -> resolveWiseAstType(unionFindMap, tt, onError)));
+		if (length(rtypes) == 1) {
+			rtypes[0];
+		} else {
+			println("ERROR: Could not find unique type: " + toString(eclass));
+			rtypes[0];
+		}
+	}
+}
+
+resolveWiseAstType(unionFindMap : UnionFindMap<[WiseAstType]>, t : WiseAstType, onError : (WiseAst, string) -> void) -> WiseAstType {
+	rec = \tt -> resolveWiseAstType(unionFindMap, tt, onError);
+	switch (t : WiseAstType) {
+		WiseAstTypeI32() : t;
+		WiseAstTypeI64() : t;
+		WiseAstTypeF32() : t;
+		WiseAstTypeF64() : t;
+		WiseAstTypeFunc(argTypes, retType) : WiseAstTypeFunc(map(argTypes, rec), rec(retType));
+		WiseAstTypeSIMD() : t;
+		WiseAstTypeBool() : t;
+		WiseAstTypeString() : t;
+		WiseAstTypeTuple(fields) : WiseAstTypeTuple(map(fields, rec));
+		WiseAstTypeEclass(id) : resolveWiseAstTypeByEclass(unionFindMap, id, onError);
 	}
 }
