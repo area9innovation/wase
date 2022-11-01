@@ -1,5 +1,6 @@
 import wise/wiseast_types;
 import wise/wise_types;
+import wase/wase_types;
 import ds/set;
 import text/blueprint;
 
@@ -17,7 +18,7 @@ export {
 	);
 	// isDotCallFn(v : WaseAst) -> bool;
 
-	// addDotNFunctions(fns : Set<WaseDotFn>, d : WaseAst) -> WaseAst;
+	addDotNFunctionsToWase(fns : Set<WaseDotFn>, d : WaseAst) -> WaseAst;
 
 }
 
@@ -88,31 +89,57 @@ wiseAstType2dotname(type : WiseAstType) -> string {
 // 	} */false
 // }
 
-// addDotNFunctions(fns : Set<WaseDotFn>, d : WaseAst) -> WaseAst {
-// 	/* foldSet(fns, d, \acc, fn -> {
-// 		returnType = elementAt(fn.argTypes, fn.index, DslList(makeList()));
-// 		DslNode(
-// 			"function",
-// 			[
-// 				DslString(fn.name),
-// 				DslString(""), // export
-// 				DslList(array2list(mapi(fn.argTypes, \i, argType -> DslNode(
-// 					"idtype",
-// 					[DslString("v" + i2s(i)), DslNode("type", [argType, argType], 0), argType],
-// 					0
-// 				)))),
-// 				returnType,
-// 				DslNode( // body
-// 					"brace", 
-// 					[
-// 						DslList(makeList1(DslNode("var", [DslString("v" + i2s(fn.index)), returnType], 0))),
-// 						returnType
-// 					],
-// 					0
-// 				),
-// 				acc, // scope
-// 				DslList(makeList())],
-// 			0
-// 		)
-// 	}); */d
-// }
+addDotNFunctionsToWase(fns : Set<WaseDotFn>, d : WaseAst) -> WaseAst {
+	dotFns = foldSet(fns, WeWaseEmpty(), \acc : WeDecl, fn -> {
+		types = map(fn.argTypes, wiseAstType2weType);
+		returnType = elementAt(types, fn.index, WeType(""));
+		WeFunction(
+			fn.name,
+			"", // optexport
+			mapi(types, \i, argType -> WeIdtype("v" + i2s(i), argType)),
+			[returnType],
+			WeReturn(WeVar("v" + i2s(fn.index))),
+			acc
+		);
+	});
+	newValue = addFnToWaseAst(d, dotFns);
+	if (newValue == d && !isEmptySet(fns)) println("ERROR: can't add the dot fns. Declaration is not found");
+	newValue;
+}
+
+addFnToWaseAst(v : WaseAst, fns : WeDecl) -> WaseAst {
+	setFns = \decl -> if (decl == WeWaseEmpty()) fns else decl;
+
+	switch (v : WaseAst) {
+		WeData(__, __, __, __, __) : WeData(v with decl = setFns(fns));
+		WeFunction(__, __, __, __, __, __) : WeFunction(v with decl = setFns(fns));
+		WeGlobal(__, __, __, __, __, __) : WeGlobal(v with decl = setFns(fns));
+		WeImportFun(__, __, __, __, __) : WeImportFun(v with decl = setFns(fns));
+		WeImportGlobal(__, __, __, __, __, __) : WeImportGlobal(v with decl = setFns(fns));
+		WeImportMemory(__, __, __, __, __) : WeImportMemory(v with decl = setFns(fns));
+		WeImportTable(__, __, __, __, __, __, __) : WeImportTable(v with decl = setFns(fns));
+		WeMemory(__, __, __, __) : WeMemory(v with decl = setFns(fns));
+		WeWaseInclude(__, __) : WeWaseInclude(v with decl = setFns(fns));
+		default : v;
+	}
+}
+
+wiseAstType2weType(type : WiseAstType) -> WeType {
+	makeErrCode = \-> {
+		println("Wrong type '" + toString(type) + "' in dotFn");
+		""
+	}
+	code = switch (type) {
+		WiseAstTypeI32() : "i32";
+		WiseAstTypeI64() : "i64";
+		WiseAstTypeF32() : "f32";
+		WiseAstTypeF64() : "f64";
+		WiseAstTypeFunc(tt, rt) : "i32";
+		WiseAstTypeSIMD() : "v128";
+		WiseAstTypeBool() : "i32";
+		WiseAstTypeString() : "i32";
+		WiseAstTypeTuple(fields) : makeErrCode();
+		WiseAstTypeEclass(id) : makeErrCode();
+	}
+	WeType(code);
+}

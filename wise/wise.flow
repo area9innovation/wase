@@ -65,18 +65,18 @@ println("from DSL: "+toString(wiseProgram));
 			typeEnv = makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast)));
 			checkedTypes = typeWiseAst(typeEnv, wiseProgram);
 			// typedWise = resolveWiseAst(typeEnv, wiseProgram);
-			loweredWase = lowerWiseAst2WaseAst(checkedTypes, typeEnv.unionFindMap);
+			dots  = ref makeSet();
+			loweredWase = lowerWiseAst2WaseAst(checkedTypes, typeEnv.unionFindMap, dots);
 println("LOWERED WISE: "+toString(loweredWase));
+			waseCode = addDotNFunctionsToWase(^dots, loweredWase);
 			// TODO: WaseAst2Wase
-			// TODO: Tuples!!
-			loweredAst = waseAst2DslAst(loweredWase);
+			loweredAst = waseAst2DslAst(waseCode);
 println("LOWERED AST: "+toString(loweredAst));
 			// typeWise makes type duplicates(?) what necessary for dsl2wase
 			// waseAst2DslAst doesn't have the real types. We have to fix it
 			// auto == () doesn't work. greate = bool type (should be int)
-			typed = typeWase(loweredAst);
 println("CHECKED TYPE");
-			Pair(makeSet(), typed);
+			typeWase(loweredAst); // TODO: delete
 		} else {
 			// typed -> lowered
 			typed = typeWise(extended);
@@ -89,13 +89,12 @@ println("CHECKED TYPE");
 			});
 println("TYPED AST: "+toString(typed));
 println("LWD AST: "+toString(lowerWise2Wase(env, typed)));
-			Pair(^(env.dots), lowerWise2Wase(env, typed));
+			// add dot* functions
+			addDotNFunctions(^(env.dots), lowerWise2Wase(env, typed));
 		}
 
-		// add dot* functions
-		lowered1 = unpair(lowered0, addDotNFunctions);
 		// Add exported memory
-		lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered1], 0);
+		lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered0], 0);
 
 		if (isUrlParameterTrue("debug-lower")) {
 			println("Wase '" + filename + "'':");

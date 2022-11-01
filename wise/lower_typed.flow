@@ -4,7 +4,7 @@ import wise/type_ast;
 import wise/wiseast_dot;
 
 export {
-	lowerWiseAst2WaseAst(w : WiseAst, unionFindMap : UnionFindMap<[WiseAstType]>,) -> WaseAst;
+	lowerWiseAst2WaseAst(w : WiseAst, unionFindMap : UnionFindMap<[WiseAstType]>, dots : ref Set<WaseDotFn>) -> WaseAst;
 }
 
 LowerWiseAstEnv(
@@ -21,10 +21,11 @@ makeLowerWiseAstEnv() -> LowerWiseAstEnv {
 	LowerWiseAstEnv(0, [], makeTree(), makeTree(), ref makeSet(), makeUnionFindMap([], \v1, v2 -> v1), nop2);
 }
 
-lowerWiseAst2WaseAst(w : WiseAst, unionFindMap : UnionFindMap<[WiseAstType]>,) -> WaseAst {
+lowerWiseAst2WaseAst(w : WiseAst, unionFindMap : UnionFindMap<[WiseAstType]>, dots : ref Set<WaseDotFn>) -> WaseAst {
 	env = LowerWiseAstEnv(makeLowerWiseAstEnv() with
 		fns = extractFnNamesFromWiseAst(w, makeTree()),
 		unionFindMap = unionFindMap,
+		dots = dots,
 		onError = \ast, error -> println(error + " at: " + toString(ast))
 	);
 	lowerWiseAstToWaseAst(env, w);
