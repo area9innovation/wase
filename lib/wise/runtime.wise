@@ -91,8 +91,8 @@ printf64(f : f64) -> () {
 	f0 : f64 = abs<>(f);
 	f1 : f64 = (f0 - trunc<>(f0)) * 100000000.0;
 	printi32(trunc_u<>(f1)); // 8 symbols
-	f2 = (f1 - trunc<>(f1));
-	f3 = f2 * 100000000.0; // 8 symbols
+	f2 : f64 = (f1 - trunc<>(f1));
+	f3 : f64 = f2 * 100000000.0; // 8 symbols
 	printi32(trunc_u<>(f3));
 	{}
 }

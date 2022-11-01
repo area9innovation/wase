@@ -16,7 +16,6 @@ export {
 		argTypes : [WiseAstType],
 		index : int,
 	);
-	// isDotCallFn(v : WaseAst) -> bool;
 
 	addDotNFunctionsToWase(fns : Set<WaseDotFn>, d : WaseAst) -> WaseAst;
 
@@ -27,7 +26,7 @@ makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType) -> WaseTupledotFn {
 	dotFn = "dot_"
 			+ superglue(types, wiseAstType2dotname, "_") + "_"
 			+ (if (index >= 0) i2s(index) else "");
-	value = WiCall(WiVar(dotFn, 0), [e], 0); // ? eclass
+	value = WiCall(WiVar(dotFn, 0), [e], 0);
 	WaseTupledotFn(
 		value,
 		WaseDotFn(dotFn, types, index)
@@ -64,31 +63,6 @@ wiseAstType2dotname(type : WiseAstType) -> string {
 	}
 }
 
-// extractDotFnName(v : WaseAst) -> string {
-// 	/* switch (v) {
-// 		DslNode(name, largs, pos) : {
-// 			if (name == "var" && largs != []) {
-// 				varName = getDslString(largs[0]);
-// 				if (startsWith(varName, "dot")) varName else "";
-// 			} else {
-// 				"";
-// 			}
-// 		}
-// 		default: "";
-// 	} */""
-// }
-
-// isDotCallFn(v : WaseAst) -> bool {
-// 	/* switch (v) {
-// 		DslNode(name, largs, pos) : {
-// 			name == "call"
-// 			&& largs != []
-// 			&& extractDotFnName(largs[0]) != "";
-// 		}
-// 		default: false;
-// 	} */false
-// }
-
 addDotNFunctionsToWase(fns : Set<WaseDotFn>, d : WaseAst) -> WaseAst {
 	dotFns = foldSet(fns, WeWaseEmpty(), \acc : WeDecl, fn -> {
 		types = map(fn.argTypes, wiseAstType2weType);
@@ -102,25 +76,43 @@ addDotNFunctionsToWase(fns : Set<WaseDotFn>, d : WaseAst) -> WaseAst {
 			acc
 		);
 	});
-	newValue = addFnToWaseAst(d, dotFns);
+	setDotFns = \w : WeDecl -> {
+		foldSet(fns, w, \acc : WeDecl, fn -> {
+			types = map(fn.argTypes, wiseAstType2weType);
+			returnType = elementAt(types, fn.index, WeType(""));
+			WeFunction(
+				fn.name,
+				"", // optexport
+				mapi(types, \i, argType -> WeIdtype("v" + i2s(i), argType)),
+				[returnType],
+				WeReturn(WeVar("v" + i2s(fn.index))),
+				acc
+			);
+		});
+	}
+	newValue = switch (d : WaseAst) {
+		WeDecl() : addFnToWeDecl(d, setDotFns);
+		default : d;
+	}
 	if (newValue == d && !isEmptySet(fns)) println("ERROR: can't add the dot fns. Declaration is not found");
 	newValue;
 }
 
-addFnToWaseAst(v : WaseAst, fns : WeDecl) -> WaseAst {
-	setFns = \decl -> if (decl == WeWaseEmpty()) fns else decl;
-
-	switch (v : WaseAst) {
-		WeData(__, __, __, __, __) : WeData(v with decl = setFns(fns));
-		WeFunction(__, __, __, __, __, __) : WeFunction(v with decl = setFns(fns));
-		WeGlobal(__, __, __, __, __, __) : WeGlobal(v with decl = setFns(fns));
-		WeImportFun(__, __, __, __, __) : WeImportFun(v with decl = setFns(fns));
-		WeImportGlobal(__, __, __, __, __, __) : WeImportGlobal(v with decl = setFns(fns));
-		WeImportMemory(__, __, __, __, __) : WeImportMemory(v with decl = setFns(fns));
-		WeImportTable(__, __, __, __, __, __, __) : WeImportTable(v with decl = setFns(fns));
-		WeMemory(__, __, __, __) : WeMemory(v with decl = setFns(fns));
-		WeWaseInclude(__, __) : WeWaseInclude(v with decl = setFns(fns));
-		default : v;
+addFnToWeDecl(v : WeDecl, setDotFns : (WeDecl) -> WeDecl) -> WeDecl {
+	setFns = \decl, updateWeDecl -> {
+		if (decl == WeWaseEmpty()) setDotFns(v) else updateWeDecl(addFnToWeDecl(decl, setDotFns));
+	}
+	switch (v : WeDecl) {
+		WeData(__, __, __, __, decl) : setFns(decl, \newDecl -> WeData(v with decl = newDecl));
+		WeFunction(__, __, __, __, __, decl) : setFns(decl, \newDecl -> WeFunction(v with decl = newDecl));
+		WeGlobal(__, __, __, __, __, decl) : setFns(decl, \newDecl -> WeGlobal(v with decl = newDecl));
+		WeImportFun(__, __, __, __, decl) : setFns(decl, \newDecl -> WeImportFun(v with decl = newDecl));
+		WeImportGlobal(__, __, __, __, __, decl) : setFns(decl, \newDecl -> WeImportGlobal(v with decl = newDecl));
+		WeImportMemory(__, __, __, __, decl) : setFns(decl, \newDecl -> WeImportMemory(v with decl = newDecl));
+		WeImportTable(__, __, __, __, __, __, decl) : setFns(decl, \newDecl -> WeImportTable(v with decl = newDecl));
+		WeMemory(__, __, __, decl) : setFns(decl, \newDecl -> WeMemory(v with decl = newDecl));
+		WeWaseInclude(__, decl) : setFns(decl, \newDecl -> WeWaseInclude(v with decl = newDecl));
+		WeWaseEmpty(): setDotFns(v);
 	}
 }
 
