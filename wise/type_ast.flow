@@ -333,8 +333,9 @@ typecheckWiType(state : TypeWiseAstState, t : WiType) -> Pair<WiseAstType, WiTyp
 		else if (s == "f32") WiseAstTypeF32()
 		else if (s == "f64") WiseAstTypeF64()
 		else if (s == "v128") WiseAstTypeSIMD()
+		else if (s == "auto") getNewEclassType(state)
 		else {
-			println("ERROR: unknown basic type " + s);
+			println("ERROR: unknown basic type '" + s + "'");
 			WiseAstTypeEclass(-1);
 		}
 	}

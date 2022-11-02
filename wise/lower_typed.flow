@@ -57,7 +57,7 @@ WiDecl2WeDecl(env : LowerWiseAstEnv, w : WiDecl) -> WeDecl {
 	switch (w : WiDecl) {
 		WiFunction(optexport, id, templates, lambdaargs, type, expr, decl, __): {
 			// TODO: tuple -> vars
-			args = unrollWiTupletype(lambdaargs);
+			args = lambdaargs;//unrollWiTupleArg(lambdaargs);
 			newEnv = LowerWiseAstEnv(env with locals = fold(lambdaargs, env.locals, \acc, t -> setTree(acc, t.id, t.type)));
 			WeFunction(id, optexport, map(args, WiIdtype2WeIdtype), WiType2WeTypes(type), WiExp2WeExp(newEnv, expr), lowerDecl(decl));
 		}
@@ -78,7 +78,7 @@ WiDecl2WeDecl(env : LowerWiseAstEnv, w : WiDecl) -> WeDecl {
 }
 
 // TODO "When a function takes a tuple argument, it should expand to multiple arguments:"
-unrollWiTupletype(types : [WiType], acc : [WiType]) -> [WiType] {
+/* unrollWiTupleArg(types : [WiType], acc : [WiType]) -> [WiType] {
 	if (types == []) {
 		acc
 	} else {
@@ -87,9 +87,9 @@ unrollWiTupletype(types : [WiType], acc : [WiType]) -> [WiType] {
 			WiFntype(at, rt, eclass) : Pair([], arrayPush(acc, WiFntype(at, rt, eclass)));
 			WiTupletype(tt, __) : Pair(tt, acc);
 		}
-		unrollWiTupletype(concat(tail(types), newVals.first), newVals.second);
+		unrollWiTupleArg(concat(tail(types), newVals.first), newVals.second);
 	}
-}
+} */
 
 WiWarg2WeWarg(w : WiWarg) -> WeWarg {
 	switch (w : WiWarg) {
@@ -372,7 +372,7 @@ findItemInWiTypes(v : WiseAstType, route : [int], fn : ([int], WiseAstType) -> b
 
 tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 	makeDotFnAndPushToEnv = \value, index, types -> {
-		dot = makeWeTupleDotFn(value, index, types);
+		dot = makeWeTupleDotFn(extractNotTupleDot(value), index, types);
 		env.dots := insertSet(^(env.dots), dot.fn);
 		WiExp2WeExp(env, dot.value);
 	}
@@ -384,13 +384,27 @@ tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 				if (index > -1) {
 					WeVar(varName + "." + i2s(index));
 				} else {
-					env.onError(d, "ERROR: wrong index of tuple " + toString(d));
+					env.onError(d, "ERROR: wrong index of tuple " + toString(path));
 					WiExp2WeExp(env, d.exp);
 				}
 			},
-			\-> makeDotFnAndPushToEnv(d.exp, index, types)
+			\-> {
+				if (index < 0) {
+					env.onError(d, "ERROR: wrong index of tuple " + toString(path) + " " + toString(types));
+					WiExp2WeExp(env, d.exp);
+				} else {
+					makeDotFnAndPushToEnv(d.exp, index, types);
+				}
+			}
 		);
 	});
+}
+
+extractNotTupleDot(e : WiExp) -> WiExp {
+	switch (e : WiExp) {
+		WiTupledot(e2, __, __): extractNotTupleDot(e2);
+		default : e;
+	}
 }
 
 // TODO: construct?, fnResult

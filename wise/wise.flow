@@ -59,15 +59,15 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 		lowered0 = if (gringoParser) {
 			// lowered -> typed . TODO: typed -> lowered?
 			// TODO: don't use transformations (dsl->wise->...; waseast->dsl->...)
-println("extended: "+toString(extended));
+// println("extended: "+toString(extended));
 			wiseProgram = dslAst2WiseAst(extended);
-println("from DSL: "+toString(wiseProgram));
+// println("from DSL: "+toString(wiseProgram));
 			typeEnv = makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast)));
 			checkedTypes = typeWiseAst(typeEnv, wiseProgram);
 			// typedWise = resolveWiseAst(typeEnv, wiseProgram);
 			dots  = ref makeSet();
 			loweredWase = lowerWiseAst2WaseAst(checkedTypes, typeEnv.unionFindMap, dots);
-println("LOWERED WISE: "+toString(loweredWase));
+// println("LOWERED WISE: "+toString(loweredWase));
 			waseCode = addDotNFunctionsToWase(^dots, loweredWase);
 			// TODO: WaseAst2Wase
 			loweredAst = waseAst2DslAst(waseCode);
