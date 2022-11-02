@@ -14,11 +14,12 @@ LowerWiseAstEnv(
 	fns : Tree<string, WiType>, // returnType
 	dots : ref Set<WaseDotFn>,
 	unionFindMap : UnionFindMap<[WiseAstType]>,
+	tmpCntr : ref int,
 	onError : (WiseAst, string) -> void, 
 );
 
 makeLowerWiseAstEnv() -> LowerWiseAstEnv {
-	LowerWiseAstEnv(0, [], makeTree(), makeTree(), ref makeSet(), makeUnionFindMap([], \v1, v2 -> v1), nop2);
+	LowerWiseAstEnv(0, [], makeTree(), makeTree(), ref makeSet(), makeUnionFindMap([], \v1, v2 -> v1), ref 0, nop2);
 }
 
 lowerWiseAst2WaseAst(w : WiseAst, unionFindMap : UnionFindMap<[WiseAstType]>, dots : ref Set<WaseDotFn>) -> WaseAst {
@@ -372,7 +373,7 @@ findItemInWiTypes(v : WiseAstType, route : [int], fn : ([int], WiseAstType) -> b
 
 tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 	makeDotFnAndPushToEnv = \value, index, types -> {
-		dot = makeWeTupleDotFn(extractNotTupleDot(value), index, types);
+		dot = makeWeTupleDotFn(extractNotTupleDot(value), index, types, env.tmpCntr);
 		env.dots := insertSet(^(env.dots), dot.fn);
 		WiExp2WeExp(env, dot.value);
 	}

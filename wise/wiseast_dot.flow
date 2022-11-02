@@ -6,7 +6,7 @@ import text/blueprint;
 
 export {
 
-	makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType) -> WaseTupledotFn;
+	makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType, tmpCntr : ref int) -> WaseTupledotFn;
 	WaseTupledotFn(
 		value : WiExp,
 		fn : WaseDotFn,
@@ -21,18 +21,73 @@ export {
 
 }
 
-makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType) -> WaseTupledotFn {
+makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType, tmpCntr : ref int) -> WaseTupledotFn {
 	types = extractTupleTypesFromWiseAstTypes([type]);
 	dotFn = "dot_"
 			+ superglue(types, wiseAstType2dotname, "_") + "_"
 			+ (if (index >= 0) i2s(index) else "");
-	value = WiCall(WiVar(dotFn, 0), [e], 0);
 	WaseTupledotFn(
-		value,
+		makeWeTupleDotCallBody(dotFn, e, type, tmpCntr),
 		WaseDotFn(dotFn, types, index)
 	);
 }
 
+makeWeTupleDotCallBody(dotFn : string, e : WiExp, tupleType : WiseAstType, tmpCntr : ref int) -> WiExp {
+	tupleEclass = e.eclass;
+	tmpVar = WiVar("_conTuple" + i2s(^tmpCntr), tupleEclass);
+	tmpCntr := (^tmpCntr) + 1;
+	wiType = wiseAstType2wiType(tupleType);
+	WiLet(
+		tmpVar.id,
+		0,
+		switch (wiType : WiType) {
+			WiTupletype(tt, ec): WiTupletype(tt, tupleEclass);
+			default : wiType;
+		},
+		e,
+		WiBrace(
+			[WiCall(
+				WiVar(dotFn, 0),
+				foldWiseAstTypeTuple(tupleType, [], \indexes, tt -> fold(indexes, tmpVar, \acc, i -> WiTupledot(acc, i, 0))),
+				0
+			)],
+			0
+		),
+		tupleEclass
+	);
+}
+
+foldWiseAstTypeTuple(t : WiseAstType, ind : [int], fn : ([int], WiseAstType) -> ?) -> [?] {
+	switch (t : WiseAstType) {
+		WiseAstTypeI32() : [fn(ind, t)];
+		WiseAstTypeI64() : [fn(ind, t)];
+		WiseAstTypeF32() : [fn(ind, t)];
+		WiseAstTypeF64() : [fn(ind, t)];
+		WiseAstTypeFunc(__, __) : [fn(ind, t)];
+		WiseAstTypeSIMD() : [fn(ind, t)];
+		WiseAstTypeBool() : [fn(ind, t)];
+		WiseAstTypeString() : [fn(ind, t)];
+		WiseAstTypeTuple(fields) : concatA(mapi(fields, \i, at -> foldWiseAstTypeTuple(at, arrayPush(ind, i), fn)));
+		WiseAstTypeEclass(__) : [fn(ind, t)];
+	}
+}
+
+wiseAstType2wiType(t : WiseAstType) -> WiType {
+	switch (t : WiseAstType) {
+		WiseAstTypeI32() : WiBasictype("i32", 0);
+		WiseAstTypeI64() : WiBasictype("i64", 0);
+		WiseAstTypeF32() : WiBasictype("f32", 0);
+		WiseAstTypeF64() : WiBasictype("f64", 0);
+		WiseAstTypeFunc(tt, rt) : WiFntype(map(tt, wiseAstType2wiType), wiseAstType2wiType(rt), 0);
+		WiseAstTypeSIMD() : WiBasictype("v128", 0);
+		WiseAstTypeBool() : WiBasictype("i32", 0);
+		WiseAstTypeString() : WiBasictype("i32", 0);
+		WiseAstTypeTuple(fields) : WiTupletype(map(fields, wiseAstType2wiType), 0);
+		WiseAstTypeEclass(id) : WiBasictype("", id);
+	}
+}
+
+// the order is not important
 extractTupleTypesFromWiseAstTypes(types : [WiseAstType]) -> [WiseAstType] {
 	mapConcat(types, \t -> switch (t : WiseAstType) {
 		WiseAstTypeI32() : [t];
