@@ -212,7 +212,11 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 				default: typecheckWiExp(state, fn);
 			}; */
 			t = rec2(fn, callType);
-			bindNewEclassToType(state, result/* t.first */, \id -> WiCall(t.second, map(targs, secondOfPair), id));
+			resType= switch (t.first : WiseAstType) {
+				WiseAstTypeFunc(atypes, rtype) : rtype;
+				default : t.first;
+			}
+			bindNewEclassToType(state, resType, \id -> WiCall(t.second, map(targs, secondOfPair), id));
 		}
 		WiEqual(exp1, exp2, __): {
 			t = rec2b(exp1, exp2);
