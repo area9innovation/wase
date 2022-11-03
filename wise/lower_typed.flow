@@ -2,6 +2,7 @@ import wise/wise_types;
 import wase/wase_types;
 import wise/type_ast;
 import wise/wiseast_dot;
+import ds/arrayutils;
 
 export {
 	lowerWiseAst2WaseAst(w : WiseAst, unionFindMap : UnionFindMap<[WiseAstType]>, dots : ref Set<WaseDotFn>) -> WaseAst;
@@ -78,20 +79,6 @@ WiDecl2WeDecl(env : LowerWiseAstEnv, w : WiDecl) -> WeDecl {
 	}
 }
 
-// TODO "When a function takes a tuple argument, it should expand to multiple arguments:"
-/* unrollWiTupleArg(types : [WiType], acc : [WiType]) -> [WiType] {
-	if (types == []) {
-		acc
-	} else {
-		newVals = switch (types[0] : WiType) {
-			WiBasictype(s, __) : Pair([], arrayPush(acc, types[0]));
-			WiFntype(at, rt, eclass) : Pair([], arrayPush(acc, WiFntype(at, rt, eclass)));
-			WiTupletype(tt, __) : Pair(tt, acc);
-		}
-		unrollWiTupleArg(concat(tail(types), newVals.first), newVals.second);
-	}
-} */
-
 WiWarg2WeWarg(w : WiWarg) -> WeWarg {
 	switch (w : WiWarg) {
 		WiInt(int_0, __): WeInt(int_0);
@@ -142,10 +129,10 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 			elsec = WiExp2WeExp(nenv, exp3);
 			WeIfelse(cond, then, elsec);
 		}
-		WiInt(int_0, __): WeInt(int_0)
-		WiReturn(exps, __): WeReturn(rec(exps[0]))
-		WiSet(id, e, __): WeSet(id, rec(e))
-		WiTuple(exps, __): WeTuple(map(exps, rec))
+		WiInt(int_0, __): WeInt(int_0);
+		WiReturn(exps, __): WeReturn(WeBrace(map(exps, rec)));
+		WiSet(id, e, __): WeSet(id, rec(e));
+		WiTuple(exps, __): WeTuple(map(exps, rec));
 		WiVar(id, __): {
 			if (containsKeyTree(env.fns, id) && !containsKeyTree(env.locals, id)) {
 				WeWasmOp("fn", [WeString(id)], [])
@@ -277,10 +264,14 @@ WiType2WeType(w : WiType) -> WeType {
 }
 
 WiType2WeTypes(w : WiType) -> [WeType] {
+	unrollAndMapWiType(w, \t -> WeType(t.s));
+}
+
+unrollAndMapWiType(w : WiType, fn : (WiBasictype) -> ?) -> [?] {
 	switch (w : WiType) {
-		WiBasictype(s, __): [WeType(s)]
-		WiFntype(types, type, __): concat(fold(types, [], \acc, t -> concat(acc, WiType2WeTypes(t))), WiType2WeTypes(type))
-		WiTupletype(types, __): fold(types, [], \acc, t -> concat(acc, WiType2WeTypes(t)))
+		WiBasictype(s, __): [fn(w)];
+		WiFntype(types, type, __): concat(fold(types, [], \acc, t -> concat(acc, unrollAndMapWiType(t, fn))), unrollAndMapWiType(type, fn));
+		WiTupletype(types, __): fold(types, [], \acc, t -> concat(acc, unrollAndMapWiType(t, fn)));
 	}
 }
 
@@ -289,36 +280,74 @@ wiLet2weLet(env : LowerWiseAstEnv, w : WiLet) -> WeExp {
 	recE = \w1 -> WiExp2WeExp(newEnv, w1);
 	rec = \w1 -> WiExp2WeExp(env, w1);
 	makeLetVar = \-> WeLet(w.id, w.i, WiType2WeType(w.opttype), rec(w.exp), WeBrace(map(w.brace.expsemi, recE)));
-	recTuple = \e -> {
-		values = map(extractTupleExps(env, e, []), rec);
-		switch (e : WiExp) {
-			WiTuple(__, __): WeTuple(values);
-			default : if (length(values) == 1) values[0] else WeBrace(values);
-		}
-	}
 	switch (w.opttype : WiType) {
 		WiBasictype(__, __): makeLetVar();
 		WiFntype(__, __, __): makeLetVar();
-		WiTupletype(__, __): WeLettuple(w.id, w.i, WiType2WeTypes(w.opttype), recTuple(w.exp), WeBrace(map(w.brace.expsemi, recE)));
+		WiTupletype(__, __): wiLet2weLettuple(env, w, w.opttype);
 	}
 }
 
-extractTupleExps(env : LowerWiseAstEnv, e : WiExp, acc : [WiExp]) -> [WiExp] {
-	makeDef = \-> arrayPush(acc, e);
-	switch (e : WiExp) {
-		WiTuple(exps, __): fold(exps, acc, \acc2, e1 -> extractTupleExps(env, e1, acc2));
-		WiVar(id, __) : eitherFn(
-			lookupTree(env.locals, id),
-			\type -> switch (type : WiType) {
-				WiTupletype(__, __) : {
-					types = WiType2WeTypes(type);
-					concat(acc, mapi(reverseA(types), \i, __ -> WiTupledot(e, i, 0))); // elcass ?
+wiLet2weLettuple(env : LowerWiseAstEnv, w : WiLet, ttype : WiTupletype) -> WeLettuple {
+	newEnv = LowerWiseAstEnv(env with locals = setTree(env.locals, w.id, w.opttype));
+	recE = \w1 -> WiExp2WeExp(newEnv, w1);
+	recTuple = \e, ttypes -> {
+		switch (e : WiExp) {
+			WiTuple(exps, __): {
+				unpair(getTupleConstructFields(env, e, ttypes, [], []), \constrTmp : [WeExp], fields : [WeExp] -> {
+					WeBrace(arrayPush(constrTmp, WeTuple(fields)))
+				})
+			}
+			default : WiExp2WeExp(env, e); // ok. we have the 'flat' type here
+		}
+	}
+	WeLettuple(
+		w.id,
+		w.i,
+		WiType2WeTypes(w.opttype),
+		recTuple(w.exp, ttype.types),
+		WeBrace(map(w.brace.expsemi, recE))
+	);
+}
+
+getTupleConstructFields(env : LowerWiseAstEnv, e : WiTuple, fieldTypes : [WiType], tmpConstr : [WeExp], fields : [WeExp]) -> Pair<[WeExp], [WeExp]> {
+	if (length(e.exps) != length(fieldTypes)) {
+		env.onError(e, "ERROR: the number of tuple types and expressions do not match");
+		Pair([], []);
+	} else {
+		res = mapi(e.exps, \i, fe -> {
+			fieldType = fieldTypes[i];
+			switch (fieldType : WiType) {
+				WiBasictype(__, __) : Pair(None(), [WiExp2WeExp(env, fe)]);
+				WiFntype(__, __, __) : Pair(None(), [WiExp2WeExp(env, fe)]);
+				WiTupletype(tTypes, eclass) : {
+					tmpVar = WiVar("_tmp" + i2s(^(env.tmpCntr)), eclass);
+					env.tmpCntr := (^(env.tmpCntr)) + 1;
+					newEnv = LowerWiseAstEnv(env with locals = setTree(env.locals, tmpVar.id, fieldType));
+					tmpTuple = wiLet2weLettuple(newEnv, WiLet(
+						tmpVar.id,
+						0,
+						fieldType,
+						fe,
+						WiBrace([], 0),
+						eclass
+					), fieldType);
+					newTuple = mapi(unrollAndMapWiType(fieldType, idfn), \j, t -> {
+						wtd = WiTupledot(tmpVar, j, fe.eclass);
+						WiExp2WeExp(newEnv, wtd)
+					});
+					Pair(Some(tmpTuple), newTuple);
 				}
-				default : makeDef();
-			},
-			makeDef
-		);
-		default : makeDef();
+			}
+		});
+		fold(res, Pair([], []), \acc, p -> Pair(maybeArrayPush(acc.first, p.first), concat(acc.second, p.second)));
+	}
+}
+
+foldWiTypeTuple(t : WiType, ind : [int], fn : ([int], WiType) -> ?) -> [?] {
+	switch (t : WiType) {
+		WiBasictype(__, __) : [fn(ind, t)];
+		WiFntype(__, __, __) : [fn(ind, t)];
+		WiTupletype(fields, __) : concatA(mapi(fields, \i, at -> foldWiTypeTuple(at, arrayPush(ind, i), fn)));
 	}
 }
 
@@ -375,7 +404,7 @@ tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 	makeDotFnAndPushToEnv = \value, index, types -> {
 		dot = makeWeTupleDotFn(extractNotTupleDot(value), index, types, env.tmpCntr);
 		env.dots := insertSet(^(env.dots), dot.fn);
-		WiExp2WeExp(env, dot.value);
+		WiExp2WeExp(env, dot.value); // H
 	}
 	untriple(makeTupledotData(env, d, []), \varNameM, types, path -> {
 		index = wiFieldPath2index(path, types, -1);
@@ -391,7 +420,7 @@ tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 			},
 			\-> {
 				if (index < 0) {
-					env.onError(d, "ERROR: wrong index of tuple " + toString(path) + " " + toString(types));
+					env.onError(d, "ERROR: wrong index of tuple " + toString(path) + " " + toString(types.first));
 					WiExp2WeExp(env, d.exp);
 				} else {
 					makeDotFnAndPushToEnv(d.exp, index, types);
@@ -411,14 +440,15 @@ extractNotTupleDot(e : WiExp) -> WiExp {
 // TODO: construct?, fnResult
 makeTupledotData(env : LowerWiseAstEnv, e : WiExp, indexes : [int]) -> Triple<Maybe<string>, WiseAstType, [int]> {
 	rec = \e2 -> resolveWiseAst(env.unionFindMap, e2, env.onError);
+	defType = WiseAstTypeEclass(-1);
 	switch (e : WiExp) {
 		WiTupledot(e1, ind, __): makeTupledotData(env, e1, concat([ind], indexes));
 		WiTuple(exps, eclass) : Triple(None(), rec(e), indexes);
-		WiVar(id, __) : Triple(Some(id), eitherMap(lookupTree(env.locals, id), rec, WiseAstTypeEclass(-1)), indexes); // eclass
-		WiCall(e1, __, __) : Triple(None(), eitherMap(lookupTree(env.fns, getWiVarId(e1)), rec, WiseAstTypeEclass(-1)), indexes); // eclass
+		WiVar(id, __) : Triple(Some(id), eitherMap(lookupTree(env.locals, id), rec, defType), indexes); // eclass
+		WiCall(e1, __, __) : Triple(None(), eitherMap(lookupTree(env.fns, getWiVarId(e1)), rec, defType), indexes); // eclass
 		default : {
 			env.onError(e, "		TODO: types for tupledot from " + toString(e));
-			Triple(None(), WiseAstTypeEclass(-1), indexes) // eclass
+			Triple(None(), defType, indexes) // eclass
 		};
 	}
 }

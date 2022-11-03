@@ -32,6 +32,7 @@ makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType, tmpCntr : ref int) 
 	);
 }
 
+// теряются вложенные классы
 makeWeTupleDotCallBody(dotFn : string, e : WiExp, tupleType : WiseAstType, tmpCntr : ref int) -> WiExp {
 	tupleEclass = e.eclass;
 	tmpVar = WiVar("_conTuple" + i2s(^tmpCntr), tupleEclass);
