@@ -6,12 +6,18 @@ import algorithms;
 export {
 	typeWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAst;
 	resolveWiseAst(unionFindMap : UnionFindMap<[WiseAstType]>, t : WiseAst, onError : (WiseAst, string) -> void) -> WiseAstType;
+	resolveWiseAstTypeByEclass(unionFindMap : UnionFindMap<[WiseAstType]>, eclass : int, onError : (WiseAst, string) -> void) -> WiseAstType;
 
 	makeTypeWiseAstState(onError : (WiseAst, string) -> void) -> TypeWiseAstState;
+	makeTypeWiseAstState2(unionFindMap : UnionFindMap<[WiseAstType]>, onError : (WiseAst, string) -> void) -> TypeWiseAstState;
 }
 
 makeTypeWiseAstState(onError : (WiseAst, string) -> void) -> TypeWiseAstState {
 	TypeWiseAstState(makeTree(), makeTree(), onError, makeUnionFindMap([], \l, r -> { sortUnique(concat(l, r)) }), ref 0);
+}
+
+makeTypeWiseAstState2(unionFindMap : UnionFindMap<[WiseAstType]>, onError : (WiseAst, string) -> void) -> TypeWiseAstState {
+	TypeWiseAstState(makeTree(), makeTree(), onError, unionFindMap, ref 0);
 }
 
 TypeWiseAstState(

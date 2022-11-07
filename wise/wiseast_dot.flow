@@ -1,12 +1,15 @@
 import wise/wiseast_types;
 import wise/wise_types;
 import wase/wase_types;
+import wise/type_ast;
 import ds/set;
+import ds/arrayutils;
+import ds/union_find_map;
 import text/blueprint;
 
 export {
 
-	makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType, tmpCntr : ref int) -> WaseTupledotFn;
+	makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType, tmpCntr : ref int, unionFindMap : UnionFindMap<[WiseAstType]>,) -> WaseTupledotFn;
 	WaseTupledotFn(
 		value : WiExp,
 		fn : WaseDotFn,
@@ -21,30 +24,27 @@ export {
 
 }
 
-makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType, tmpCntr : ref int) -> WaseTupledotFn {
+makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType, tmpCntr : ref int, unionFindMap : UnionFindMap<[WiseAstType]>,) -> WaseTupledotFn {
 	types = extractTupleTypesFromWiseAstTypes([type]);
 	dotFn = "dot_"
 			+ superglue(types, wiseAstType2dotname, "_") + "_"
 			+ (if (index >= 0) i2s(index) else "");
 	WaseTupledotFn(
-		makeWeTupleDotCallBody(dotFn, e, type, tmpCntr),
+		makeWeTupleDotCallBody(dotFn, e, type, tmpCntr, unionFindMap),
 		WaseDotFn(dotFn, types, index)
 	);
 }
 
-// теряются вложенные классы
-makeWeTupleDotCallBody(dotFn : string, e : WiExp, tupleType : WiseAstType, tmpCntr : ref int) -> WiExp {
+makeWeTupleDotCallBody(dotFn : string, e : WiExp, tupleType : WiseAstType, tmpCntr : ref int, unionFindMap : UnionFindMap<[WiseAstType]>,) -> WiExp {
 	tupleEclass = e.eclass;
 	tmpVar = WiVar("_conTuple" + i2s(^tmpCntr), tupleEclass);
 	tmpCntr := (^tmpCntr) + 1;
-	wiType = wiseAstType2wiType(tupleType);
-	WiLet(
+	wiType = wiseAstType2wiType(tupleType, tupleEclass, unionFindMap);
+	
+	wl = WiLet(
 		tmpVar.id,
 		0,
-		switch (wiType : WiType) {
-			WiTupletype(tt, ec): WiTupletype(tt, tupleEclass);
-			default : wiType;
-		},
+		wiType,
 		e,
 		WiBrace(
 			[WiCall(
@@ -56,6 +56,13 @@ makeWeTupleDotCallBody(dotFn : string, e : WiExp, tupleType : WiseAstType, tmpCn
 		),
 		tupleEclass
 	);
+
+	typeEnv = makeTypeWiseAstState2(unionFindMap, \ast, error -> println(error + " at: " + toString(ast)));
+	typedLet = typeWiseAst(typeEnv, wl);
+	switch (typedLet : WiseAst) {
+		WiLet(__, __, __, __, __, __): typedLet;
+		default : wl;
+	}
 }
 
 foldWiseAstTypeTuple(t : WiseAstType, ind : [int], fn : ([int], WiseAstType) -> ?) -> [?] {
@@ -73,18 +80,74 @@ foldWiseAstTypeTuple(t : WiseAstType, ind : [int], fn : ([int], WiseAstType) -> 
 	}
 }
 
-wiseAstType2wiType(t : WiseAstType) -> WiType {
+wiseAstType2wiType(t : WiseAstType, eclass : int, unionFindMap : UnionFindMap<[WiseAstType]>) -> WiType {
+	getTypeWithEclass = \ -> {
+		typesWithClasses = getUnionMapValue(unionFindMap, eclass);
+		if (typesWithClasses == []) WiseAstTypeEclass(0) else typesWithClasses[0];
+	}
 	switch (t : WiseAstType) {
-		WiseAstTypeI32() : WiBasictype("i32", 0);
-		WiseAstTypeI64() : WiBasictype("i64", 0);
-		WiseAstTypeF32() : WiBasictype("f32", 0);
-		WiseAstTypeF64() : WiBasictype("f64", 0);
-		WiseAstTypeFunc(tt, rt) : WiFntype(map(tt, wiseAstType2wiType), wiseAstType2wiType(rt), 0);
-		WiseAstTypeSIMD() : WiBasictype("v128", 0);
-		WiseAstTypeBool() : WiBasictype("i32", 0);
-		WiseAstTypeString() : WiBasictype("i32", 0);
-		WiseAstTypeTuple(fields) : WiTupletype(map(fields, wiseAstType2wiType), 0);
+		WiseAstTypeI32() : WiBasictype("i32", eclass);
+		WiseAstTypeI64() : WiBasictype("i64", eclass);
+		WiseAstTypeF32() : WiBasictype("f32", eclass);
+		WiseAstTypeF64() : WiBasictype("f64", eclass);
+		WiseAstTypeFunc(tt, rt) : {
+			typeWithClasses = getTypeWithEclass();
+			fieldClasses = switch (typeWithClasses : WiseAstType) {
+				WiseAstTypeFunc(tt2, rt2) : {
+					if (length(tt) != length(tt2)) {
+						println("Error : Can't fix eclasses. Wrong function type. Given : " + toString(t) + ". Found : " + toString(typeWithClasses));
+					}
+					Pair(mapi(tt, \i, f -> elementAtMap(tt2, i, extractEclassFromWiseAstType, 0)), extractEclassFromWiseAstType(rt2));
+				}
+				default : {
+					println("Error : Can't fix eclasses. not a function type. Given : " + toString(t) + ". Found : " + toString(typeWithClasses));
+					Pair(map(tt, \__ -> 0), 0);
+				}
+			}
+			WiFntype(
+				mapi(tt, \i, at -> wiseAstType2wiType(at, fieldClasses.first[i], unionFindMap)),
+				wiseAstType2wiType(rt, fieldClasses.second, unionFindMap),
+				eclass
+			);
+		}
+		WiseAstTypeSIMD() : WiBasictype("v128", eclass);
+		WiseAstTypeBool() : WiBasictype("i32", eclass);
+		WiseAstTypeString() : WiBasictype("i32", eclass);
+		WiseAstTypeTuple(fields) : {
+			typeWithClasses = getTypeWithEclass();
+			fieldClasses = switch (typeWithClasses : WiseAstType) {
+				WiseAstTypeTuple(fields2) : {
+					if (length(fields) != length(fields2)) {
+						println("Error : Can't fix eclasses. Wrong tuple type. Given : " + toString(t) + ". Found : " + toString(typeWithClasses));
+					}
+					mapi(fields, \i, f -> elementAtMap(fields2, i, extractEclassFromWiseAstType, 0));
+				}
+				default : {
+					println("Error : Can't fix eclasses. not a tuple type. Given : " + toString(t) + ". Found : " + toString(typeWithClasses));
+					map(fields, \__ -> 0);
+				}
+			}
+			WiTupletype(
+				mapi(fields, \i, ft -> wiseAstType2wiType(ft, fieldClasses[i], unionFindMap)),
+				eclass
+			);
+		}
 		WiseAstTypeEclass(id) : WiBasictype("", id);
+	}
+}
+
+extractEclassFromWiseAstType(t : WiseAstType) -> int {
+	switch (t : WiseAstType) {
+		WiseAstTypeI32() : 0;
+		WiseAstTypeI64() : 0;
+		WiseAstTypeF32() : 0;
+		WiseAstTypeF64() : 0;
+		WiseAstTypeFunc(__, __) : 0;
+		WiseAstTypeSIMD() : 0;
+		WiseAstTypeBool() : 0;
+		WiseAstTypeString() : 0;
+		WiseAstTypeTuple(__) : 0;
+		WiseAstTypeEclass(id) : id;
 	}
 }
 

@@ -402,9 +402,9 @@ findItemInWiTypes(v : WiseAstType, route : [int], fn : ([int], WiseAstType) -> b
 
 tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 	makeDotFnAndPushToEnv = \value, index, types -> {
-		dot = makeWeTupleDotFn(extractNotTupleDot(value), index, types, env.tmpCntr);
+		dot = makeWeTupleDotFn(extractNotTupleDot(value), index, types, env.tmpCntr, env.unionFindMap);
 		env.dots := insertSet(^(env.dots), dot.fn);
-		WiExp2WeExp(env, dot.value); // H
+		WiExp2WeExp(env, dot.value);
 	}
 	untriple(makeTupledotData(env, d, []), \varNameM, types, path -> {
 		index = wiFieldPath2index(path, types, -1);
@@ -420,7 +420,7 @@ tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 			},
 			\-> {
 				if (index < 0) {
-					env.onError(d, "ERROR: wrong index of tuple " + toString(path) + " " + toString(types.first));
+					env.onError(d, "ERROR: wrong index of tuple " + toString(path) + " " + toString(types));
 					WiExp2WeExp(env, d.exp);
 				} else {
 					makeDotFnAndPushToEnv(d.exp, index, types);
