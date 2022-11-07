@@ -9,25 +9,18 @@ export {
 	resolveWiseAstTypeByEclass(unionFindMap : UnionFindMap<[WiseAstType]>, eclass : int, onError : (WiseAst, string) -> void) -> WiseAstType;
 
 	makeTypeWiseAstState(onError : (WiseAst, string) -> void) -> TypeWiseAstState;
-	makeTypeWiseAstState2(unionFindMap : UnionFindMap<[WiseAstType]>, onError : (WiseAst, string) -> void) -> TypeWiseAstState;
+	TypeWiseAstState(
+		vars : Tree<string, WiseAstType>,
+		fns : Tree<string, WiseAstTypeFunc>,
+		onError : (WiseAst, string) -> void,
+		unionFindMap : UnionFindMap<[WiseAstType]>, // types tree
+		unique : ref int, // the last type id
+	);
 }
 
 makeTypeWiseAstState(onError : (WiseAst, string) -> void) -> TypeWiseAstState {
 	TypeWiseAstState(makeTree(), makeTree(), onError, makeUnionFindMap([], \l, r -> { sortUnique(concat(l, r)) }), ref 0);
 }
-
-makeTypeWiseAstState2(unionFindMap : UnionFindMap<[WiseAstType]>, onError : (WiseAst, string) -> void) -> TypeWiseAstState {
-	TypeWiseAstState(makeTree(), makeTree(), onError, unionFindMap, ref 0);
-}
-
-TypeWiseAstState(
-	vars : Tree<string, WiseAstType>,
-	fns : Tree<string, WiseAstTypeFunc>,
-	onError : (WiseAst, string) -> void,
-
-	unionFindMap : UnionFindMap<[WiseAstType]>, // types tree
-	unique : ref int, // the last type id
-);
 
 typeWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAst {
 	typecheckWiseAst(state, ast).second;
@@ -84,6 +77,8 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> Pair<WiseAstType, W
 	}
 }
 
+// TODO: WiWasmOp types
+// see dslWasmOp2WaseInstruction, typecheckWaseInstruction
 typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp> {
 	rec2 = \value : WiExp, ltype : WiseAstType -> {
 		t = typecheckWiExp(state, value);
@@ -310,7 +305,7 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 		WiWasmOp(s, wargs, exps, eclass): {
 			newArgs = map(wargs, \v -> typecheckWiWarg(state, v).second);
 			newExps = map(exps, rec);
-			t = if (exps == []) WiseAstTypeEclass(eclass) else newExps[length(newExps) - 1].first;
+			t = if (exps == []) WiseAstTypeEclass(eclass) else newExps[length(newExps) - 1].first; // TODO: find out the result type
 			bindNewEclassToType(state, t, \id -> WiWasmOp(s, newArgs, map(newExps, secondOfPair), id));
 		}
 		WiSizeoftype(type, eclass): {

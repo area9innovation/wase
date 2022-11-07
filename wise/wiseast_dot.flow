@@ -57,12 +57,12 @@ makeWeTupleDotCallBody(dotFn : string, e : WiExp, tupleType : WiseAstType, tmpCn
 		tupleEclass
 	);
 
-	typeEnv = makeTypeWiseAstState2(unionFindMap, \ast, error -> println(error + " at: " + toString(ast)));
+	/* typeEnv = makeTypeWiseAstState2(unionFindMap, \ast, error -> println(error + " at: " + toString(ast)));
 	typedLet = typeWiseAst(typeEnv, wl);
 	switch (typedLet : WiseAst) {
 		WiLet(__, __, __, __, __, __): typedLet;
 		default : wl;
-	}
+	} */wl
 }
 
 foldWiseAstTypeTuple(t : WiseAstType, ind : [int], fn : ([int], WiseAstType) -> ?) -> [?] {

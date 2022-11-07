@@ -64,10 +64,12 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 // println("from DSL: "+toString(wiseProgram));
 			typeEnv = makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast)));
 			checkedTypes = typeWiseAst(typeEnv, wiseProgram);
-			// typedWise = resolveWiseAst(typeEnv, wiseProgram);
+println("typedWise: "+toString(checkedTypes));
+// 			typedWise = resolveWiseAst(typeEnv.unionFindMap, checkedTypes, typeEnv.onError);
+// println("Resolved: ");
 			dots  = ref makeSet();
-			loweredWase = lowerWiseAst2WaseAst(checkedTypes, typeEnv.unionFindMap, dots);
-// println("LOWERED WISE: "+toString(loweredWase));
+			loweredWase = lowerWiseAst2WaseAst(checkedTypes, typeEnv, dots);
+println("LOWERED WISE: "+toString(loweredWase));
 			waseCode = addDotNFunctionsToWase(^dots, loweredWase);
 			// TODO: WaseAst2Wase
 			loweredAst = waseAst2DslAst(waseCode);

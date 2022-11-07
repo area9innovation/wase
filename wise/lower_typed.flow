@@ -5,7 +5,7 @@ import wise/wiseast_dot;
 import ds/arrayutils;
 
 export {
-	lowerWiseAst2WaseAst(w : WiseAst, unionFindMap : UnionFindMap<[WiseAstType]>, dots : ref Set<WaseDotFn>) -> WaseAst;
+	lowerWiseAst2WaseAst(w : WiseAst, typeEnv : TypeWiseAstState, dots : ref Set<WaseDotFn>) -> WaseAst;
 }
 
 LowerWiseAstEnv(
@@ -14,19 +14,19 @@ LowerWiseAstEnv(
 	locals : Tree<string, WiType>,
 	fns : Tree<string, WiType>, // returnType
 	dots : ref Set<WaseDotFn>,
-	unionFindMap : UnionFindMap<[WiseAstType]>,
+	typeEnv : TypeWiseAstState,
 	tmpCntr : ref int,
 	onError : (WiseAst, string) -> void, 
 );
 
 makeLowerWiseAstEnv() -> LowerWiseAstEnv {
-	LowerWiseAstEnv(0, [], makeTree(), makeTree(), ref makeSet(), makeUnionFindMap([], \v1, v2 -> v1), ref 0, nop2);
+	LowerWiseAstEnv(0, [], makeTree(), makeTree(), ref makeSet(), makeTypeWiseAstState(nop2), ref 0, nop2);
 }
 
-lowerWiseAst2WaseAst(w : WiseAst, unionFindMap : UnionFindMap<[WiseAstType]>, dots : ref Set<WaseDotFn>) -> WaseAst {
+lowerWiseAst2WaseAst(w : WiseAst, typeEnv : TypeWiseAstState, dots : ref Set<WaseDotFn>) -> WaseAst {
 	env = LowerWiseAstEnv(makeLowerWiseAstEnv() with
 		fns = extractFnNamesFromWiseAst(w, makeTree()),
-		unionFindMap = unionFindMap,
+		typeEnv = typeEnv,
 		dots = dots,
 		onError = \ast, error -> println(error + " at: " + toString(ast))
 	);
@@ -322,7 +322,12 @@ getTupleConstructFields(env : LowerWiseAstEnv, e : WiTuple, fieldTypes : [WiType
 				WiTupletype(tTypes, eclass) : {
 					tmpVar = WiVar("_tmp" + i2s(^(env.tmpCntr)), eclass);
 					env.tmpCntr := (^(env.tmpCntr)) + 1;
-					newEnv = LowerWiseAstEnv(env with locals = setTree(env.locals, tmpVar.id, fieldType));
+					newEnv = LowerWiseAstEnv(env with
+								locals = setTree(env.locals, tmpVar.id, fieldType),
+								// another type ? flat
+								typeEnv = TypeWiseAstState(env.typeEnv with vars = setTree(env.typeEnv.vars, tmpVar.id, resolveWiseAstTypeByEclass(env.typeEnv.unionFindMap, eclass, env.onError)))
+					);
+					typeWiseAst(newEnv.typeEnv, tmpVar);
 					tmpTuple = wiLet2weLettuple(newEnv, WiLet(
 						tmpVar.id,
 						0,
@@ -332,8 +337,9 @@ getTupleConstructFields(env : LowerWiseAstEnv, e : WiTuple, fieldTypes : [WiType
 						eclass
 					), fieldType);
 					newTuple = mapi(unrollAndMapWiType(fieldType, idfn), \j, t -> {
-						wtd = WiTupledot(tmpVar, j, fe.eclass);
-						WiExp2WeExp(newEnv, wtd)
+						wtd = WiTupledot(tmpVar, j, 0/* fe.eclass */);
+						wtd2 = extractWiExpFromWiseAst(typeWiseAst(newEnv.typeEnv, wtd)); // неверный тип. должно быть число, а у нас tuple!
+						WiExp2WeExp(newEnv, wtd2)
 					});
 					Pair(Some(tmpTuple), newTuple);
 				}
@@ -402,7 +408,8 @@ findItemInWiTypes(v : WiseAstType, route : [int], fn : ([int], WiseAstType) -> b
 
 tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 	makeDotFnAndPushToEnv = \value, index, types -> {
-		dot = makeWeTupleDotFn(extractNotTupleDot(value), index, types, env.tmpCntr, env.unionFindMap);
+		dotVal = extractWiExpFromWiseAst(typeWiseAst(env.typeEnv, extractNotTupleDot(value)));
+		dot = makeWeTupleDotFn(dotVal, index, types, env.tmpCntr, env.typeEnv.unionFindMap);
 		env.dots := insertSet(^(env.dots), dot.fn);
 		WiExp2WeExp(env, dot.value);
 	}
@@ -430,6 +437,16 @@ tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 	});
 }
 
+extractWiExpFromWiseAst(e : WiseAst) -> WiExp {
+	switch (e : WiseAst) {
+		WiExp() : e;
+		default : {
+			println("can't extract expression from WiseAst: " + toString(e));
+			WiBrace([], 0);
+		}
+	}
+}
+
 extractNotTupleDot(e : WiExp) -> WiExp {
 	switch (e : WiExp) {
 		WiTupledot(e2, __, __): extractNotTupleDot(e2);
@@ -439,7 +456,7 @@ extractNotTupleDot(e : WiExp) -> WiExp {
 
 // TODO: construct?, fnResult
 makeTupledotData(env : LowerWiseAstEnv, e : WiExp, indexes : [int]) -> Triple<Maybe<string>, WiseAstType, [int]> {
-	rec = \e2 -> resolveWiseAst(env.unionFindMap, e2, env.onError);
+	rec = \e2 -> resolveWiseAst(env.typeEnv.unionFindMap, e2, env.onError);
 	defType = WiseAstTypeEclass(-1);
 	switch (e : WiExp) {
 		WiTupledot(e1, ind, __): makeTupledotData(env, e1, concat([ind], indexes));
