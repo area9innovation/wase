@@ -292,7 +292,7 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 					}
 				}
 				default : {
-					println("ERROR : can't extract field type from Tuple : " + toString(e));
+					println("ERROR : can't extract field type from Tuple : " + toString(e) + ". Type: " + toString(et.first));
 					def(WiseAstTypeEclass(eclass));
 				}
 			}

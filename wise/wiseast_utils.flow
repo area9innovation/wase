@@ -1,0 +1,82 @@
+import wise/wiseast_types;
+import wise/wise_types;
+import ds/arrayutils;
+import ds/union_find_map;
+
+export {
+
+	wiseAstType2wiType(t : WiseAstType, eclass : int, unionFindMap : UnionFindMap<[WiseAstType]>) -> WiType;
+
+}
+
+
+wiseAstType2wiType(t : WiseAstType, eclass : int, unionFindMap : UnionFindMap<[WiseAstType]>) -> WiType {
+	getTypeWithEclass = \ -> {
+		typesWithClasses = getUnionMapValue(unionFindMap, eclass);
+		if (typesWithClasses == []) WiseAstTypeEclass(0) else typesWithClasses[0];
+	}
+	switch (t : WiseAstType) {
+		WiseAstTypeI32() : WiBasictype("i32", eclass);
+		WiseAstTypeI64() : WiBasictype("i64", eclass);
+		WiseAstTypeF32() : WiBasictype("f32", eclass);
+		WiseAstTypeF64() : WiBasictype("f64", eclass);
+		WiseAstTypeFunc(tt, rt) : {
+			typeWithClasses = getTypeWithEclass();
+			fieldClasses = switch (typeWithClasses : WiseAstType) {
+				WiseAstTypeFunc(tt2, rt2) : {
+					if (length(tt) != length(tt2)) {
+						println("Error : Can't fix eclasses. Wrong function type. Given : " + toString(t) + ". Found : " + toString(typeWithClasses));
+					}
+					Pair(mapi(tt, \i, f -> elementAtMap(tt2, i, extractEclassFromWiseAstType, 0)), extractEclassFromWiseAstType(rt2));
+				}
+				default : {
+					println("Error : Can't fix eclasses. not a function type. Given : " + toString(t) + ". Found : " + toString(typeWithClasses));
+					Pair(map(tt, \__ -> 0), 0);
+				}
+			}
+			WiFntype(
+				mapi(tt, \i, at -> wiseAstType2wiType(at, fieldClasses.first[i], unionFindMap)),
+				wiseAstType2wiType(rt, fieldClasses.second, unionFindMap),
+				eclass
+			);
+		}
+		WiseAstTypeSIMD() : WiBasictype("v128", eclass);
+		WiseAstTypeBool() : WiBasictype("i32", eclass);
+		WiseAstTypeString() : WiBasictype("i32", eclass);
+		WiseAstTypeTuple(fields) : {
+			typeWithClasses = getTypeWithEclass();
+			fieldClasses = switch (typeWithClasses : WiseAstType) {
+				WiseAstTypeTuple(fields2) : {
+					if (length(fields) != length(fields2)) {
+						println("Error : Can't fix eclasses. Wrong tuple type. Given : " + toString(t) + ". Found : " + toString(typeWithClasses));
+					}
+					mapi(fields, \i, f -> elementAtMap(fields2, i, extractEclassFromWiseAstType, 0));
+				}
+				default : {
+					println("Error : Can't fix eclasses. not a tuple type. Given : " + toString(t) + ". Found : " + toString(typeWithClasses));
+					map(fields, \__ -> 0);
+				}
+			}
+			WiTupletype(
+				mapi(fields, \i, ft -> wiseAstType2wiType(ft, fieldClasses[i], unionFindMap)),
+				eclass
+			);
+		}
+		WiseAstTypeEclass(id) : WiBasictype("", id);
+	}
+}
+
+extractEclassFromWiseAstType(t : WiseAstType) -> int {
+	switch (t : WiseAstType) {
+		WiseAstTypeI32() : 0;
+		WiseAstTypeI64() : 0;
+		WiseAstTypeF32() : 0;
+		WiseAstTypeF64() : 0;
+		WiseAstTypeFunc(__, __) : 0;
+		WiseAstTypeSIMD() : 0;
+		WiseAstTypeBool() : 0;
+		WiseAstTypeString() : 0;
+		WiseAstTypeTuple(__) : 0;
+		WiseAstTypeEclass(id) : id;
+	}
+}
