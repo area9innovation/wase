@@ -64,24 +64,24 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 // println("from DSL: "+toString(wiseProgram));
 			typeEnv = makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast)));
 			checkedTypes = typeWiseAst(typeEnv, wiseProgram);
-println("typedWise: "+toString(checkedTypes));
+println("typedWise: \n"+toString(checkedTypes));
 			loweredTuples = lowerTuplesInWiseAst(checkedTypes, typeEnv.unionFindMap, ref 0);
-println("loweredTuples: "+toString(loweredTuples));
+println("loweredTuples: \n"+toString(loweredTuples));
 			checkedLoweredTypes = typeWiseAst(typeEnv, loweredTuples);
-println("TYPED loweredTuples: "+toString(checkedLoweredTypes));
+println("TYPED loweredTuples: \n"+toString(checkedLoweredTypes));
 // 			typedWise = resolveWiseAst(typeEnv.unionFindMap, checkedTypes, typeEnv.onError);
 // println("Resolved: ");
 			dots  = ref makeSet();
 			loweredWase = lowerWiseAst2WaseAst(checkedLoweredTypes/* checkedTypes */, typeEnv, dots);
-println("LOWERED WISE: "+toString(loweredWase));
+println("LOWERED WISE: \n"+toString(loweredWase));
 			waseCode = addDotNFunctionsToWase(^dots, loweredWase);
 			// TODO: WaseAst2Wase
 			loweredAst = waseAst2DslAst(waseCode);
-println("LOWERED AST: "+toString(loweredAst));
+println("LOWERED AST: \n"+toString(loweredAst));
 			// typeWise makes type duplicates(?) what necessary for dsl2wase
 			// waseAst2DslAst doesn't have the real types. We have to fix it
 			// auto == () doesn't work. greate = bool type (should be int)
-println("CHECKED TYPE");
+println("CHECKED TYPE\n");
 			typeWase(loweredAst); // TODO: delete
 		} else {
 			// typed -> lowered
@@ -93,8 +93,8 @@ println("CHECKED TYPE");
 			env = makeLowerWiseEnv(\node, error -> {
 				println(error + " at " + summarizeDsl(node));
 			});
-println("TYPED AST: "+toString(typed));
-println("LWD AST: "+toString(lowerWise2Wase(env, typed)));
+println("TYPED AST: \n"+toString(typed));
+println("LWD AST: v"+toString(lowerWise2Wase(env, typed)));
 			// add dot* functions
 			addDotNFunctions(^(env.dots), lowerWise2Wase(env, typed));
 		}
