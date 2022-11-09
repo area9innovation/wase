@@ -64,24 +64,24 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 // println("from DSL: "+toString(wiseProgram));
 			typeEnv = makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast)));
 			checkedTypes = typeWiseAst(typeEnv, wiseProgram);
-println("typedWise: \n"+toString(checkedTypes));
+println("			typedWise: \n"+toString(checkedTypes));
 			loweredTuples = lowerTuplesInWiseAst(checkedTypes, typeEnv.unionFindMap, ref 0);
-println("loweredTuples: \n"+toString(loweredTuples));
+println("			loweredTuples: \n"+toString(loweredTuples));
 			checkedLoweredTypes = typeWiseAst(typeEnv, loweredTuples);
-println("TYPED loweredTuples: \n"+toString(checkedLoweredTypes));
+println("			TYPED loweredTuples: \n"+toString(checkedLoweredTypes));
 // 			typedWise = resolveWiseAst(typeEnv.unionFindMap, checkedTypes, typeEnv.onError);
 // println("Resolved: ");
 			dots  = ref makeSet();
 			loweredWase = lowerWiseAst2WaseAst(checkedLoweredTypes/* checkedTypes */, typeEnv, dots);
-println("LOWERED WISE: \n"+toString(loweredWase));
+println("			LOWERED WISE: \n"+toString(loweredWase));
 			waseCode = addDotNFunctionsToWase(^dots, loweredWase);
 			// TODO: WaseAst2Wase
 			loweredAst = waseAst2DslAst(waseCode);
-println("LOWERED AST: \n"+toString(loweredAst));
+println("			LOWERED AST: \n"+toString(loweredAst));
 			// typeWise makes type duplicates(?) what necessary for dsl2wase
 			// waseAst2DslAst doesn't have the real types. We have to fix it
 			// auto == () doesn't work. greate = bool type (should be int)
-println("CHECKED TYPE\n");
+println("			CHECKED TYPE\n");
 			typeWase(loweredAst); // TODO: delete
 		} else {
 			// typed -> lowered

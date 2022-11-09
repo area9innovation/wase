@@ -412,6 +412,7 @@ makeTupledotData(env : LowerWiseAstEnv, e : WiExp, indexes : [int]) -> Triple<Ma
 	}
 }
 
+// ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 lowerTuplesInWiseAst(ast : WiseAst, unionFindMap : UnionFindMap<[WiseAstType]>, tmpCntr : ref int) -> WiseAst {
 	rec = \v -> lowerTuplesInWiseAst(v, unionFindMap, tmpCntr);
 
@@ -545,7 +546,7 @@ lowerTuplesInWiExp(v : WiExp, unionFindMap : UnionFindMap<[WiseAstType]>, tmpCnt
 				WiseAstTypeTuple(__) : {
 					ttype = lowerTuplesInWiType(wiseAstType2wiType(fieldType, eclass, unionFindMap));
 					switch (ttype : WiType) {
-						WiTupletype(ttypes, eclass2): WiTuple(mapi(ttypes, \j, t -> WiTupledot(v, j, 0)), eclass2);
+						WiTupletype(ttypes, eclass2): WiTuple(mapi(ttypes, \j, t -> WiTupledot(v, j, t.eclass)), eclass2);
 						default : v;
 					}
 				}
@@ -585,68 +586,12 @@ unrollWiTupleFields(exps : [WiExp], unionFindMap : UnionFindMap<[WiseAstType]>, 
 				value = lowerTuplesInWiExp(fe, unionFindMap, tmpCntr);
 				newLet = WiLet(tmpVar.id, 0, WiTupletype(fieldTypes, 0), value, WiBrace([], 0), 0);
 				tmpTuple = Some(eitherMap(beforeExps, \b -> setLastEmptyBrace(b, newLet), newLet));
-				varName = tmpVar;//either(getReturnVariable(value), tmpVar);
-				newTupleFields = mapi(fieldTypes, \j, t -> WiTupledot(varName, j, 0));
+				newTupleFields = mapi(fieldTypes, \j, t -> WiTupledot(tmpVar, j, t.eclass));
 				Pair(tmpTuple, concat(tupleFields, newTupleFields));
 			}
 		}
 	});
 }
-
-// ?
-/* getReturnVariable(e : WiExp) -> Maybe<WiVar> {
-	switch (e : WiExp) {
-		WiVar(__, __) : Some(e);
-		WiBrace(exps, __) : if (exps != []) getReturnVariable(exps[length(exps) - 1]) else None();
-		WiReturn(exps, __) : if (exps != []) getReturnVariable(exps[length(exps) - 1]) else None();
-		WiWhile(__, exp2, __) : getReturnVariable(exp2);
-		WiAdd(__, __, __): None();
-		WiAnd(__, __, __): None();
-		WiBool(__, __): None();
-		WiBreak(__): None();
-		WiContinue(__): None();
-		WiDefoftype(__, __): None();
-		WiDouble(__, __): None();
-		WiHex32(__, __): None();
-		WiHex64(__, __): None();
-		WiHexf32(__, __): None();
-		WiHexf64(__, __): None();
-		WiI64(__, __): None();
-		WiIf(__, __, __): None();
-		WiIfelse(__, __, __, __): None();
-		WiInt(__, __): None();
-		WiSet(__, __, __): None();
-		WiSizeoftype(__, __): None();
-		WiTuple(__, __): None();
-		WiBoolAnd(__, __, __): None();
-		WiBoolNot(__, __): None();
-		WiBoolOr(__, __, __): None();
-		WiCall(__, __, __): None();
-		WiDiv(__, __, __): None();
-		WiEqual(__, __, __): None();
-		WiGreater(__, __, __): None();
-		WiGreaterEqual(__, __, __): None();
-		WiGreaterEqualu(__, __, __): None();
-		WiGreateru(__, __, __): None();
-		WiIsNull(__, __): None();
-		WiLess(__, __, __): None();
-		WiLessEqual(__, __, __): None();
-		WiLessEqualu(__, __, __): None();
-		WiLessu(__, __, __): None();
-		WiLet(__, __, __, __, __, __): None();
-		WiMod(__, __, __): None();
-		WiMul(__, __, __): None();
-		WiNegate(__, __): None();
-		WiNotEqual(__, __, __): None();
-		WiOr(__, __, __): None();
-		WiPolycall(__, __, __): None();
-		WiSub(__, __, __): None();
-		WiTupledot(__, __, __): None();
-		WiTypeannotation(__, __, __): None();
-		WiWasmOp(__, __, __, __): None();
-		WiXor(__, __, __): None();
-	}
-} */
 
 setLastEmptyBrace(l : WiLet, v : WiExp) -> WiLet {
 	if (l.brace.expsemi == []) {
