@@ -24,11 +24,21 @@ makeLowerWiseAstEnv() -> LowerWiseAstEnv {
 }
 
 lowerWiseAst2WaseAst(w : WiseAst, typeEnv : TypeWiseAstState, dots : ref Set<WaseDotFn>) -> WaseAst {
+	errorFn = \ast, error -> println(error + " at: " + toString(ast));
+	codeFns = extractFnNamesFromWiseAst(w, Pair(makeTree(), makeTree()));
 	env = LowerWiseAstEnv(makeLowerWiseAstEnv() with
-		fns = extractFnNamesFromWiseAst(w, makeTree()),
-		typeEnv = typeEnv,
+		fns = codeFns.first,
+		typeEnv = TypeWiseAstState(typeEnv with 
+			fns = foldTree(codeFns.second, typeEnv.fns, \id, eclass, acc -> {
+				fnType = resolveWiseAstTypeByEclass(typeEnv.unionFindMap, eclass, errorFn);
+				switch(fnType : WiseAstType) {
+					WiseAstTypeFunc(__, __) : setTree(acc, id, fnType);
+					default : acc;
+				}
+			})
+		),
 		dots = dots,
-		onError = \ast, error -> println(error + " at: " + toString(ast))
+		onError = errorFn
 	);
 	lowerWiseAstToWaseAst(env, w);
 }
@@ -58,8 +68,13 @@ WiDecl2WeDecl(env : LowerWiseAstEnv, w : WiDecl) -> WeDecl {
 	lowerDecl = \decl -> WiDecl2WeDecl(env, decl);
 	switch (w : WiDecl) {
 		WiFunction(optexport, id, templates, lambdaargs, type, expr, decl, __): {
-			newEnv = LowerWiseAstEnv(env with locals = fold(lambdaargs, env.locals, \acc, t -> setTree(acc, t.id, t.type)));
-			WeFunction(id, optexport, map(lambdaargs, WiIdtype2WeIdtype), WiType2WeTypes(type), WiExp2WeExp(newEnv, expr), lowerDecl(decl));
+			newEnv = LowerWiseAstEnv(env with 
+				locals = fold(lambdaargs, env.locals, \acc, t -> setTree(acc, t.id, t.type)),
+				typeEnv = TypeWiseAstState(env.typeEnv with 
+					vars = fold(lambdaargs, env.typeEnv.vars, \acc, t -> setTree(acc, t.id, resolveWiseAstTypeByEclass(env.typeEnv.unionFindMap, t.eclass, env.onError)))
+				)
+			);
+			WeFunction(id, optexport, map(lambdaargs, WiIdtype2WeIdtype), WiType2WeTypes(type), WiExp2WeExp(newEnv, expr), WiDecl2WeDecl(newEnv, decl));
 		}
 		WiGlobal(id, optexport, type, optmutable, expr, decl, __): {
 			WeGlobal(id, optexport, WiType2WeType(type), optmutable, lowerExp(expr), lowerDecl(decl));
@@ -299,7 +314,7 @@ wiLet2weLettuple(env : LowerWiseAstEnv, w : WiLet, ttype : WiTupletype) -> WeExp
 	);
 }
 
-extractFnNamesFromWiseAst(w : WiseAst, acc : Tree<string, WiType>,) -> Tree<string, WiType> {
+extractFnNamesFromWiseAst(w : WiseAst, acc : Pair<Tree<string, WiType>, Tree<string, int>>) -> Pair<Tree<string, WiType>, Tree<string, int>> {
 	switch (w) {
 		WiseAstList(value): foldList(value, acc, \acc2, v -> extractFnNamesFromWiseAst(v, acc2));
 		WiseAstBool(__): acc;
@@ -309,11 +324,11 @@ extractFnNamesFromWiseAst(w : WiseAst, acc : Tree<string, WiType>,) -> Tree<stri
 		WiExp(): acc;
 		WiType(): acc;
 		WiIdtype(__, __, __): acc;
-		WiFunction(optexport, id, templates, lambdaargs, type, expr, decl, __): extractFnNamesFromWiseAst(decl, setTree(acc, id, type));
-		WiGlobal(id, optexport, type, optmutable, expr, decl, __): extractFnNamesFromWiseAst(decl, acc);
-		WiImport(id1, type, optmutable, id2, id3, decl, __): extractFnNamesFromWiseAst(decl, acc);
+		WiFunction(__, id, __, __, type, __, decl, eclass): extractFnNamesFromWiseAst(decl, Pair(setTree(acc.first, id, type), setTree(acc.second, id, eclass)));
+		WiGlobal(__, __, __, __, __, decl, __): extractFnNamesFromWiseAst(decl, acc);
+		WiImport(__, __, __, __, __, decl, __): extractFnNamesFromWiseAst(decl, acc);
 		WiWaseEmpty(__): acc;
-		WiWiseInclude(s, decl, __): extractFnNamesFromWiseAst(decl, acc);
+		WiWiseInclude(__, decl, __): extractFnNamesFromWiseAst(decl, acc);
 	}
 }
 
