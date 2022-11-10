@@ -396,7 +396,7 @@ extractNotTupleDot(e : WiExp) -> WiExp {
 	}
 }
 
-// TODO: construct?, fnResult
+// TODO: maybe I can remove it ..?
 makeTupledotData(env : LowerWiseAstEnv, e : WiExp, indexes : [int]) -> Triple<Maybe<string>, WiseAstType, [int]> {
 	rec = \e2 -> resolveWiseAst(env.typeEnv.unionFindMap, e2, env.onError);
 	defType = WiseAstTypeEclass(-1);
@@ -405,8 +405,15 @@ makeTupledotData(env : LowerWiseAstEnv, e : WiExp, indexes : [int]) -> Triple<Ma
 		WiTuple(exps, eclass) : Triple(None(), rec(e), indexes);
 		WiVar(id, __) : Triple(Some(id), eitherMap(lookupTree(env.locals, id), rec, defType), indexes);
 		WiCall(e1, __, __) : Triple(None(), eitherMap(lookupTree(env.fns, getWiVarId(e1)), rec, defType), indexes);
+		WiLet(__, __, __, __, b, __) : makeTupledotData(env, b, indexes);
+		WiBrace(es, __) : if (es == []) {
+			env.onError(e, "ERROR: can't extract value for Tupledot");
+			Triple(None(), defType, indexes);
+		} else {
+			makeTupledotData(env, es[length(es) - 1], indexes);
+		}
 		default : {
-			env.onError(e, "		TODO: types for tupledot from " + toString(e));
+			env.onError(e, "	TODO: types for tupledot");
 			Triple(None(), defType, indexes);
 		};
 	}
@@ -489,6 +496,7 @@ lowerTuplesInWiExp(v : WiExp, unionFindMap : UnionFindMap<[WiseAstType]>, tmpCnt
 		WiVar(id, eclass): v2;
 		WiType() : lowerTuplesInWiType(v2);
 	}
+	onError = \inf, err -> println(err + " [" + toString(inf) + "]");
 
 	switch (v : WiExp) {
 		WiAdd(exp1, exp2, eclass): WiAdd(rec(exp1), rec(exp2), eclass);
@@ -536,23 +544,78 @@ lowerTuplesInWiExp(v : WiExp, unionFindMap : UnionFindMap<[WiseAstType]>, tmpCnt
 		WiXor(exp1, exp2, eclass): WiXor(rec(exp1), rec(exp2), eclass);
 		WiSizeoftype(type, eclass): WiSizeoftype(lowerTuplesInWiType(type), eclass);
 		WiPolycall(e, types, eclass): WiPolycall(rec(e), map(types, lowerTuplesInWiType), eclass);
-		WiTupledot(e, int_0, eclass): WiTupledot(rec(e), int_0, eclass); // TODO ?
+		WiTupledot(e, ind, eclass): lowerWiTupledot(unionFindMap, v, tmpCntr, onError);
 		WiDefoftype(type, eclass): WiDefoftype(lowerTuplesInWiType(type), eclass);
 		WiInt(int_0, eclass): v;
-		WiVar(id, eclass): {
-			fieldType = resolveWiseAstTypeByEclass(unionFindMap, eclass, \inf, err -> println(err + " [" + toString(inf) + "]"));
-			switch (fieldType : WiseAstType) {
+		WiVar(id, eclass): lowerTuplesInWiVar(v, unionFindMap, onError);
+	}
+}
+
+lowerTuplesInWiVar(v : WiExp, unionFindMap : UnionFindMap<[WiseAstType]>, onError :(WiseAst, string) -> void) -> WiExp {
+	fieldType = resolveWiseAstTypeByEclass(unionFindMap, v.eclass, onError);
+	switch (fieldType : WiseAstType) {
+		default : v;
+		WiseAstTypeTuple(__) : {
+			ttype = lowerTuplesInWiType(wiseAstType2wiType(fieldType, v.eclass, unionFindMap));
+			switch (ttype : WiType) {
+				WiTupletype(ttypes, eclass2): WiTuple(mapi(ttypes, \j, t -> WiTupledot(v, j, t.eclass)), eclass2);
 				default : v;
-				WiseAstTypeTuple(__) : {
-					ttype = lowerTuplesInWiType(wiseAstType2wiType(fieldType, eclass, unionFindMap));
-					switch (ttype : WiType) {
-						WiTupletype(ttypes, eclass2): WiTuple(mapi(ttypes, \j, t -> WiTupledot(v, j, t.eclass)), eclass2);
-						default : v;
-					}
-				}
-				
 			}
 		}
+		
+	}
+}
+
+lowerWiTupledot(unionFindMap : UnionFindMap<[WiseAstType]>, v : WiTupledot, tmpCntr : ref int, onError :(WiseAst, string) -> void) -> WiTupledot {
+	value = extractWiTupledotValue(v);
+	loweredValue = lowerTuplesInWiExp(value, unionFindMap, tmpCntr);
+	fieldType = resolveWiseAstTypeByEclass(unionFindMap, value.eclass, onError);
+	indexes = collectTupledotIndexes(v, []);
+	newInd = getTupledotIndexFromFlatTuple(indexes, fieldType, 0);
+	WiTupledot(loweredValue, newInd, 0);
+}
+
+extractWiTupledotValue(v : WiExp) -> WiExp {
+	switch (v : WiExp) {
+		WiTupledot(e, __, __): extractWiTupledotValue(e);
+		default : v;
+	}
+}
+
+collectTupledotIndexes(e : WiExp, acc : [int]) -> [int] {
+	switch (e : WiExp) {
+		WiTupledot(e1, ind, __) : collectTupledotIndexes(e1, concat([ind], acc));
+		default : acc;
+	}
+}
+
+getTupledotIndexFromFlatTuple(path : [int], type : WiseAstType, acc : int) -> int {
+	if (path == []) {
+		acc
+	} else {
+		switch (type : WiseAstType) {
+			WiseAstTypeTuple(fields) : {
+				ind = path[0];
+				if (existsIndex(fields, ind)) {
+					len = fold(subrange(fields, 0, ind), acc, \acc2, f -> acc2 + getFlatTupleLength(f, 0));
+					getTupledotIndexFromFlatTuple(tail(path), fields[ind], len);
+				} else {
+					println("error : wrong tuple length. index=" + i2s(ind) + ". " + toString(type));
+					acc;
+				}
+			}
+			default : {
+				println("error : expected tuple, got basic type. " + toString(type) + " : " + toString(path));
+				acc;
+			}
+		}
+	}
+}
+
+getFlatTupleLength(type : WiseAstType, acc : int) -> int {
+	switch (type : WiseAstType) {
+		WiseAstTypeTuple(fields) : fold(fields, acc, \acc2, f -> acc2 + getFlatTupleLength(f, 0));
+		default : acc + 1;
 	}
 }
 
