@@ -2,6 +2,7 @@ import wise/type_ast;
 import wise/wiseast_utils;
 
 export {
+	// tuple tree -> flat tuple
 	lowerTuplesInWiseAst(ast : WiseAst, unionFindMap : UnionFindMap<[WiseAstType]>, tmpCntr : ref int) -> WiseAst;
 }
 
