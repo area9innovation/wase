@@ -35,6 +35,7 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 		}
 
 		gringoParser = !isUrlParameterFalse("gringo");
+		debug = isUrlParameterTrue("debug");
 
 		combinedProgram = if (gringoParser) {
 			program = parseWiDecl(code, \err -> println("Error in '" + filename + "': " + err));
@@ -58,29 +59,26 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 
 		// Here, we should lower Wise constructs to Wase constructs
 		lowered0 = if (gringoParser) {
-			// lowered -> typed . TODO: typed -> lowered?
 			// TODO: don't use transformations (dsl->wise->...; waseast->dsl->...)
-// println("extended: "+toString(extended));
 			wiseProgram = dslAst2WiseAst(extended);
-// println("from DSL: "+toString(wiseProgram));
 			typeEnv = makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast)));
 			checkedTypes = typeWiseAst(typeEnv, wiseProgram);
-println("			typedWise: \n"+toString(checkedTypes));
+			if (debug) println("			typedWise: \n"+toString(checkedTypes));
 			loweredTuples = lowerTuplesInWiseAst(checkedTypes, typeEnv.unionFindMap, ref 0);
-println("			loweredTuples: \n"+toString(loweredTuples));
+			if (debug) println("			loweredTuples: \n"+toString(loweredTuples));
 			checkedLoweredTypes = typeWiseAst(typeEnv, loweredTuples);
-println("			TYPED loweredTuples: \n"+toString(checkedLoweredTypes));
+			if (debug) println("			TYPED loweredTuples: \n"+toString(checkedLoweredTypes));
 			dots  = ref makeSet();
 			loweredWase = lowerWiseAst2WaseAst(checkedLoweredTypes, typeEnv, dots);
-println("			LOWERED WISE: \n"+toString(loweredWase));
+			if (debug) println("			LOWERED WISE: \n"+toString(loweredWase));
 			waseCode = addDotNFunctionsToWase(^dots, loweredWase);
 			// TODO: WaseAst2Wase
 			loweredAst = waseAst2DslAst(waseCode);
-println("			LOWERED AST: \n"+toString(loweredAst));
+			if (debug) println("			LOWERED AST: \n"+toString(loweredAst));
 			// typeWise makes type duplicates(?) what necessary for dsl2wase
 			// waseAst2DslAst doesn't have the real types. We have to fix it
 			// auto == () doesn't work. greate = bool type (should be int)
-println("			CHECKED TYPE\n");
+			if (debug) println("			CHECKED TYPE\n");
 			typeWase(loweredAst); // TODO: delete
 		} else {
 			// typed -> lowered
@@ -92,8 +90,6 @@ println("			CHECKED TYPE\n");
 			env = makeLowerWiseEnv(\node, error -> {
 				println(error + " at " + summarizeDsl(node));
 			});
-println("TYPED AST: \n"+toString(typed));
-println("LWD AST: v"+toString(lowerWise2Wase(env, typed)));
 			// add dot* functions
 			addDotNFunctions(^(env.dots), lowerWise2Wase(env, typed));
 		}
@@ -114,7 +110,7 @@ println("LWD AST: v"+toString(lowerWise2Wase(env, typed)));
 			println("\nAs wase:");
 			println(prettyWase(wase));
 		}
-println("\n"+toString(wase));
+		if (debug) println("\n"+toString(wase));
 		wasm = wase2wasm(wase);
 		bytes = wasmModule2bytes(wasm);
 
