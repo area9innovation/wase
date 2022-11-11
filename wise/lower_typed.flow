@@ -220,7 +220,9 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 					indirect(WeVar(fnId))
 				} else {
 					// TODO: WeCall2 ?
-					WeCall(WeVar(fnId), map(mapConcat(exps, \ee -> unrollTupleForWeCall(env, ee)), rec))
+					newExps = map(exps, \ee -> unrollTupleForWeCall(env, ee));
+					fnCall = WeCall(WeVar(fnId), mapConcat(newExps, firstOfPair));
+					fold(mapConcat(newExps, secondOfPair), fnCall, \acc, conExp -> WeLettuple(conExp with brace = WeBrace([acc])));
 				}
 			}
 		}
@@ -252,17 +254,31 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp) -> WeExp {
 	}
 }
 
-unrollTupleForWeCall(env : LowerWiseAstEnv, e : WiExp) -> [WiExp] {
+// move to lowerTuple ?
+unrollTupleForWeCall(env : LowerWiseAstEnv, e : WiExp) -> Pair<[WeExp], [WeLettuple]> {
+	rec = \w1 -> WiExp2WeExp(env, w1);
 	type = resolveWiseAstTypeByEclass(env.typeEnv.unionFindMap, e.eclass, env.onError);
 	switch (type : WiseAstType) {
-		WiseAstTypeTuple(__) : switch (e : WiExp) {
-			WiTuple(exps, __) : mapConcat(exps, \ee -> unrollTupleForWeCall(env, ee));
+		WiseAstTypeTuple(ftypes) : switch (e : WiExp) {
+			WiTuple(exps, __) : fold2(exps, [], [], \fexps, conexps, ee -> 
+				unpair(unrollTupleForWeCall(env, ee), \v1, v2 -> Pair(concat(fexps, v1), concat(conexps, v2)))
+			);
 			default : {
-				env.onError(e, "TODO ?: expected tuple, found expression.");
-				[e];
+				tmpCntr = ^(env.tmpCntr);
+				env.tmpCntr := tmpCntr + 1;
+				varName = "_tmp" + i2s(tmpCntr);
+				newExp = WeLettuple(
+					varName,
+					0,
+					WiType2WeTypes(wiseAstType2wiType(type, e.eclass, env.typeEnv.unionFindMap)),
+					rec(e),
+					WeBrace([])
+				);
+				exps = mapi(ftypes, \i, __ -> WeVar(varName + "." + i2s(i)));
+				Pair(exps, [newExp]);
 			}
 		};
-		default : [e];
+		default : Pair([rec(e)], []);
 	}
 }
 
