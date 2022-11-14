@@ -481,7 +481,22 @@ makeTupledotData(env : LowerWiseAstEnv, e : WiExp, indexes : [int]) -> Triple<Ma
 		WiTupledot(e1, ind, __): makeTupledotData(env, e1, concat([ind], indexes));
 		WiTuple(exps, eclass) : Triple(None(), rec(e), indexes);
 		WiVar(id, __) : Triple(Some(id), eitherMap(lookupTree(env.locals, id), rec, defType), indexes);
-		WiCall(e1, __, __) : Triple(None(), eitherMap(lookupTree(env.fns, getWiVarId(e1)), rec, defType), indexes);
+		WiCall(e1, __, __) : {
+			varId = getWiVarId(e1);
+			varM = eitherFn(
+				lookupTree(env.fns, varId),
+				\fn -> Some(fn),
+				\-> maybeBind(
+					lookupTree(env.locals, varId),
+					\varType -> switch (varType : WiType) {
+						WiFntype(__, retType, __): Some(retType);
+						WiBasictype(__, __) : None();
+						WiTupletype(__, __) : None();
+					}
+				)
+			);
+			Triple(None(), eitherMap(varM, rec, defType), indexes);
+		}
 		WiLet(__, __, __, __, b, __) : makeTupledotData(env, b, indexes);
 		WiBrace(es, __) : if (es == []) {
 			env.onError(e, "ERROR: can't extract value for Tupledot");
