@@ -1471,7 +1471,7 @@ dsl2WasmValType(onError : (DslAst, string) -> void, d : DslAst) -> WasmValType {
 dsl2WasmValTypes(onError : (DslAst, string) -> void, d : DslAst) -> [WasmValType] {
 	switch (d) {
 		DslList(v): {
-			map(list2array(v), \e -> dsl2WasmValType(onError, e))
+			map(reverseA(list2array(v)), \e -> dsl2WasmValType(onError, e));
 		}
 		default: {
 			[dsl2WasmValType(onError, d)]
