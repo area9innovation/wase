@@ -684,7 +684,7 @@ memory.init and data.drop not implemented yet. Requires data indexing.
 | `*.extend8_s` | `extend8_s<>(val)` | Lifts a byte to a i32/i64, as signed. The val is the same type as the result
 | `*.extend16_s` | `extend16_s<>(val)` | Lifts 16 bits to a i32/i64, as signed.  The val is the same type as the result
 | `*.convert_*_s` | `convert_s<>(val)` | Lifts signed i32/i64 to f32/f64.
-| `*.convert*_u` | `convert_u<>(val)` | Lifts unsigned i32/i64 to d32/f64.
+| `*.convert*_u` | `convert_u<>(val)` | Lifts unsigned i32/i64 to f32/f64.
 | `*.demote_f64` | `demote*<>(val)` | Lowers a f64 to f32
 | `*.promote_f32` | `promote*<>(val)` | Lifts a f32 to a f64
 | `*.reinterpret*` | `reinterpret<>(val)` | Taking bit pattern of i32/i64/f32/f64 and interpret as f32/f64/i32/i64 correspondingly.
