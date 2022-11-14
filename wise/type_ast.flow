@@ -43,6 +43,7 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> Pair<WiseAstType, W
 		WiseAstDouble(__): def(WiseAstTypeF64());
 		WiseAstString(__): def(WiseAstTypeString());
 		WiFunction(opWiseAstort, id, templates, lambdaargs, type, e, decl, __): {
+			// TODO: auto
 			retType = typecheckWiType(state, type);
 			args = map(lambdaargs, \a -> typecheckWiIdtype(state, a));
 			fnType = WiseAstTypeFunc(map(args, firstOfPair), retType.first);
@@ -78,8 +79,6 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> Pair<WiseAstType, W
 	}
 }
 
-// TODO: WiWasmOp types
-// see dslWasmOp2WaseInstruction, typecheckWaseInstruction
 typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp> {
 	rec2 = \value : WiExp, ltype : WiseAstType -> {
 		t = typecheckWiExp(state, value);
@@ -269,10 +268,18 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 			bindNewEclassToType(state, t.first, \id -> WiBoolNot(t.second, id));
 		}
 		WiLet(id, i, opttype, e, brace, __): {
-			varType = typecheckWiType(state, opttype);
+			e2 = typecheckWiExp(state, e);
+			varType = if (isAutoType(opttype)) {
+				e3 = bindNewEclassToType(state, e2.first, idfn);
+				opttype2 = wiseAstType2wiType(e3.first, e3.second, state.unionFindMap);
+				Pair(e3.first, opttype2);
+			} else {
+				cType = typecheckWiType(state, opttype);
+				unifyWiseAstTypes(state, e2.first, cType.first);
+				cType;
+			}
+
 			newState = TypeWiseAstState(state with vars = setTree(state.vars, id, varType.first));
-			e2 = typecheckWiExp(newState, e);
-			unifyWiseAstTypes(state, e2.first, varType.first);
 			t = typecheckWiBrace(newState, brace);
 			bindNewEclassToType(state, t.first, \id1 -> WiLet(id, i, varType.second, e2.second, t.second, id1));
 		}
@@ -330,6 +337,13 @@ bindNewEclassToType(state : TypeWiseAstState, vtype : WiseAstType, setEclass : (
 	ttype = getNewEclassType(state);
 	unifyWiseAstTypes(state, vtype, ttype);
 	Pair(vtype, setEclass(ttype.id));
+}
+
+isAutoType(t : WiType) -> bool {
+	switch (t : WiType) {
+		WiBasictype(s, __) : s == "auto";
+		default : false;
+	}
 }
 
 typecheckWiType(state : TypeWiseAstState, t : WiType) -> Pair<WiseAstType, WiType> {

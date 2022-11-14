@@ -48,12 +48,12 @@ wiseAstType2wiType(t : WiseAstType, eclass : int, unionFindMap : UnionFindMap<[W
 			fieldClasses = switch (typeWithClasses : WiseAstType) {
 				WiseAstTypeTuple(fields2) : {
 					if (length(fields) != length(fields2)) {
-						println("Error : Can't fix eclasses. Wrong tuple type. Given : " + toString(t) + ". Found : " + toString(typeWithClasses));
+						println("Error : Can't resolve eclasses. Wrong tuple type. Given : " + toString(t) + ". Found : " + toString(typeWithClasses));
 					}
 					mapi(fields, \i, f -> elementAtMap(fields2, i, extractEclassFromWiseAstType, 0));
 				}
 				default : {
-					println("Error : Can't fix eclasses. not a tuple type. Given : " + toString(t) + ". Found : " + toString(typeWithClasses));
+					println("Error : Can't resolve eclasses. not a tuple type. Given : " + toString(t) + ". Found : " + toString(typeWithClasses));
 					map(fields, \__ -> 0);
 				}
 			}
