@@ -6,7 +6,7 @@ import ds/union_find_map;
 export {
 
 	wiseAstType2wiType(t : WiseAstType, eclass : int, unionFindMap : UnionFindMap<[WiseAstType]>) -> WiType;
-
+	getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAstType) -> WiseAstType;
 }
 
 
@@ -78,5 +78,153 @@ extractEclassFromWiseAstType(t : WiseAstType) -> int {
 		WiseAstTypeString() : 0;
 		WiseAstTypeTuple(__) : 0;
 		WiseAstTypeEclass(id) : id;
+	}
+}
+
+// the list of types : https://webassembly.github.io/spec/core/appendix/index-instructions.html
+getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAstType) -> WiseAstType {
+	voidType = WiseAstTypeTuple([]);
+	if (id == "store" || id == "store8" || id == "store16" || id == "store32") {
+		if (length(args) == 2) voidType else defType;
+	} else if (id == "load" || id == "load8_s" || id == "load8_u" || id == "load16_s" || id == "load16_u" || id == "load32_s" || id == "load32_u") {
+		defType; // TODO : type = left operand
+	} else if (id == "trunc") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeF64()) WiseAstTypeF64()
+		else if (args[0] == WiseAstTypeF32()) WiseAstTypeF32()
+		else defType;
+	} else if (id == "trunc_s" || id == "trunc_u" || id == "trunc_sat_s" || id == "trunc_sat_u") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeF64()) WiseAstTypeI64()
+		else if (args[0] == WiseAstTypeF32()) WiseAstTypeI32()
+		else defType;
+	} else if (id == "wrap") {
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI32()
+		else defType;
+ 	} else if (id == "clz" || id == "ctz") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI64()
+		else defType;
+	} else if (id == "popcnt") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI64()
+		else if (args[0] == WiseAstTypeSIMD()) WiseAstTypeSIMD()
+		else defType;
+	} else if (id == "shl" || id == "shr_s" || id == "shr_u") {
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI64()
+		else if (args[0] == WiseAstTypeSIMD()) WiseAstTypeSIMD()
+		else defType;
+	} else if (id == "rotl" || id == "rotr") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI64()
+		else defType;
+	} else if (id == "eqz" || id == "eq") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI64()
+		else defType;
+	} else if (id == "div") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeF32()) WiseAstTypeF32()
+		else if (args[0] == WiseAstTypeF64()) WiseAstTypeF64()
+		else defType;
+	} else if (id == "div_u" || id == "div_s") {
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI64()
+		else defType;
+	} else if (id == "rem_u" || id == "rem_s") {
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI64()
+		else defType;
+	} else if (id == "extend_s" || id == "extend_u") {
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI64()
+		else defType;
+	} else if (id == "extend8_s" || id == "extend16_s") {
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI64()
+		else defType;
+	} else if (id == "i16x8.extend_low_i8x16_s" || id == "i16x8.extend_high_i8x16_s" || id == "i16x8.extend_low_i8x16_u" || id == "i16x8.extend_high_i8x16_u"
+				|| id == "i32x4.extend_low_i16x8_s" || id == "i32x4.extend_high_i16x8_s" || id == "i32x4.extend_low_i16x8_u" || id == "i32x4.extend_high_i16x8_u"
+				|| id == "i64x2.extend_low_i32x4_s" || id == "i64x2.extend_high_i32x4_s" || id == "i64x2.extend_low_i32x4_u" || id == "i64x2.extend_high_i32x4_u"
+	) {
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeSIMD()) WiseAstTypeSIMD()
+		else defType;
+	} else if (id == "convert_s" || id == "convert_u") {
+		if (args == []) defType
+		// TODO : type = left operand
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeF32() // or WiseAstTypeF64())
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeF64() // or WiseAstTypeF32())
+		else defType;
+	} else if (id == "promote") {
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeF32()) WiseAstTypeF64()
+		else defType;
+	} else if (id == "f64x2.promote_low_f32x4") {
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeSIMD()) WiseAstTypeSIMD()
+		else defType;
+	} else if (id == "demote") {
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeF64()) WiseAstTypeF32()
+		else defType;
+	} else if (id == "f32x4.demote_f64x2_zero") {
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeSIMD()) WiseAstTypeSIMD()
+		else defType;
+	} else if (id == "reinterpret") {
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeF32()
+		else if (args[0] == WiseAstTypeF32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeF64()
+		else if (args[0] == WiseAstTypeF64()) WiseAstTypeI64()
+		else defType;
+	} else if (id == "lt_u") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI64()
+		else defType;
+	} else if (id == "gt_u") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI64()
+		else defType;
+	} else if (id == "le_u") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI64()
+		else defType;
+	} else if (id == "ge_u") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeI32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeI64()) WiseAstTypeI64()
+		else defType;
+	} else if (id == "abs" || id == "ceil" || id == "floor" || id == "nearest" || id == "sqrt") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeF32()) WiseAstTypeF32()
+		else if (args[0] == WiseAstTypeF64()) WiseAstTypeF64()
+		else defType;
+	} else if (id == "min" || id == "max" || id == "copysign") { 
+		if (args == []) defType
+		else if (args[0] == WiseAstTypeF32()) WiseAstTypeF32()
+		else if (args[0] == WiseAstTypeF64()) WiseAstTypeF64()
+		else defType;
+	} else if (id == "memory.copy") {
+		voidType;
+	} else if (id == "v128.store") {
+		voidType;
+	} else {
+		println("Can't detect the result type. Unknown wasm instruction : " + id + "[" + toString(args) + "]");
+		defType;
 	}
 }

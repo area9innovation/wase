@@ -1,5 +1,6 @@
 import wise/wise_types;
 import wise/wiseast_types;
+import wise/wiseast_utils;
 import ds/union_find_map;
 import algorithms;
 
@@ -305,7 +306,7 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 		WiWasmOp(s, wargs, exps, eclass): {
 			newArgs = map(wargs, \v -> typecheckWiWarg(state, v).second);
 			newExps = map(exps, rec);
-			t = if (exps == []) WiseAstTypeEclass(eclass) else newExps[length(newExps) - 1].first; // TODO: find out the result type
+			t = getWaseInstructionResultType(s, map(newExps, firstOfPair), WiseAstTypeEclass(eclass));
 			bindNewEclassToType(state, t, \id -> WiWasmOp(s, newArgs, map(newExps, secondOfPair), id));
 		}
 		WiSizeoftype(type, eclass): {
