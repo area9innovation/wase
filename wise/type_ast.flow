@@ -105,16 +105,16 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 	def = \t -> Pair(t, ast);
 
 	switch (ast : WiExp) {
-		WiBool(__, __): def(WiseAstTypeBool());
-		WiBreak(eclass): def(WiseAstTypeEclass(eclass));
-		WiContinue(eclass): def(WiseAstTypeEclass(eclass));
-		WiDouble(__, __): def(WiseAstTypeF64());
-		WiHex32(__, __): def(WiseAstTypeI32());
-		WiHex64(__, __): def(WiseAstTypeI64());
-		WiHexf32(__, __): def(WiseAstTypeF32());
-		WiHexf64(__, __): def(WiseAstTypeF64());
-		WiI64(__, __): def(WiseAstTypeI64());
-		WiInt(__, __): def(WiseAstTypeI32());
+		WiBreak(eclass): def(WiseAstTypeEclass(eclass)); // TODO ?
+		WiContinue(eclass): def(WiseAstTypeEclass(eclass)); // TODO ?
+		WiBool(__, __): bindNewEclassToType(state, WiseAstTypeBool(), \id -> WiBool(ast with eclass = id));
+		WiDouble(__, __): bindNewEclassToType(state, WiseAstTypeF64(), \id -> WiDouble(ast with eclass = id));
+		WiHex32(__, __): bindNewEclassToType(state, WiseAstTypeI32(), \id -> WiHex32(ast with eclass = id));
+		WiHex64(__, __): bindNewEclassToType(state, WiseAstTypeI64(), \id -> WiHex64(ast with eclass = id));
+		WiHexf32(__, __): bindNewEclassToType(state, WiseAstTypeF32(), \id -> WiHexf32(ast with eclass = id));
+		WiHexf64(__, __): bindNewEclassToType(state, WiseAstTypeF64(), \id -> WiHexf64(ast with eclass = id));
+		WiI64(__, __): bindNewEclassToType(state, WiseAstTypeI64(), \id -> WiI64(ast with eclass = id));
+		WiInt(__, __): bindNewEclassToType(state, WiseAstTypeI32(), \id -> WiInt(ast with eclass = id));
 		WiIf(cond, val, __): {
 			cond1 = rec2(cond, WiseAstTypeBool());
 			t = rec(val);
