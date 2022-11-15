@@ -96,6 +96,40 @@ that are stackable should be specialized. Polymorphism on other types on the
 heap are always tagged. Maybe this will automatically happen if we represent 
 heap objects as tuples.
 
+## Templates
+
+Syntax : 
+fn_name\[params_list](arguments) -> type { ... }
+Parameter name can contain letters, digits, "_". It must start from  a letter. 
+Functions with real types will be created at compile time.
+
+Example, 
+```
+myFn[T, V](arg1 : T, arg2 : V) -> () { ...}
+myMapFn[A](value : A, fn : (A) -> A) -> A { fn(value); }
+idfn[T](v : T) -> T { v; }
+...
+myFn[i32, f64](v1, v2);
+myMapFn[i32](10, idfn[i32]);
+```
+There are 2 functions, what can help to work with templates :
+- sizeoftype
+- defoftype
+
+sizeoftype(Template_Name) returns the size of the type in bytes.
+defoftype(Template_Name) returns a value of a particular type.
+
+Example, 
+```
+clearArray[T](adr : i32) -> i32 {
+	typeSize : i32 = sizeoftype(T);
+	defValue : T = defoftype(T);
+	length : i32 = getArrayLength(adr);
+	memory.fill<>(adr, defValue, length * typeSize);
+	adr;
+}
+```
+
 # Plan
 - Typedef
 - Heap
