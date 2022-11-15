@@ -97,7 +97,7 @@ addDotNFunctions(fns : Set<DslDotFn>, d : DslAst) -> DslAst {
 			"function",
 			[
 				DslString(fn.name),
-				DslInt(0), // export
+				DslString(""), // export
 				DslList(array2list(mapi(fn.argTypes, \i, argType -> DslNode(
 					"idtype",
 					[DslString("v" + i2s(i)), DslNode("type", [argType, argType], 0), argType],

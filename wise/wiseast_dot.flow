@@ -1,0 +1,193 @@
+import wase/wase_types;
+import wise/type_ast;
+import ds/set;
+import text/blueprint;
+import wise/wiseast_utils;
+
+export {
+
+	makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType, tmpCntr : ref int, unionFindMap : UnionFindMap<[WiseAstType]>,) -> WaseTupledotFn;
+	WaseTupledotFn(
+		value : WiExp,
+		fn : WaseDotFn,
+	);
+	WaseDotFn(
+		name : string,  // format : dot_type[_type]_index
+		argTypes : [WiseAstType],
+		index : int,
+	);
+
+	addDotNFunctionsToWase(fns : Set<WaseDotFn>, d : WaseAst) -> WaseAst;
+
+}
+
+makeWeTupleDotFn(e : WiExp, index : int, type : WiseAstType, tmpCntr : ref int, unionFindMap : UnionFindMap<[WiseAstType]>,) -> WaseTupledotFn {
+	types = extractTupleTypesFromWiseAstTypes([type]);
+	dotFn = "dot_"
+			+ superglue(types, wiseAstType2dotname, "_") + "_"
+			+ (if (index >= 0) i2s(index) else "");
+	WaseTupledotFn(
+		makeWeTupleDotCallBody(dotFn, e, type, tmpCntr, unionFindMap),
+		WaseDotFn(dotFn, types, index)
+	);
+}
+
+makeWeTupleDotCallBody(dotFn : string, e : WiExp, tupleType : WiseAstType, tmpCntr : ref int, unionFindMap : UnionFindMap<[WiseAstType]>,) -> WiExp {
+	tupleEclass = e.eclass;
+	tmpVar = WiVar("_conTuple" + i2s(^tmpCntr), tupleEclass);
+	tmpCntr := (^tmpCntr) + 1;
+	wiType = wiseAstType2wiType(tupleType, tupleEclass, unionFindMap);
+
+	onError = \a, err -> println(err + " [" + toString(a) + "]");
+	eType = getUnionMapValue(unionFindMap, e.eclass);
+	
+	wl = WiLet(
+		tmpVar.id,
+		0,
+		wiType,
+		e,
+		WiBrace(
+			[WiCall(
+				WiVar(dotFn, 0),
+				resolveWiseAstTypeTuple(
+					unionFindMap,
+					if (eType == []) tupleType else eType[0], // resolvedType (eclass=0) or eclassType(eclass!=0)
+					[],
+					\indexes, tt, eclass -> fold(indexes, tmpVar, \acc, i -> WiTupledot(acc, i, eclass)),
+					onError
+				),
+				0
+			)],
+			0
+		),
+		tupleEclass
+	);
+
+	wl
+}
+
+resolveWiseAstTypeTuple(unionFindMap : UnionFindMap<[WiseAstType]>, t : WiseAstType, ind : [int], fn : ([int], WiseAstType, int) -> ?, onError : (WiseAst, string) -> void) -> [?] {
+	rec = \tt -> resolveWiseAstType(unionFindMap, tt, onError);
+	switch (t : WiseAstType) {
+		WiseAstTypeI32() : [fn(ind, t, 0)];
+		WiseAstTypeI64() : [fn(ind, t, 0)];
+		WiseAstTypeF32() : [fn(ind, t, 0)];
+		WiseAstTypeF64() : [fn(ind, t, 0)];
+		WiseAstTypeFunc(argTypes, retType) : {
+			resolvedType = WiseAstTypeFunc(map(argTypes, rec), rec(retType));
+			[fn(ind, resolvedType, 0)];
+		}
+		WiseAstTypeSIMD() : [fn(ind, t, 0)];
+		WiseAstTypeBool() : [fn(ind, t, 0)];
+		WiseAstTypeString() : [fn(ind, t, 0)];
+		WiseAstTypeTuple(fields) : concatA(mapi(fields, \i, at -> resolveWiseAstTypeTuple(unionFindMap, at, arrayPush(ind, i), fn, onError)));
+		WiseAstTypeEclass(id) : {
+			resolvedType = resolveWiseAstTypeByEclass(unionFindMap, id, onError);
+			[fn(ind, resolvedType, id)];
+		}
+	}
+}
+
+// the order is not important
+extractTupleTypesFromWiseAstTypes(types : [WiseAstType]) -> [WiseAstType] {
+	mapConcat(types, \t -> switch (t : WiseAstType) {
+		WiseAstTypeI32() : [t];
+		WiseAstTypeI64() : [t];
+		WiseAstTypeF32() : [t];
+		WiseAstTypeF64() : [t];
+		WiseAstTypeFunc(__, __) : [t];
+		WiseAstTypeSIMD() : [t];
+		WiseAstTypeBool() : [t];
+		WiseAstTypeString() : [t];
+		WiseAstTypeTuple(fields) : extractTupleTypesFromWiseAstTypes(fields);
+		WiseAstTypeEclass(__) : [t];
+	});
+}
+
+wiseAstType2dotname(type : WiseAstType) -> string {
+	switch (type) {
+		WiseAstTypeI32() : "i32";
+		WiseAstTypeI64() : "i64";
+		WiseAstTypeF32() : "f32";
+		WiseAstTypeF64() : "f64";
+		WiseAstTypeFunc(tt, rt) : "fn_" + superglue(tt, wiseAstType2dotname, "-") + "--" + wiseAstType2dotname(rt);
+		WiseAstTypeSIMD() : "v128";
+		WiseAstTypeBool() : "b";
+		WiseAstTypeString() : "s";
+		WiseAstTypeTuple(fields) : "t_" + superglue(fields, wiseAstType2dotname, "-");
+		WiseAstTypeEclass(id) : "e" + i2s(id);
+	}
+}
+
+addDotNFunctionsToWase(fns : Set<WaseDotFn>, d : WaseAst) -> WaseAst {
+	dotFns = foldSet(fns, WeWaseEmpty(), \acc : WeDecl, fn -> {
+		types = map(fn.argTypes, wiseAstType2weType);
+		returnType = elementAt(types, fn.index, WeType(""));
+		WeFunction(
+			fn.name,
+			"", // optexport
+			mapi(types, \i, argType -> WeIdtype("v" + i2s(i), argType)),
+			[returnType],
+			WeReturn(WeVar("v" + i2s(fn.index))),
+			acc
+		);
+	});
+	setDotFns = \w : WeDecl -> {
+		foldSet(fns, w, \acc : WeDecl, fn -> {
+			types = map(fn.argTypes, wiseAstType2weType);
+			returnType = elementAt(types, fn.index, WeType(""));
+			WeFunction(
+				fn.name,
+				"", // optexport
+				mapi(types, \i, argType -> WeIdtype("v" + i2s(i), argType)),
+				[returnType],
+				WeReturn(WeVar("v" + i2s(fn.index))),
+				acc
+			);
+		});
+	}
+	newValue = switch (d : WaseAst) {
+		WeDecl() : addFnToWeDecl(d, setDotFns);
+		default : d;
+	}
+	if (newValue == d && !isEmptySet(fns)) println("ERROR: can't add the dot fns. Declaration is not found");
+	newValue;
+}
+
+addFnToWeDecl(v : WeDecl, setDotFns : (WeDecl) -> WeDecl) -> WeDecl {
+	setFns = \decl, updateWeDecl -> {
+		if (decl == WeWaseEmpty()) setDotFns(v) else updateWeDecl(addFnToWeDecl(decl, setDotFns));
+	}
+	switch (v : WeDecl) {
+		WeData(__, __, __, __, decl) : setFns(decl, \newDecl -> WeData(v with decl = newDecl));
+		WeFunction(__, __, __, __, __, decl) : setFns(decl, \newDecl -> WeFunction(v with decl = newDecl));
+		WeGlobal(__, __, __, __, __, decl) : setFns(decl, \newDecl -> WeGlobal(v with decl = newDecl));
+		WeImportFun(__, __, __, __, decl) : setFns(decl, \newDecl -> WeImportFun(v with decl = newDecl));
+		WeImportGlobal(__, __, __, __, __, decl) : setFns(decl, \newDecl -> WeImportGlobal(v with decl = newDecl));
+		WeImportMemory(__, __, __, __, decl) : setFns(decl, \newDecl -> WeImportMemory(v with decl = newDecl));
+		WeImportTable(__, __, __, __, __, __, decl) : setFns(decl, \newDecl -> WeImportTable(v with decl = newDecl));
+		WeMemory(__, __, __, decl) : setFns(decl, \newDecl -> WeMemory(v with decl = newDecl));
+		WeWaseInclude(__, decl) : setFns(decl, \newDecl -> WeWaseInclude(v with decl = newDecl));
+		WeWaseEmpty(): setDotFns(v);
+	}
+}
+
+wiseAstType2weType(type : WiseAstType) -> WeType {
+	makeErrCode = \-> {
+		println("Wrong type '" + toString(type) + "' in dotFn");
+		""
+	}
+	code = switch (type) {
+		WiseAstTypeI32() : "i32";
+		WiseAstTypeI64() : "i64";
+		WiseAstTypeF32() : "f32";
+		WiseAstTypeF64() : "f64";
+		WiseAstTypeFunc(tt, rt) : "i32";
+		WiseAstTypeSIMD() : "v128";
+		WiseAstTypeBool() : "i32";
+		WiseAstTypeString() : "i32";
+		WiseAstTypeTuple(fields) : makeErrCode();
+		WiseAstTypeEclass(id) : makeErrCode();
+	}
+	WeType(code);
+}

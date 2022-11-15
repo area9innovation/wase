@@ -85,15 +85,15 @@ printlnb(i : i32) -> () {
 
 // for tests. the current version is a loss of accuracy! (trunc/-/*)
 printf64(f : f64) -> () {
-	b : i32 = trunc_s<>(f);
+	b : i32 = wrap<>(trunc_s<>(f));
 	printi32(b); // sign and int
 	printByte(46); // .
 	f0 : f64 = abs<>(f);
 	f1 : f64 = (f0 - trunc<>(f0)) * 100000000.0;
-	printi32(trunc_u<>(f1)); // 8 symbols
-	f2 = (f1 - trunc<>(f1));
-	f3 = f2 * 100000000.0; // 8 symbols
-	printi32(trunc_u<>(f3));
+	printi32(wrap<>(trunc_u<>(f1))); // 8 symbols
+	f2 : f64 = (f1 - trunc<>(f1));
+	f3 : f64 = f2 * 100000000.0; // 8 symbols
+	printi32(wrap<>(trunc_u<>(f3)));
 	{}
 }
 
