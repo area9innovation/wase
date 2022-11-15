@@ -833,7 +833,7 @@ dslWasmOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id 
 	} else if (id == "table.fill") {
 		WaseTableFill(getDslString(pars[0]))
 	} else if (id == "call_indirect") {
-		params = map(subrange(types, 0, length(types) - 1), \t -> dsl2WasmValType(onError, t));
+		params = mapConcat(subrange(types, 0, length(types) - 1), \t -> dsl2WasmValTypes(onError, t));
 		returnTypes = dsl2WasmValTypes(onError, retType);
 		fnType = WasmFuncType(params, returnTypes);
 
@@ -1471,7 +1471,7 @@ dsl2WasmValType(onError : (DslAst, string) -> void, d : DslAst) -> WasmValType {
 dsl2WasmValTypes(onError : (DslAst, string) -> void, d : DslAst) -> [WasmValType] {
 	switch (d) {
 		DslList(v): {
-			map(list2array(v), \e -> dsl2WasmValType(onError, e))
+			map(reverseA(list2array(v)), \e -> dsl2WasmValType(onError, e));
 		}
 		default: {
 			[dsl2WasmValType(onError, d)]
