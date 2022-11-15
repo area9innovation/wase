@@ -84,11 +84,6 @@ Returning tuples does not require any changes:
 
 	two_0 : i32, two_1 : f64 = bar();
 
-TODO:
-- Support nested tuples in blocks
-- Support function arguments that are tuples
-- Implement adding the "dot2" and friend functions to the runtime
-
 ## Polymorphism
 
 TODO: Polymorphism on basic types like i32, i64, f32, f64 and tuples of these
