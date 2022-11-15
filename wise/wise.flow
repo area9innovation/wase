@@ -36,7 +36,7 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 
 		gringoParser = !isUrlParameterFalse("gringo");
 		debug = isUrlParameterTrue("debug");
-
+// TODO: resolve order of imports (dependecies)
 		combinedProgram = if (gringoParser) {
 			program = parseWiDecl(code, \err -> println("Error in '" + filename + "': " + err));
 			// TODO: don't use transformations (wise->dsl->wise->...)

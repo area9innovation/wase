@@ -45,7 +45,10 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> Pair<WiseAstType, W
 		WiseAstString(__): def(WiseAstTypeString());
 		WiFunction(opWiseAstort, id, templates, lambdaargs, type, e, decl, __): {
 			args = map(lambdaargs, \a -> typecheckWiIdtype(state, a));
-			body = typecheckWiseAst(state, e);
+			newState = TypeWiseAstState(state with 
+				vars = fold(lambdaargs, state.vars, \acc, t -> setTree(acc, t.id, rec(t.type).first))
+			);
+			body = typecheckWiseAst(newState, e);
 			retType = if (isAutoType(type)) {
 				resType = bindNewEclassToType(state, body.first, idfn);
 				resWiType = wiseAstType2wiType(resType.first, resType.second, state.unionFindMap);
@@ -57,12 +60,9 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> Pair<WiseAstType, W
 			}
 
 			fnType = WiseAstTypeFunc(map(args, firstOfPair), retType.first);
-			newState = TypeWiseAstState(state with 
-				fns = setTree(state.fns, id, fnType),
-				vars = fold(lambdaargs, state.vars, \acc, t -> setTree(acc, t.id, rec(t.type).first))
-			);
+			newState2 = TypeWiseAstState(state with fns = setTree(state.fns, id, fnType));
 
-			decl2 = typecheckWiseAst(newState, decl);
+			decl2 = typecheckWiseAst(newState2, decl);
 			unifyWiseAstTypes(state, getNewEclassType(state), decl2.first);
 			bindNewEclassToType(state, fnType, \id1 -> WiFunction(opWiseAstort, id, templates, map(args, secondOfPair), retType.second, body.second, decl2.second, id1));
 		}

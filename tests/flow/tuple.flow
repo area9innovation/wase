@@ -42,7 +42,7 @@ Tuple2(
 );
 
 makeTuple1(t : Tuple) -> Tuple1 {
-	Tuple1(87, Tuple2(t, 1.56), Tuple2(Tuple(9, 9.08), 21));
+	Tuple1(87, Tuple2(t, 1.56), Tuple2(Tuple(9, 9.08), 21.9), -8);
 }
 
 main() {
@@ -66,7 +66,7 @@ main() {
 	println(i2); // 678
 	i3 = nested().t.i;
 	println(i3); // 2
-	i4 = makeTuple1(mktuple()).t1.i;
+	i4 = makeTuple1(mktuple()).t1.t.i;
 	println(i4); // 1
 
 	si : int = trunc(fi);
