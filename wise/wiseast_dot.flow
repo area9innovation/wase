@@ -37,6 +37,9 @@ makeWeTupleDotCallBody(dotFn : string, e : WiExp, tupleType : WiseAstType, tmpCn
 	tmpVar = WiVar("_conTuple" + i2s(^tmpCntr), tupleEclass);
 	tmpCntr := (^tmpCntr) + 1;
 	wiType = wiseAstType2wiType(tupleType, tupleEclass, unionFindMap);
+
+	onError = \a, err -> println(err + " [" + toString(a) + "]");
+	eType = getUnionMapValue(unionFindMap, e.eclass);
 	
 	wl = WiLet(
 		tmpVar.id,
@@ -46,7 +49,13 @@ makeWeTupleDotCallBody(dotFn : string, e : WiExp, tupleType : WiseAstType, tmpCn
 		WiBrace(
 			[WiCall(
 				WiVar(dotFn, 0),
-				foldWiseAstTypeTuple(tupleType, [], \indexes, tt -> fold(indexes, tmpVar, \acc, i -> WiTupledot(acc, i, 0))),
+				resolveWiseAstTypeTuple(
+					unionFindMap,
+					if (eType == []) tupleType else eType[0], // resolvedType (eclass=0) or eclassType(eclass!=0)
+					[],
+					\indexes, tt, eclass -> fold(indexes, tmpVar, \acc, i -> WiTupledot(acc, i, eclass)),
+					onError
+				),
 				0
 			)],
 			0
@@ -54,26 +63,28 @@ makeWeTupleDotCallBody(dotFn : string, e : WiExp, tupleType : WiseAstType, tmpCn
 		tupleEclass
 	);
 
-	/* typeEnv = makeTypeWiseAstState2(unionFindMap, \ast, error -> println(error + " at: " + toString(ast)));
-	typedLet = typeWiseAst(typeEnv, wl);
-	switch (typedLet : WiseAst) {
-		WiLet(__, __, __, __, __, __): typedLet;
-		default : wl;
-	} */wl
+	wl
 }
 
-foldWiseAstTypeTuple(t : WiseAstType, ind : [int], fn : ([int], WiseAstType) -> ?) -> [?] {
+resolveWiseAstTypeTuple(unionFindMap : UnionFindMap<[WiseAstType]>, t : WiseAstType, ind : [int], fn : ([int], WiseAstType, int) -> ?, onError : (WiseAst, string) -> void) -> [?] {
+	rec = \tt -> resolveWiseAstType(unionFindMap, tt, onError);
 	switch (t : WiseAstType) {
-		WiseAstTypeI32() : [fn(ind, t)];
-		WiseAstTypeI64() : [fn(ind, t)];
-		WiseAstTypeF32() : [fn(ind, t)];
-		WiseAstTypeF64() : [fn(ind, t)];
-		WiseAstTypeFunc(__, __) : [fn(ind, t)];
-		WiseAstTypeSIMD() : [fn(ind, t)];
-		WiseAstTypeBool() : [fn(ind, t)];
-		WiseAstTypeString() : [fn(ind, t)];
-		WiseAstTypeTuple(fields) : concatA(mapi(fields, \i, at -> foldWiseAstTypeTuple(at, arrayPush(ind, i), fn)));
-		WiseAstTypeEclass(__) : [fn(ind, t)];
+		WiseAstTypeI32() : [fn(ind, t, 0)];
+		WiseAstTypeI64() : [fn(ind, t, 0)];
+		WiseAstTypeF32() : [fn(ind, t, 0)];
+		WiseAstTypeF64() : [fn(ind, t, 0)];
+		WiseAstTypeFunc(argTypes, retType) : {
+			resolvedType = WiseAstTypeFunc(map(argTypes, rec), rec(retType));
+			[fn(ind, resolvedType, 0)];
+		}
+		WiseAstTypeSIMD() : [fn(ind, t, 0)];
+		WiseAstTypeBool() : [fn(ind, t, 0)];
+		WiseAstTypeString() : [fn(ind, t, 0)];
+		WiseAstTypeTuple(fields) : concatA(mapi(fields, \i, at -> resolveWiseAstTypeTuple(unionFindMap, at, arrayPush(ind, i), fn, onError)));
+		WiseAstTypeEclass(id) : {
+			resolvedType = resolveWiseAstTypeByEclass(unionFindMap, id, onError);
+			[fn(ind, resolvedType, id)];
+		}
 	}
 }
 

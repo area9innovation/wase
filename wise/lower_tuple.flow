@@ -158,7 +158,7 @@ lowerWiTupledot(unionFindMap : UnionFindMap<[WiseAstType]>, v : WiTupledot, tmpC
 	fieldType = resolveWiseAstTypeByEclass(unionFindMap, value.eclass, onError);
 	indexes = collectTupledotIndexes(v, []);
 	newInd = getTupledotIndexFromFlatTuple(indexes, fieldType, 0);
-	WiTupledot(loweredValue, newInd, 0);
+	WiTupledot(loweredValue, newInd, value.eclass);
 }
 
 extractWiTupledotValue(v : WiExp) -> WiExp {

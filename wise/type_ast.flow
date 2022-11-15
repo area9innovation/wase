@@ -8,6 +8,7 @@ export {
 	typeWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAst;
 	resolveWiseAst(unionFindMap : UnionFindMap<[WiseAstType]>, t : WiseAst, onError : (WiseAst, string) -> void) -> WiseAstType;
 	resolveWiseAstTypeByEclass(unionFindMap : UnionFindMap<[WiseAstType]>, eclass : int, onError : (WiseAst, string) -> void) -> WiseAstType;
+	resolveWiseAstType(unionFindMap : UnionFindMap<[WiseAstType]>, t : WiseAstType, onError : (WiseAst, string) -> void) -> WiseAstType;
 
 	makeTypeWiseAstState(onError : (WiseAst, string) -> void) -> TypeWiseAstState;
 	TypeWiseAstState(
