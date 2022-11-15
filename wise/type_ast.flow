@@ -45,26 +45,37 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> Pair<WiseAstType, W
 		WiseAstString(__): def(WiseAstTypeString());
 		WiFunction(opWiseAstort, id, templates, lambdaargs, type, e, decl, __): {
 			args = map(lambdaargs, \a -> typecheckWiIdtype(state, a));
-			newState = TypeWiseAstState(state with 
-				vars = fold(lambdaargs, state.vars, \acc, t -> setTree(acc, t.id, rec(t.type).first))
-			);
-			body = typecheckWiseAst(newState, e);
-			retType = if (isAutoType(type)) {
+			res = if (isAutoType(type)) {
+				newState = TypeWiseAstState(state with 
+					vars = fold(lambdaargs, state.vars, \acc, t -> setTree(acc, t.id, rec(t.type).first)),
+					fns = setTree(state.fns, id, WiseAstTypeFunc(map(args, firstOfPair), WiseAstTypeEclass(0))) // return type is unknown
+				);
+				body = typecheckWiseAst(newState, e);
+
 				resType = bindNewEclassToType(state, body.first, idfn);
 				resWiType = wiseAstType2wiType(resType.first, resType.second, state.unionFindMap);
-				Pair(resType.first, resWiType);
+
+				fnType = WiseAstTypeFunc(map(args, firstOfPair), resType.first);
+				newState2 = TypeWiseAstState(state with fns = setTree(state.fns, id, fnType));
+
+				Quadruple(newState2, fnType, resWiType, body.second);
 			} else {
 				resType = typecheckWiType(state, type);
+				fnType = WiseAstTypeFunc(map(args, firstOfPair), resType.first);
+				newState = TypeWiseAstState(state with 
+					vars = fold(lambdaargs, state.vars, \acc, t -> setTree(acc, t.id, rec(t.type).first)),
+					fns = setTree(state.fns, id, fnType)
+				);
+				body = typecheckWiseAst(newState, e);
 				unifyWiseAstTypes(state, body.first, resType.first);
-				resType;
+
+				Quadruple(newState, fnType, resType.second, body.second);
 			}
-
-			fnType = WiseAstTypeFunc(map(args, firstOfPair), retType.first);
-			newState2 = TypeWiseAstState(state with fns = setTree(state.fns, id, fnType));
-
-			decl2 = typecheckWiseAst(newState2, decl);
-			unifyWiseAstTypes(state, getNewEclassType(state), decl2.first);
-			bindNewEclassToType(state, fnType, \id1 -> WiFunction(opWiseAstort, id, templates, map(args, secondOfPair), retType.second, body.second, decl2.second, id1));
+			unquadruple(res, \newState, fnType, newRetType, newBody -> {
+				decl2 = typecheckWiseAst(newState, decl);
+				unifyWiseAstTypes(newState, getNewEclassType(newState), decl2.first);
+				bindNewEclassToType(newState, fnType, \id1 -> WiFunction(opWiseAstort, id, templates, map(args, secondOfPair), newRetType, extractWiExpFromWiseAst(newBody), decl2.second, id1));
+			});
 		}
 		WiGlobal(id, opWiseAstort, type, optmutable, e, decl, __): {
 			decl2 = rec(decl);

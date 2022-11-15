@@ -7,6 +7,7 @@ export {
 
 	wiseAstType2wiType(t : WiseAstType, eclass : int, unionFindMap : UnionFindMap<[WiseAstType]>) -> WiType;
 	getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAstType) -> WiseAstType;
+	extractWiExpFromWiseAst(e : WiseAst) -> WiExp;
 }
 
 
@@ -94,9 +95,10 @@ getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAs
 		else if (args[0] == WiseAstTypeF32()) WiseAstTypeF32()
 		else defType;
 	} else if (id == "trunc_s" || id == "trunc_u" || id == "trunc_sat_s" || id == "trunc_sat_u") { 
+		 // TODO : type = left operand
 		if (args == []) defType
-		else if (args[0] == WiseAstTypeF64()) WiseAstTypeI64()
-		else if (args[0] == WiseAstTypeF32()) WiseAstTypeI32()
+		else if (args[0] == WiseAstTypeF64()) WiseAstTypeI64() // or i32
+		else if (args[0] == WiseAstTypeF32()) WiseAstTypeI32() // or i64
 		else defType;
 	} else if (id == "wrap") {
 		if (args == []) defType
@@ -226,5 +228,15 @@ getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAs
 	} else {
 		println("Can't detect the result type. Unknown wasm instruction : " + id + "[" + toString(args) + "]");
 		defType;
+	}
+}
+
+extractWiExpFromWiseAst(e : WiseAst) -> WiExp {
+	switch (e : WiseAst) {
+		WiExp() : e;
+		default : {
+			println("can't extract expression from WiseAst: " + toString(e));
+			WiBrace([], 0);
+		}
 	}
 }

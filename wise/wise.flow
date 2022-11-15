@@ -36,7 +36,7 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 
 		gringoParser = !isUrlParameterFalse("gringo");
 		debug = isUrlParameterTrue("debug");
-// TODO: resolve order of imports (dependecies)
+		// TODO: resolve the order of imports (dependecies)
 		combinedProgram = if (gringoParser) {
 			program = parseWiDecl(code, \err -> println("Error in '" + filename + "': " + err));
 			// TODO: don't use transformations (wise->dsl->wise->...)
@@ -64,12 +64,13 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 			typeEnv = makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast)));
 			checkedTypes = typeWiseAst(typeEnv, wiseProgram);
 			if (debug) println("			typedWise: \n"+toString(checkedTypes));
-			loweredTuples = lowerTuplesInWiseAst(checkedTypes, typeEnv.unionFindMap, ref 0);
+			tmpCntr = ref 0;
+			loweredTuples = lowerTuplesInWiseAst(checkedTypes, typeEnv.unionFindMap, tmpCntr);
 			if (debug) println("			loweredTuples: \n"+toString(loweredTuples));
 			checkedLoweredTypes = typeWiseAst(typeEnv, loweredTuples);
 			if (debug) println("			TYPED loweredTuples: \n"+toString(checkedLoweredTypes));
 			dots  = ref makeSet();
-			loweredWase = lowerWiseAst2WaseAst(checkedLoweredTypes, typeEnv, dots);
+			loweredWase = lowerWiseAst2WaseAst(checkedLoweredTypes, typeEnv, dots, tmpCntr);
 			if (debug) println("			LOWERED WISE: \n"+toString(loweredWase));
 			waseCode = addDotNFunctionsToWase(^dots, loweredWase);
 			// TODO: WaseAst2Wase

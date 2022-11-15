@@ -276,7 +276,7 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 				type = getChildType(2);
 
 				if (containsKeyTree(^(acc.env), vname)) {
-					acc.onError(node, "let '" + vname + "' is shadowing");
+					acc.onError(node, "lettuple '" + vname + "' is shadowing");
 				}
 				// Record that this is NOT mutable
 				acc.constants := insertSet(^(acc.constants), vname);

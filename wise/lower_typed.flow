@@ -4,7 +4,7 @@ import wise/wiseast_dot;
 import wise/wiseast_utils;
 
 export {
-	lowerWiseAst2WaseAst(w : WiseAst, typeEnv : TypeWiseAstState, dots : ref Set<WaseDotFn>) -> WaseAst;
+	lowerWiseAst2WaseAst(w : WiseAst, typeEnv : TypeWiseAstState, dots : ref Set<WaseDotFn>, tmpCntr : ref int) -> WaseAst;
 }
 
 LowerWiseAstEnv(
@@ -22,7 +22,7 @@ makeLowerWiseAstEnv() -> LowerWiseAstEnv {
 	LowerWiseAstEnv(0, [], makeTree(), makeTree(), ref makeSet(), makeTypeWiseAstState(nop2), ref 0, nop2);
 }
 
-lowerWiseAst2WaseAst(w : WiseAst, typeEnv : TypeWiseAstState, dots : ref Set<WaseDotFn>) -> WaseAst {
+lowerWiseAst2WaseAst(w : WiseAst, typeEnv : TypeWiseAstState, dots : ref Set<WaseDotFn>, tmpCntr : ref int) -> WaseAst {
 	errorFn = \ast, error -> println(error + " at: " + toString(ast));
 	codeFns = extractFnNamesFromWiseAst(w, Pair(makeTree(), makeTree()));
 	env = LowerWiseAstEnv(makeLowerWiseAstEnv() with
@@ -37,6 +37,7 @@ lowerWiseAst2WaseAst(w : WiseAst, typeEnv : TypeWiseAstState, dots : ref Set<Was
 			})
 		),
 		dots = dots,
+		tmpCntr = tmpCntr,
 		onError = errorFn
 	);
 	lowerWiseAstToWaseAst(env, w);
@@ -454,16 +455,6 @@ tupledot2WeAst(env : LowerWiseAstEnv, d : WiTupledot) -> WeExp {
 			}
 		);
 	});
-}
-
-extractWiExpFromWiseAst(e : WiseAst) -> WiExp {
-	switch (e : WiseAst) {
-		WiExp() : e;
-		default : {
-			println("can't extract expression from WiseAst: " + toString(e));
-			WiBrace([], 0);
-		}
-	}
 }
 
 extractNotTupleDot(e : WiExp) -> WiExp {
