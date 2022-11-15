@@ -98,7 +98,7 @@ fn_name\[params_list](arguments) -> type { ... }
 Parameter name can contain letters, digits, "_". It must start from  a letter. 
 Functions with real types will be created at compile time.
 
-Example, 
+Example: 
 ```
 myFn[T, V](arg1 : T, arg2 : V) -> () { ...}
 myMapFn[A](value : A, fn : (A) -> A) -> A { fn(value); }
@@ -112,9 +112,10 @@ There are 2 functions, what can help to work with templates :
 - defoftype
 
 sizeoftype(Template_Name) returns the size of the type in bytes.
+
 defoftype(Template_Name) returns a value of a particular type.
 
-Example, 
+Example: 
 ```
 clearArray[T](adr : i32) -> i32 {
 	typeSize : i32 = sizeoftype(T);
