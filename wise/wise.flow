@@ -15,6 +15,7 @@ import wise/wise_template;
 import wase/wase_types2dsl;
 import wise/lower_typed;
 import wise/lower_tuple;
+import wise/wise_include;
 
 compileWise2File(includes : [string], filename : string, code : string, outputPath : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
@@ -37,30 +38,16 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 		gringoParser = !isUrlParameterFalse("gringo");
 		debug = isUrlParameterTrue("debug");
 		// TODO: resolve the order of imports (dependecies)
-		combinedProgram = if (gringoParser) {
+		lowered0 = if (gringoParser) {
 			program = parseWiDecl(code, \err -> println("Error in '" + filename + "': " + err));
 			// TODO: don't use transformations (wise->dsl->wise->...)
-			dslProgram = wiseAst2DslAst(program);
-			include = DslInclude(includes, [".wise"], "wise_include", "wase_empty", \path, file, content -> {
-				wiProgram = parseWiDecl(content, \err -> println("Error in '" + path + "': " + err));
-				// TODO: don't use transformations
-				wiseAst2DslAst(wiProgram)
-			}, ref makeSet());
-			processDslIncludes(include, dslProgram);
-		} else {
-			program = parseWise(filename, code);
-			include = DslInclude(includes, [".wise"], "wise_include", "wase_empty", \path, file, content -> {
-				parseWise(path, content);
-			}, ref makeSet());
-			processDslIncludes(include, program);
-		}
 
-		extended = decomposePolyWise(combinedProgram);
-
-		// Here, we should lower Wise constructs to Wase constructs
-		lowered0 = if (gringoParser) {
-			// TODO: don't use transformations (dsl->wise->...; waseast->dsl->...)
-			wiseProgram = dslAst2WiseAst(extended);
+			include = WiseAstInclude(includes, [".wise"], \path, file, content -> {
+				parseWiDecl(content, \err -> println("Error in '" + path + "': " + err));
+			}, ref makeSet());
+			combinedProgram = processWiseAstIncludes(include, program);
+			wiseProgram = decomposePolyWiseAst(combinedProgram);
+			// Here, we should lower Wise constructs to Wase constructs
 			typeEnv = makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast)));
 			checkedTypes = typeWiseAst(typeEnv, wiseProgram);
 			if (debug) println("			typedWise: \n"+toString(checkedTypes));
@@ -82,6 +69,12 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 			if (debug) println("			CHECKED TYPE\n");
 			typeWase(loweredAst); // TODO: delete
 		} else {
+			program = parseWise(filename, code);
+			include = DslInclude(includes, [".wise"], "wise_include", "wase_empty", \path, file, content -> {
+				parseWise(path, content);
+			}, ref makeSet());
+			combinedProgram = processDslIncludes(include, program);
+			extended = decomposePolyWise(combinedProgram);
 			// typed -> lowered
 			typed = typeWise(extended);
 			if (isUrlParameterTrue("debug-type")) {

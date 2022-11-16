@@ -1,0 +1,96 @@
+import wise/wise_types;
+import fs/filesystem;
+
+export {
+	// Find this file, using the include path
+	resolveWiseAstFile(includes : [string], file : string) -> string;
+
+	// Process all includes in this AST
+	WiseAstInclude(
+		// A set of directories we will use to find includes
+		includes : [string],
+		// A list of file suffixes .wasm, .wat that will be appending the include paths
+		suffixes : [string],
+		// Parse the given file. Takes the include path, the resolved filename including suffix 
+		// and the content of the file, and produces a AST that will be "inlined"
+		parser : (string, string, string) -> WiseAst,
+		// What files have already been included?
+		included : ref Set<string>, 
+	);
+	processWiseAstIncludes(include : WiseAstInclude, program : WiseAst) -> WiseAst;
+}
+
+resolveWiseAstFile(includes : [string], file : string) -> string {
+	if (fileExists(file)) resolveRelativePath(file)
+	else if (includes == []) ""
+	else {
+		path = pathCombine(includes[0], file);
+		if (fileExists(path)) {
+			resolveRelativePath(path)
+		} else {
+			resolveWiseAstFile(tail(includes), file);
+		}
+	}
+}
+
+processWiseAstIncludes(include : WiseAstInclude, program : WiseAst) -> WiseAst {
+	switch (program : WiseAst) {
+		WiDecl() : processWiDeclIncludes(include, program);
+		default : program;
+	}
+}
+
+processWiDeclIncludes(include : WiseAstInclude, d : WiDecl) -> WiDecl {
+	switch (d : WiDecl) {
+		WiFunction(__, __, __, __, __, __, decl, __) : WiFunction(d with decl = processWiDeclIncludes(include, decl));
+		WiGlobal(__, __, __, __, __, decl, __) : WiGlobal(d with decl = processWiDeclIncludes(include, decl));
+		WiImport(__, __, __, __, __, decl, __) : WiImport(d with decl = processWiDeclIncludes(include, decl));
+		WiWaseEmpty(__) : d;
+		WiWiseInclude(file, decl, __) : {
+			filename = fold(include.suffixes, file, \acc, s -> {
+				res = resolveWiseAstFile(include.includes, changeFileExt(file, s));
+				if (res != "") res else acc
+			});
+			if (containsSet(^(include.included), filename)) {
+				// Already included. No need to do it again
+				decl;
+			} else if (fileExists(filename)) {
+				include.included := insertSet(^(include.included), filename);
+				code = getFileContent(filename);
+				includedFile = include.parser(file, filename, code);
+				if (isUrlParameterTrue("verbose")) {
+					println("  Included '" + file + "' as " + resolveRelativePath(filename));
+				}
+
+				switch (includedFile : WiseAst) {
+					WiDecl() : if (isSameStructType(decl, WiWaseEmpty(0))) {
+						processWiDeclIncludes(include, includedFile);
+					} else {
+						newValue = replaceWiWaseEmptyInWiDecl(includedFile, decl);
+						if (newValue == includedFile) println("ERROR: Could not find place to import " + file);
+						processWiDeclIncludes(include, newValue);
+					}
+					default : {
+						println("Declaration is not found. " + file + " is ignored.");
+						decl;
+					}
+				}
+				
+				
+			} else {
+				println("ERROR: Could not include " + file);
+				decl;
+			}
+		}
+	}
+}
+
+replaceWiWaseEmptyInWiDecl(d : WiDecl, replacement : WiDecl) -> WiDecl {
+	switch (d : WiDecl) {
+		WiFunction(__, __, __, __, __, __, decl, __) : WiFunction(d with decl = replaceWiWaseEmptyInWiDecl(decl, replacement));
+		WiGlobal(__, __, __, __, __, decl, __) : WiGlobal(d with decl = replaceWiWaseEmptyInWiDecl(decl, replacement));
+		WiImport(__, __, __, __, __, decl, __) : WiImport(d with decl = replaceWiWaseEmptyInWiDecl(decl, replacement));
+		WiWaseEmpty(__) : replacement;
+		WiWiseInclude(__, decl, __) : WiWiseInclude(d with decl = replaceWiWaseEmptyInWiDecl(decl, replacement));
+	}
+}

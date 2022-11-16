@@ -6,6 +6,7 @@ import text/blueprint;
 // TODO: remove [templates] from call()
 export {
 	decomposePolyWise(program : DslAst) -> DslAst;
+	decomposePolyWiseAst(program : WiseAst) -> WiseAst;
 }
 
 decomposePolyWise(program : DslAst) -> DslAst {
