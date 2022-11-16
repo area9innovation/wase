@@ -95,13 +95,13 @@ typecheckWiseAst(state : TypeWiseAstState, ast : WiseAst) -> Pair<WiseAstType, W
 		}
 		WiType() : typecheckWiType(state, ast);
 		WiIdtype(__, __, __) : typecheckWiIdtype(state, ast);
-		WiExp() : typecheckWiExp(state, ast);
+		WiExp() : typecheckWiExp(state, ast, None());
 	}
 }
 
-typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp> {
+typecheckWiExp(state : TypeWiseAstState, ast : WiExp, resType : Maybe<WiseAstType>) -> Pair<WiseAstType, WiExp> {
 	rec2 = \value : WiExp, ltype : WiseAstType -> {
-		t = typecheckWiExp(state, value);
+		t = typecheckWiExp(state, value, None());
 		unifyWiseAstTypes(state, ltype, t.first);
 		t;
 	}
@@ -214,7 +214,7 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 			t = checkBitwiseOp(exp1, exp2);
 			bindNewEclassToType(state, t.first, \id -> WiXor(t.second, t.third, id));
 		}
-		WiBrace(expsemi, eclass): typecheckWiBrace(state, ast);
+		WiBrace(expsemi, eclass): typecheckWiBrace(state, ast, resType);
 		WiCall(fn, args, __): {
 			targs = map(args, rec);
 			result = getNewEclassType(state);
@@ -233,11 +233,11 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 				default: typecheckWiExp(state, fn);
 			}; */
 			t = rec2(fn, callType);
-			resType= switch (t.first : WiseAstType) {
+			callResType = switch (t.first : WiseAstType) {
 				WiseAstTypeFunc(atypes, rtype) : rtype;
 				default : t.first;
 			}
-			bindNewEclassToType(state, resType, \id -> WiCall(t.second, map(targs, secondOfPair), id));
+			bindNewEclassToType(state, callResType, \id -> WiCall(t.second, map(targs, secondOfPair), id));
 		}
 		WiEqual(exp1, exp2, __): {
 			t = rec2b(exp1, exp2);
@@ -288,20 +288,21 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 			bindNewEclassToType(state, t.first, \id -> WiBoolNot(t.second, id));
 		}
 		WiLet(id, i, opttype, e, brace, __): {
-			e2 = typecheckWiExp(state, e);
 			varType = if (isAutoType(opttype)) {
+				e2 = typecheckWiExp(state, e, None());
 				e3 = bindNewEclassToType(state, e2.first, idfn);
 				opttype2 = wiseAstType2wiType(e3.first, e3.second, state.unionFindMap);
-				Pair(e3.first, opttype2);
+				Triple(e3.first, opttype2, e2.second);
 			} else {
 				cType = typecheckWiType(state, opttype);
+				e2 = typecheckWiExp(state, e, Some(cType.first));
 				unifyWiseAstTypes(state, e2.first, cType.first);
-				cType;
+				Triple(cType.first, cType.second, e2.second);
 			}
 
 			newState = TypeWiseAstState(state with vars = setTree(state.vars, id, varType.first));
-			t = typecheckWiBrace(newState, brace);
-			bindNewEclassToType(state, t.first, \id1 -> WiLet(id, i, varType.second, e2.second, t.second, id1));
+			t = typecheckWiBrace(newState, brace, None());
+			bindNewEclassToType(state, t.first, \id1 -> WiLet(id, i, varType.second, varType.third, t.second, id1));
 		}
 		WiNegate(e, __): {
 			t = rec(e);
@@ -333,7 +334,7 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp) -> Pair<WiseAstType, WiExp
 		WiWasmOp(s, wargs, exps, eclass): {
 			newArgs = map(wargs, \v -> typecheckWiWarg(state, v).second);
 			newExps = map(exps, rec);
-			t = getWaseInstructionResultType(s, map(newExps, firstOfPair), WiseAstTypeEclass(eclass));
+			t = getWaseInstructionResultType(s, map(newExps, firstOfPair), WiseAstTypeEclass(eclass), resType);
 			bindNewEclassToType(state, t, \id -> WiWasmOp(s, newArgs, map(newExps, secondOfPair), id));
 		}
 		WiSizeoftype(type, eclass): {
@@ -429,9 +430,9 @@ typecheckWiIdtype(state : TypeWiseAstState, v : WiIdtype) -> Pair<WiseAstType, W
 	Pair(tt.first, WiIdtype(v.id, tt.second, ltype.id));
 }
 
-typecheckWiBrace(state : TypeWiseAstState, v : WiBrace) -> Pair<WiseAstType, WiBrace> {
-	rec = \value : WiExp -> {
-		t = typecheckWiExp(state, value);
+typecheckWiBrace(state : TypeWiseAstState, v : WiBrace, resType : Maybe<WiseAstType>) -> Pair<WiseAstType, WiBrace> {
+	rec = \value : WiExp, eType -> {
+		t = typecheckWiExp(state, value, eType);
 		ltype = getNewEclassType(state);
 		unifyWiseAstTypes(state, ltype, t.first);
 		t;
@@ -439,7 +440,8 @@ typecheckWiBrace(state : TypeWiseAstState, v : WiBrace) -> Pair<WiseAstType, WiB
 	if (v.expsemi == []) {
 		Pair(WiseAstTypeEclass(v.eclass), v);
 	} else {
-		exps = map(v.expsemi, rec);
+		lastInd = length(v.expsemi) - 1;
+		exps = mapi(v.expsemi, \i, e -> rec(e, if (i == lastInd) resType else None()));
 		bindNewEclassToType(state, exps[length(exps) - 1].first, \id -> WiBrace(map(exps, secondOfPair), id));
 	}
 }

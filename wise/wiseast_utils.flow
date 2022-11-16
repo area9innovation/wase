@@ -6,7 +6,7 @@ import ds/union_find_map;
 export {
 
 	wiseAstType2wiType(t : WiseAstType, eclass : int, unionFindMap : UnionFindMap<[WiseAstType]>) -> WiType;
-	getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAstType) -> WiseAstType;
+	getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAstType, resType : Maybe<WiseAstType>) -> WiseAstType;
 	extractWiExpFromWiseAst(e : WiseAst) -> WiExp;
 }
 
@@ -83,22 +83,23 @@ extractEclassFromWiseAstType(t : WiseAstType) -> int {
 }
 
 // the list of types : https://webassembly.github.io/spec/core/appendix/index-instructions.html
-getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAstType) -> WiseAstType {
+getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAstType, resType : Maybe<WiseAstType>) -> WiseAstType {
 	voidType = WiseAstTypeTuple([]);
 	if (id == "store" || id == "store8" || id == "store16" || id == "store32") {
 		if (length(args) == 2) voidType else defType;
 	} else if (id == "load" || id == "load8_s" || id == "load8_u" || id == "load16_s" || id == "load16_u" || id == "load32_s" || id == "load32_u") {
-		defType; // TODO : type = left operand
+		knownResType = maybeBind(resType, \t -> if (t == WiseAstTypeI64() || t == WiseAstTypeI32() || t == WiseAstTypeF64() || t == WiseAstTypeF32() || t == WiseAstTypeSIMD()) Some(t) else None());
+		either(knownResType, defType);
 	} else if (id == "trunc") { 
 		if (args == []) defType
 		else if (args[0] == WiseAstTypeF64()) WiseAstTypeF64()
 		else if (args[0] == WiseAstTypeF32()) WiseAstTypeF32()
 		else defType;
 	} else if (id == "trunc_s" || id == "trunc_u" || id == "trunc_sat_s" || id == "trunc_sat_u") { 
-		 // TODO : type = left operand
+		knownResType = maybeBind(resType, \t -> if (t == WiseAstTypeI64() || t == WiseAstTypeI32()) Some(t) else None());
 		if (args == []) defType
-		else if (args[0] == WiseAstTypeF64()) WiseAstTypeI64() // or i32
-		else if (args[0] == WiseAstTypeF32()) WiseAstTypeI32() // or i64
+		else if (args[0] == WiseAstTypeF64()) either(knownResType, WiseAstTypeI64())
+		else if (args[0] == WiseAstTypeF32()) either(knownResType, WiseAstTypeI32())
 		else defType;
 	} else if (id == "wrap") {
 		if (args == []) defType
@@ -163,10 +164,10 @@ getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAs
 		else if (args[0] == WiseAstTypeSIMD()) WiseAstTypeSIMD()
 		else defType;
 	} else if (id == "convert_s" || id == "convert_u") {
+		knownResType = maybeBind(resType, \t -> if (t == WiseAstTypeF64() || t == WiseAstTypeF32()) Some(t) else None());
 		if (args == []) defType
-		// TODO : type = left operand
-		else if (args[0] == WiseAstTypeI32()) WiseAstTypeF32() // or WiseAstTypeF64())
-		else if (args[0] == WiseAstTypeI64()) WiseAstTypeF64() // or WiseAstTypeF32())
+		else if (args[0] == WiseAstTypeI32()) either(knownResType, WiseAstTypeF32())
+		else if (args[0] == WiseAstTypeI64()) either(knownResType, WiseAstTypeF64())
 		else defType;
 	} else if (id == "promote") {
 		if (args == []) defType
