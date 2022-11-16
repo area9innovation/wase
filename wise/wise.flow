@@ -12,10 +12,11 @@ import wise/lower;
 import wase/compile;
 import wase/pretty_wase;
 import wise/wise_template;
-import wase/wase_types2dsl;
 import wise/lower_typed;
 import wise/lower_tuple;
 import wise/wise_include;
+import wase/wase_types2dsl;
+import wase/waseast2wase;
 
 compileWise2File(includes : [string], filename : string, code : string, outputPath : string) -> Promise<int, string> {
 	Promise(\onDone : (int) -> void, onError : (string) -> void -> {
@@ -60,14 +61,15 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 			loweredWase = lowerWiseAst2WaseAst(checkedLoweredTypes, typeEnv, dots, tmpCntr);
 			if (debug) println("			LOWERED WISE: \n"+toString(loweredWase));
 			waseCode = addDotNFunctionsToWase(^dots, loweredWase);
-			// TODO: WaseAst2Wase
+			waseProgram = waseAst2wase(waseCode);
+
 			loweredAst = waseAst2DslAst(waseCode);
 			if (debug) println("			LOWERED AST: \n"+toString(loweredAst));
 			// typeWise makes type duplicates(?) what necessary for dsl2wase
 			// waseAst2DslAst doesn't have the real types. We have to fix it
 			// auto == () doesn't work. greate = bool type (should be int)
 			if (debug) println("			CHECKED TYPE\n");
-			typeWase(loweredAst); // TODO: delete
+			Pair(typeWase(loweredAst), Some(waseProgram)); // TODO: delete
 		} else {
 			program = parseWise(filename, code);
 			include = DslInclude(includes, [".wise"], "wise_include", "wase_empty", \path, file, content -> {
@@ -85,11 +87,11 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 				println(error + " at " + summarizeDsl(node));
 			});
 			// add dot* functions
-			addDotNFunctions(^(env.dots), lowerWise2Wase(env, typed));
+			Pair(addDotNFunctions(^(env.dots), lowerWise2Wase(env, typed)), None());
 		}
 
 		// Add exported memory
-		lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered0], 0);
+		lowered = DslNode("memory", [DslInt(1), DslInt(1), DslList(makeList()), lowered0.first], 0);
 
 		if (isUrlParameterTrue("debug-lower")) {
 			println("Wase '" + filename + "'':");
@@ -103,7 +105,10 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 			println("\nAs wase:");
 			println(prettyWase(wase));
 		}
-		if (debug) println("\n"+toString(wase));
+		if (debug) {
+			println("\n	WASE from DSL:\n" + toString(wase));
+			maybeApply(lowered0.second, \c -> println("	WASE from AST:\n" + toString(c)));
+		}
 		wasm = wase2wasm(wase);
 		bytes = wasmModule2bytes(wasm);
 

@@ -1,0 +1,191 @@
+import wase/wase_types;
+import wase/wase_ast;
+import formats/wasm/wasm_encode;
+
+export {
+	waseAst2wase(ast : WaseAst) -> Wase;
+}
+
+waseAst2wase(ast : WaseAst) -> Wase {
+	onError = \v : WaseAst, error : string -> {
+		println("Error: " + error + " at " + toString(v));
+	}
+	getWaseExportid = \optexport, id -> if (optexport == "1") id else optexport;
+	rec = \v -> waseAst2wase(v);
+	valtype = \t : WeType -> weType2wasmValType(t, onError);
+	expr = \e -> weExp2waseExpr(e, onError);
+	defError = \ -> {
+		onError(ast, "wrong structure");
+		WaseEmpty();
+	}
+
+	switch (ast : WaseAst) {
+		WeData(id, dataSize, dataList, dataOffset, decl): {
+			rawbytes = fold(dataList, [], \acc, value -> {
+				switch (value : WeDatavalue) {
+					WeInt(v): {
+						concat(acc,
+							if (v < 256) {[v]}
+							else {
+								// OK, we go for unsigned 32-bit
+								[
+									bitAnd(v, 0xff),
+									bitUshr(bitAnd(v, 0xff00), 8),
+									bitUshr(bitAnd(v, 0xff0000), 16),
+									bitUshr(bitAnd(v, 0xff000000), 24),
+								]
+							}
+						);
+					}
+					WeDouble(v): {
+						// WasmI64Const(low, high): concat([0x42], wasmI64Const2bytes(i));
+						// WasmF32Const(val): concat([0x43], wasmF32Const2bytes(i));
+						concat3(acc,
+							[0x44], 
+							wasmF64Const2bytes(WasmF64Const(v))
+						);
+					}
+					WeString(v): {
+						chars = string2utf8(v);
+						concat(acc, chars)
+					}
+				}
+			});
+
+			bytes = concat(wasmEncodeU32(length(rawbytes)), rawbytes);
+			offset = expr(dataOffset);
+			WaseData(id, dataSize, offset, bytes, rec(decl));
+		}
+		WeFunction(id, optexport, lambdaArgs, typeList, e, decl): {
+			argTypes = map(lambdaArgs, \fnarg : WeIdtype -> valtype(fnarg.type));
+			retTypes = map(typeList, valtype);
+			fntype = WasmFuncType(argTypes, retTypes);
+			fargs = mapi(lambdaArgs, \i, fnarg -> WaseLocal(fnarg.id, argTypes[i]));
+			WaseFunction(id, getWaseExportid(optexport, id), id == "main", fntype, fargs, expr(e), rec(decl)); // main ? start?
+		}
+		WeGlobal(id, optexport, type, optmutable, e, decl): {
+			newType : WasmValType = valtype(type);
+			WaseGlobal(id, getWaseExportid(optexport, id), newType, i2b(optmutable), expr(e), rec(decl));
+		}
+		WeImportFun(fnname, fn_type, module, name, decl): {
+			fntype = WasmFuncType(map(fn_type.types, valtype), map(fn_type.typeList, valtype));
+			WaseImportFunction(fnname, module, name, fntype, rec(decl));
+		}
+		WeImportGlobal(gname, type, optmutable, module, name, decl): {
+			WaseImportGlobal(gname, module, name, valtype(type), i2b(optmutable), rec(decl));
+		}
+		WeImportMemory(minimum, maximum, module, name, decl): {
+			WaseImportMemory(module, name, minimum, maximum, rec(decl));
+		}
+		WeImportTable(id, reftype, minimum, maximum, module, name, decl):  {
+			ttype = valtype(reftype);
+			onErrorType = \-> {
+				onError(reftype, "Only support func or extern in import table");
+				WasmFuncRef();
+			}
+			tableType = switch (ttype : WasmValType) {
+				WasmNumType() : onErrorType();
+				WasmVecType() : onErrorType();
+				WasmRefType() : ttype;
+			}
+			WaseImportTable(id, module, name, tableType, minimum, maximum, rec(decl));
+		}
+		WeMemory(optexport, minimum, maximum, decl): {
+			WaseMemory(minimum, maximum, getWaseExportid(optexport, "memory"), rec(decl));
+		}
+		WeWaseInclude(s, decl): defError();
+		WaseAstList(value): defError();
+		WaseAstBool(value): defError();
+		WaseAstInt(value): defError();
+		WaseAstDouble(value): defError();
+		WaseAstString(value): defError();
+		WeString(id): defError();
+		WeType(s): defError();
+		WeFnType(types, typeList): defError();
+		WeIdtype(id, type): defError(); // converting is in WeFunction
+		WeWaseEmpty(): WaseEmpty();
+		WeExp() : defError();
+	}
+}
+
+weExp2waseExpr(e : WeExp, onError : (WaseAst, string) -> void) -> WaseExpr {
+	WaseExpr(weExp2waseInstruction(e, [], onError));
+}
+
+weExp2waseInstruction(e : WeExp, acc : [WaseInstruction], onError : (WaseAst, string) -> void) -> [WaseInstruction] {
+	switch (e : WeExp) {
+		WeAdd(exp1, exp2): {
+			// DslNode("add", [waseAst2DslAst(a0), waseAst2DslAst(a1)], 0);
+			// restype = dsl2WasmValType(onError, args[2]);
+			nacc = weExp2waseInstruction(exp2, weExp2waseInstruction(exp1, acc, onError), onError);
+			/* if (restype == WasmI32Type()) arrayPush(nacc, WasmI32Add())
+			else if (restype == WasmI64Type()) arrayPush(nacc, WasmI64Add())
+			else if (restype == WasmF32Type()) arrayPush(nacc, WasmF32Add())
+			else if (restype == WasmF64Type()) arrayPush(nacc, WasmF64Add())
+			else  {
+				onError(e, "Can not add type " + toString(restype));
+				nacc;
+			}*/
+			nacc;
+		}
+		// WeAnd(exp1, exp2): 
+		// WeDouble(double_0): 
+		// WeHex32(s): 
+		// WeHex64(s): 
+		// WeHexf32(s): 
+		// WeHexf64(s): 
+		// WeI64(s): 
+		// WeIf(exp1, exp2): 
+		// WeIfelse(exp1, exp2, exp3): 
+		// WeInt(int_0): 
+		// WeSet(id, exp): 
+		// WeTee(id, exp): 
+		// WeVar(s): 
+		// WeBlock(brexps): 
+		// WeJustReturn(): 
+		// WeLoop(brexps): 
+		// WeReturn(exp): 
+		// WeTuple(exps): 
+		WeBrace(expsemi): {
+			// type = waseType(args[1]);
+			// ins = dslBrace2WaseInstruction(onError, [], d);
+			// arrayPush(acc, WaseBlock(dsl2WaseBlockType(onError, type), ins));
+			[];
+		}
+		// WeCall(exp, exps): 
+		// WeCall2(exp1, exp2): 
+		// WeDiv(exp1, exp2): 
+		// WeEqual(exp1, exp2): 
+		// WeGreater(exp1, exp2): 
+		// WeGreaterEqual(exp1, exp2): 
+		// WeIsNull(exp): 
+		// WeLess(exp1, exp2): 
+		// WeLessEqual(exp1, exp2): 
+		// WeLet(id, i, opttype, exp, brace): 
+		// WeLettuple(id, i, typeList, exp, brace): 
+		// WeMod(exp1, exp2): 
+		// WeMul(exp1, exp2): 
+		// WeNegate(exp): 
+		// WeNotEqual(exp1, exp2): 
+		// WeOr(exp1, exp2): 
+		// WeSub(exp1, exp2): 
+		// WeTypeAnnotation(exp, typeList): 
+		// WeWasmOp(s, wargs, exps): 
+		// WeXor(exp1, exp2): 
+		default : [];
+	}
+}
+
+weType2wasmValType(type : WeType, onError : (WeType, string) -> void) -> WasmValType {
+	if (type.s == "i32") WasmI32Type()
+	else if (type.s == "i64") WasmI64Type()
+	else if (type.s == "f32") WasmF32Type()
+	else if (type.s == "f64") WasmF64Type()
+	else if (type.s == "v128") WasmVecType()
+	else if (type.s == "func") WasmFuncRef()
+	else if (type.s == "extern") WasmExternRef()
+	else {
+		onError(type, "Unknown type");
+		WasmI32Type();
+	}
+}
