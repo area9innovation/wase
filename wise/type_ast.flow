@@ -335,6 +335,23 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp, resType : Maybe<WiseAstTyp
 			newArgs = map(wargs, \v -> typecheckWiWarg(state, v).second);
 			newExps = map(exps, rec);
 			t = getWaseInstructionResultType(s, map(newExps, firstOfPair), WiseAstTypeEclass(eclass), resType);
+			onErrorWaspOpArgType = \i, etype -> state.onError(ast, "ERROR: wrong WasmOp type '" + toString(etype) + "' of " + toString(exps[i]));
+
+			iteri(newExps, \i, p -> {
+				switch (p.first : WiseAstType) {
+					WiseAstTypeI32() : {}
+					WiseAstTypeI64() : {}
+					WiseAstTypeF32() : {}
+					WiseAstTypeF64() : {}
+					WiseAstTypeFunc(__, __) : onErrorWaspOpArgType(i, p.first);
+					WiseAstTypeSIMD() : {}
+					WiseAstTypeBool() : {}
+					WiseAstTypeString() : onErrorWaspOpArgType(i, p.first);
+					WiseAstTypeTuple(__) : {}; // ok. transformations are in lowerTuples
+					WiseAstTypeEclass(__) : onErrorWaspOpArgType(i, p.first);
+				}
+			});
+			
 			bindNewEclassToType(state, t, \id -> WiWasmOp(s, newArgs, map(newExps, secondOfPair), id));
 		}
 		WiSizeoftype(type, eclass): {
