@@ -1,5 +1,6 @@
 import wise/type_ast;
 import wise/wiseast_utils;
+import wise/wise_template_fn;
 
 export {
 	// tuple tree -> flat tuple
@@ -173,21 +174,20 @@ lowerTuplesInWiWasmOp(v : WiWasmOp, unionFindMap : UnionFindMap<[WiseAstType]>, 
 
 	hasTuple = \-> exists(exps, secondOfPair);
 	makeDefOp = \-> WiWasmOp(v.s, wargs, map(v.exps, rec), v.eclass);
+	makeAdr = \adr, type -> WiAdd(adr, WiInt(calculateSizeOfType([], type), 0), adr.eclass);
 
 	if (startsWith(v.s, "load") && v.exps != [] && eclass > 0) {
 		fieldType = resolveWiseAstTypeByEclass(unionFindMap, eclass, onError);
 		if (isSameStructType(fieldType, WiseAstTypeTuple([]))) {
-			origType = wiseAstType2wiType(fieldType, eclass, unionFindMap);
-			switch (origType : WiType) {
-				WiTupletype(__, __): mapWiTupletype2wiExp(origType, rec(v.exps[0]), \fieldT : WiType, adr -> Pair(
-					WiWasmOp(v.s, wargs, [adr], 0),
-					WiAdd(adr, WiSizeoftype(fieldT, 0), adr.eclass)
-				)).first;
-				default : {
-					onError(v, "ERROR: wrong tuple type in 'load' : " + toString(origType));
-					WiBrace([], v.eclass);
-				}
-			}
+			// flat tuple
+			fieldTypes = WiseAstTypeTuple2WiTypes(fieldType, eclass, unionFindMap);
+			WiTuple(
+				fold2(fieldTypes, rec(v.exps[0]), [], \adr : WiExp, ops, valType : WiType -> Pair(
+					makeAdr(adr, valType),
+					arrayPush(ops, WiWasmOp(v.s, wargs, [adr], 0))
+				)).second,
+				0
+			);
 		} else {
 			makeDefOp();
 		}
@@ -201,7 +201,7 @@ lowerTuplesInWiWasmOp(v : WiWasmOp, unionFindMap : UnionFindMap<[WiseAstType]>, 
 			rec(v.exps[1]),
 			WiBrace(
 				foldi2(fieldTypes, rec(v.exps[0]), [], \i, adr : WiExp, ops, valType : WiType -> Pair(
-					WiAdd(adr, WiSizeoftype(valType, 0), adr.eclass),
+					makeAdr(adr, valType),
 					arrayPush(ops, WiWasmOp(v.s, wargs, [adr, WiTupledot(tmpVar, i, valType.eclass)], 0))
 				)).second,
 				v.eclass
@@ -327,7 +327,7 @@ mapWiTupletype2wiExp(type : WiTupletype, acc : ?, mapType : (WiType, ?) -> Pair<
 		v = switch (fieldType : WiType) {
 			WiBasictype(__, __) : mapType(fieldType, newAcc);
 			WiFntype(__, __, __) : mapType(fieldType, newAcc);
-			WiTupletype(__, __) : mapWiTupletype2wiExp(fieldType, acc, mapType);
+			WiTupletype(__, __) : mapWiTupletype2wiExp(fieldType, newAcc, mapType);
 		}
 		unpair(v, \e, newAcc2 -> Pair(arrayPush(exps, e), newAcc2));
 	});

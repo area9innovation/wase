@@ -335,7 +335,7 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp, resType : Maybe<WiseAstTyp
 			newArgs = map(wargs, \v -> typecheckWiWarg(state, v).second);
 			newExps = map(exps, rec);
 			t = getWaseInstructionResultType(s, map(newExps, firstOfPair), WiseAstTypeEclass(eclass), resType);
-			onErrorWaspOpArgType = \i, etype -> state.onError(ast, "ERROR: wrong WasmOp type '" + toString(etype) + "' of " + toString(exps[i]));
+			onErrorWaspOpArgType = \i, etype -> state.onError(ast, "WARNING : wrong WasmOp type '" + toString(etype) + "' of " + toString(exps[i]));
 
 			iteri(newExps, \i, p -> {
 				switch (p.first : WiseAstType) {

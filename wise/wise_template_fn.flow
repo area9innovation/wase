@@ -1,0 +1,74 @@
+import wise/wise_types;
+import ds/array;
+import runtime;
+
+export {
+	makeDefaultValueForType(templateVars : [Pair<string, WiType>], type : WiType) -> WiExp;
+	calculateSizeOfType(templateVars : [Pair<string, WiType>], type : WiType) -> int;
+}
+
+// size in bytes
+calculateSizeOfType(templateVars : [Pair<string, WiType>], type : WiType) -> int {
+	switch (type) {
+		WiBasictype(s, eclass): {
+			if (s == "i32") 4
+			else if (s == "i64") 8
+			else if (s == "f32") 4
+			else if (s == "f64") 8
+			else if (s == "v128") 16
+			else if (s == "bool") 4 // TODO
+			else if (s == "auto") {
+				println("ERROR: Can not determine size of 'auto' type");
+				0
+			} else {
+				applyTypeFn(templateVars, type, 0, "sizeoftype", \t -> calculateSizeOfType(templateVars, t));
+			}
+		}
+		WiFntype(types, retType, eclass): 4;
+		WiTupletype(types, eclass): fold(types, 0, \acc, t -> acc + calculateSizeOfType(templateVars, t));
+	}
+}
+
+makeDefaultValueForType(templateVars : [Pair<string, WiType>], type : WiType) -> WiExp {
+	switch (type) {
+		WiBasictype(s, eclass): {
+			if (s == "i32") WiInt(0, eclass)
+			else if (s == "i64") WiInt(0, eclass) // TODO ?
+			else if (s == "f32") WiDouble(0.0, eclass) // TODO ?
+			else if (s == "f64") WiDouble(0.0, eclass)
+			else if (s == "v128") {
+				println("ERROR: Can not determine default value of 'v128' type");
+				WiInt(0, eclass)
+			}
+			else if (s == "bool") WiBool(false, eclass)
+			else if (s == "auto") {
+				println("ERROR: Can not determine default value of 'auto' type");
+				WiInt(0, eclass)
+			} else {
+				applyTypeFn(templateVars, type, WiInt(0, eclass), "defoftype", \t -> makeDefaultValueForType(templateVars, t));
+			}
+		}
+		WiFntype(types, retType, eclass): {
+			println("ERROR: Default Value of the function is unknown " + toString(type));
+			WiInt(0, eclass);
+		}
+		WiTupletype(types, eclass): WiTuple(map(types, \t -> makeDefaultValueForType(templateVars, t)), eclass);
+	}
+}
+
+applyTypeFn(templateVars : [Pair<string, WiType>], type : WiBasictype, defVal : ?, fnName : string, fn : (WiType) -> ?) -> ? {
+	mtype = fold(templateVars, None(), \acc, p -> {
+		if (p.first == type.s) Some(p.second) else acc
+	});
+	mtype ?? {
+		if (mtype == type) {
+			println("ERROR: Unknown template type '" + type.s + "' in " + fnName);
+			defVal
+		} else {
+			fn(mtype)
+		}
+	} : {
+		println("ERROR: Unknown template var " + type.s + " in " + fnName);
+		defVal
+	}
+}

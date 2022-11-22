@@ -53,7 +53,7 @@ processWiDeclIncludes(include : WiseAstInclude, d : WiDecl) -> WiDecl {
 			});
 			if (containsSet(^(include.included), filename)) {
 				// Already included. No need to do it again
-				decl;
+				processWiDeclIncludes(include, decl);
 			} else if (fileExists(filename)) {
 				include.included := insertSet(^(include.included), filename);
 				code = getFileContent(filename);
