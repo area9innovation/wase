@@ -49,10 +49,11 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 			wiseProgram = decomposePolyWiseAst(combinedProgram);
 			// Here, we should lower Wise constructs to Wase constructs
 			typeEnv = makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast)));
-			checkedTypes = typeWiseAst(typeEnv, wiseProgram);
+			onErrorStep = if (debug) \ast, error -> println(error + " at: " + toString(ast)) else nop2; // don't print errors. we'll check types below
+			checkedTypes = typeWiseAst(TypeWiseAstState(typeEnv with onError = onErrorStep), wiseProgram);
 			if (debug) println("			typedWise: \n"+toString(checkedTypes));
 			tmpCntr = ref 0;
-			loweredTuples = lowerTuplesInWiseAst(checkedTypes, typeEnv.unionFindMap, tmpCntr);
+			loweredTuples = lowerTuplesInWiseAst(checkedTypes, typeEnv.unionFindMap, tmpCntr, onErrorStep);
 			if (debug) println("			loweredTuples: \n"+toString(loweredTuples));
 			checkedLoweredTypes = typeWiseAst(typeEnv, loweredTuples);
 			if (debug) println("			TYPED loweredTuples: \n"+toString(checkedLoweredTypes));

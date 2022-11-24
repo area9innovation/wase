@@ -314,7 +314,11 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp, resType : Maybe<WiseAstTyp
 			switch (et.first : WiseAstType) {
 				WiseAstTypeTuple(types): {
 					if (existsIndex(types, ind)) {
-						bindNewEclassToType(state, types[ind], \id -> WiTupledot(et.second, ind, id));
+						fieldType = switch (types[ind] : WiseAstType) {
+							WiseAstTypeTuple(__): WiseAstTypeI32(); // pointer
+							default : types[ind];
+						}
+						bindNewEclassToType(state, fieldType, \id -> WiTupledot(et.second, ind, id));
 					} else {
 						println("ERROR : can't find field " + i2s(ind) + " in Tuple : " + toString(types));
 						def(WiseAstTypeEclass(eclass));
@@ -636,14 +640,14 @@ resolveWiseAst(unionFindMap : UnionFindMap<[WiseAstType]>, ast : WiseAst, onErro
 resolveWiseAstTypeByEclass(unionFindMap : UnionFindMap<[WiseAstType]>, eclass : int, onError : (WiseAst, string) -> void) -> WiseAstType {
 	types = getUnionMapValue(unionFindMap, eclass);
 	if (length(types) == 0) {
-		println("ERROR: Could not find a type: " + toString(eclass));
+		onError(WiWaseEmpty(eclass), "ERROR: Could not find a type: " + toString(eclass));
 		WiseAstTypeEclass(-1);
 	} else {
 		rtypes = sortUnique(map(types, \tt -> resolveWiseAstType(unionFindMap, tt, onError)));
 		if (length(rtypes) == 1) {
 			rtypes[0];
 		} else {
-			println("ERROR: Could not find unique type: " + toString(eclass));
+			onError(WiWaseEmpty(eclass), "ERROR: Could not find unique type: " + toString(eclass));
 			rtypes[0];
 		}
 	}

@@ -9,6 +9,10 @@ export {
 
 // size in bytes
 calculateSizeOfType(templateVars : [Pair<string, WiType>], type : WiType) -> int {
+	calculateSizeOfWiType(templateVars, type, true);
+}
+
+calculateSizeOfWiType(templateVars : [Pair<string, WiType>], type : WiType, topType : bool) -> int {
 	switch (type) {
 		WiBasictype(s, eclass): {
 			if (s == "i32") 4
@@ -21,15 +25,23 @@ calculateSizeOfType(templateVars : [Pair<string, WiType>], type : WiType) -> int
 				println("ERROR: Can not determine size of 'auto' type");
 				0
 			} else {
-				applyTypeFn(templateVars, type, 0, "sizeoftype", \t -> calculateSizeOfType(templateVars, t));
+				applyTypeFn(templateVars, type, 0, "sizeoftype", \t -> calculateSizeOfWiType(templateVars, t, topType));
 			}
 		}
 		WiFntype(types, retType, eclass): 4;
-		WiTupletype(types, eclass): fold(types, 0, \acc, t -> acc + calculateSizeOfType(templateVars, t));
+		WiTupletype(types, eclass): if (topType) {
+			fold(types, 0, \acc, t -> acc + calculateSizeOfWiType(templateVars, t, false))
+		} else {
+			4; // pointer
+		}
 	}
 }
 
 makeDefaultValueForType(templateVars : [Pair<string, WiType>], type : WiType) -> WiExp {
+	makeDefaultValueForWiType(templateVars, type, true);
+}
+
+makeDefaultValueForWiType(templateVars : [Pair<string, WiType>], type : WiType, topType : bool) -> WiExp {
 	switch (type) {
 		WiBasictype(s, eclass): {
 			if (s == "i32") WiInt(0, eclass)
@@ -45,14 +57,18 @@ makeDefaultValueForType(templateVars : [Pair<string, WiType>], type : WiType) ->
 				println("ERROR: Can not determine default value of 'auto' type");
 				WiInt(0, eclass)
 			} else {
-				applyTypeFn(templateVars, type, WiInt(0, eclass), "defoftype", \t -> makeDefaultValueForType(templateVars, t));
+				applyTypeFn(templateVars, type, WiInt(0, eclass), "defoftype", \t -> makeDefaultValueForWiType(templateVars, t, topType));
 			}
 		}
 		WiFntype(types, retType, eclass): {
 			println("ERROR: Default Value of the function is unknown " + toString(type));
 			WiInt(0, eclass);
 		}
-		WiTupletype(types, eclass): WiTuple(map(types, \t -> makeDefaultValueForType(templateVars, t)), eclass);
+		WiTupletype(types, eclass): if (topType) {
+			WiTuple(map(types, \t -> makeDefaultValueForWiType(templateVars, t, false)), eclass);
+		} else {
+			WiInt(0, eclass) // pointer
+		}
 	}
 }
 
