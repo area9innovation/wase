@@ -1,0 +1,104 @@
+
+import runtime;
+
+Union1 ::= Struct11, Struct12, Struct14;
+Struct11();
+Struct12(f : double, i : int);
+Struct13(f : double, t : Struct12);
+Struct14();
+
+Union2 ::= Struct15, Union1;
+Struct15();
+
+fnU1(u : Union1) -> Union1 { u; }
+fnU2(u : Union1) -> int {
+	switch (u) {
+		Struct11() : 101;
+		Struct12(__, v2) : v2;
+		Struct14() : 103;
+	}
+}
+
+fn1(s : Struct13) -> double { s.t.f; }
+fn2(s : Struct13) -> Struct13 { Struct13(45.9, Struct12(87.9, s.t.i)); }
+
+// // TODO: template in struct ? 
+// // 1) Tuple(v : ?);
+// // 2) isSome : (m : Maybe<?>) -> bool;
+
+main() {
+	obj1 = Struct13(10.9, Struct12(5.7, 3));
+	s1 = Struct12(1.3, 8);
+	f1 = s1.f;
+	println(f1); // 1.3
+	obj2 = Struct13(67.4, s1);
+	f2 = obj2.t.f;
+	println(f2); // 1.3
+	f3 = Struct12(1.5, 8).f;
+	println(f3); // 1.5
+	// Compare
+	s2 = Struct12(1.3, 8);
+	s3 = Struct12(1.3, 8);
+	s4 = Struct12(4.5, 2);
+	s5 = Struct11();
+	println(s3 == s2); // true
+	println(s4 == s3); // false
+	println(s5 == s4); // false
+	ss1 = Struct11();
+	ss2 = Struct11();
+	println(ss1 == ss2);  // true
+	obj3 = Struct13(67.4, Struct12(1.3, 9));
+	println(obj2 == obj3); // false
+	obj4 = Struct13(67.4, Struct12(1.3, 8));
+	println(obj2 == obj4); // true
+	// Array of Structs
+	a : [Struct12] = [Struct12(1.1, 1), Struct12(2.2, 2)];
+	bs : Struct12 = a[0];
+	println(bs.f); // 1.1
+	a1 = [Struct12(1.3, 8)];
+	a2 = [Struct12(1.3, 8)];
+	a3 = [Struct12(4.5, 2)];
+	a4 = [Struct11()];
+	println(a1 == a2); // true
+	println(a3 == a2); // false
+	println(a3 == a4); // false
+	// Functions
+	f4 = fn1(Struct13(892.9, Struct12(45.12, 7)));
+	println(f4); // 45.12
+	s21 = fn2(Struct13(892.9, Struct12(45.12, 7)));
+	println(s21.f); // 45.9
+	println(s21.t.i); // 7
+	println(s21.t.f); // 87.9
+	fnA1 = fn1;
+	fnA2 = fn2;
+	f5 = fnA1(Struct13(5.9, Struct12(23.8, 11)));
+	println(f5); // 23.8
+	s22 = fnA2(Struct13(892.9, Struct12(72.19, 55)));
+	println(s22.f); // 45.9
+	println(s22.t.i); // 55
+	println(s22.t.f); // 87.9
+
+	au : Union1 = Struct11();
+	arr = [au, Struct12(0.5, 0)];
+	b = if (false) Struct11() else Struct12(1.8, 1);
+	c = switch (arr[0]) {
+		Struct11() : 1;
+		Struct12(v1, __) : 2;
+		Struct14() : 3;
+	}
+	println(c); // 1
+	d = switch (b : Union1) {
+		Struct11() : 1;
+		default : 3;
+	}
+	println(d); // 3
+	e = switch (Struct11() : Union2) {
+		Struct15(): 4;
+		Union1() : 5;
+	}
+	println(e); // 5
+	fu1 = fnU1(au);
+	fu2 = fnU2(Struct12(4.7, 19));
+	println(fu2); // 19
+	{}
+}
