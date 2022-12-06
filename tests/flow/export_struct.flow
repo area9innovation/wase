@@ -1,0 +1,8 @@
+export {
+	MyStruct(i : int);
+	fnExport() -> void;
+}
+
+fnExport() {
+
+}

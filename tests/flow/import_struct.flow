@@ -1,0 +1,5 @@
+import export_struct;
+
+main() {
+	v = MyStruct(9);
+}
