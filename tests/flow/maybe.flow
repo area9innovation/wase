@@ -1,0 +1,191 @@
+
+Maybe<?> ::= None, Some<?>;
+None();
+Some(value : ?);
+
+either(m : Maybe<?>, alternative: ?) -> ? {
+	switch (m : Maybe) {
+		None(): alternative;
+		Some(v): v;
+	}
+}
+
+isNone(m : Maybe<?>) -> bool {
+	switch (m : Maybe) {
+		None(): true;
+		Some(__): false;
+	}
+}
+
+isSome(m : Maybe<?>) -> bool {
+	// k = Some(m);
+	switch (m : Maybe) {
+		None(): false;
+		Some(__): true;
+	}
+}
+
+eitherMap(m : Maybe<?>, fn : (?) -> ??, alternative: ??) -> ?? {
+	switch (m : Maybe) {
+		None(): alternative;
+		Some(v): fn(v);
+	}
+}
+
+eitherFn(m : Maybe<?>, fn : (?) -> ??, alternativeFn: () -> ??) -> ?? {
+	switch (m : Maybe) {
+		None(): alternativeFn();
+		Some(v): fn(v);
+	}
+}
+
+maybeBind(m : Maybe<?>, f : (?) -> Maybe<??>) -> Maybe<??> {
+	switch (m : Maybe) {
+		None(): None();
+		Some(v): f(v);
+	}
+}
+
+maybeMap(m : Maybe<?>, f : (?) -> ??) -> Maybe<??> {
+	switch (m : Maybe) {
+		None(): None();
+		Some(v): Some(f(v));
+	}
+}
+
+maybeApply(m : Maybe<?>, f : (?) -> void) -> void {
+	switch (m : Maybe) {
+		None(): {};
+		Some(v): f(v);
+	}
+}
+
+
+// TODO: lambda
+/* eitherFn2(
+	a : Maybe<?>,
+	b : Maybe<?>,
+	fn2 : (?, ?) -> ??,
+	fn1 : (?) -> ??,
+	fn0 : () -> ??
+) -> ?? {
+	eitherFn(
+		a,
+		\x -> eitherFn(b, \y -> fn2(x, y), \ -> fn1(x)),
+		\ -> eitherFn(b, fn1, fn0)
+	);
+} */
+
+
+Some2(value1 : ?, value2 : ??, value3 : int);
+fntmpl2(v : Some2) -> int {
+	v1 = v.value1; // tupledot
+	v2 = v.value2;
+	n = Some2(v1, v2, 1);
+	0;
+}
+
+Some3(value0 : int, value1 : ?, value2 : Some<??>);
+fntmpl3(v : Some3) -> int {
+	v1 = v.value1; // tupledot
+	v2 = v.value2;
+	v3 = v2.value;
+	n = Some3(1109, v1, v2);
+	n.value0;
+}
+
+Some4(value0 : int, value1 : ?, value2 : Some<int>);
+
+mapStruct1(v : ?) -> Some2<?, int> { Some2(v, 55673, -8); }
+altMapStruct1() -> Some2<double, int> { Some2(88.46, 9007, -45); }
+mapStruct12(v1 : ?, v2 : ?) -> Some2<?, int> { Some2(v2, 667, -92); }
+
+printVal(v : ?) -> void { /* println(v); */ v; {} }
+
+mapStruct13(v : ?) -> Maybe<double> { if (true) Some(4.1) else Some(4.2) }
+toInt(v : ?) -> int { 17; }
+
+native println : io (flow) -> void = Native.println;
+main() {
+	a = Some(13);
+	
+	b = None();
+	c = None();
+	r1 = switch (b : Maybe) {
+		None(): 1;
+		Some(__): 2;
+	}
+	r2 = switch (a : Maybe) {
+		None(): 3;
+		Some(v): v;
+	}
+	r3 = isNone(a);
+	r4 = isSome(Some(5.6));
+	r5 = isNone(Some(99.1));
+
+	println(r1); // 1
+	println(r2); // 13
+	println(r3); // false
+	println(r4); // true
+	println(r5); // false
+
+	println(either(a, 14)); // 13
+	fntmpl2(Some2(1, 2.2, 2));
+	fntmpl2(Some2(1, Some(2.2), 3));
+
+	r6 = fntmpl3(Some3(9, 1, Some(2.2)));
+	println(r6); // 1109
+	d = Some4(1, 4.6, Some(99));
+	println(d.value2.value); // 99
+
+
+	println(either(Some(78.6), 2.4)); // 78.6
+	println(either(None(), 14)); // 14
+
+	r7 = eitherMap(Some(2.2), mapStruct1, Some2(4.4, 98, 99));
+	println(r7.value2); // 55673
+	r8 = eitherFn(Some(2.2), mapStruct1, altMapStruct1);
+	println(r8.value2); // 55673
+	r9 = eitherFn(None(), mapStruct1, altMapStruct1);
+	println(r9.value1); // 88.46
+
+	/* r10 = eitherFn2(
+		Some(77.9),
+		Some(72.9),
+		mapStruct12,
+		mapStruct1,
+		altMapStruct1
+	);
+	println(r10.value2); */
+
+	r11 = either(maybeBind(Some(14), mapStruct13), 11.1);
+	println(r11); // 4.1
+	r12 = either(maybeBind(None(), mapStruct13), 12.1);
+	println(r12); // 12.1
+	r13 = either(maybeMap(Some(1.1), toInt), -1);
+	println(r13); // 17
+	r14 = either(maybeMap(None(), toInt), -2);
+	println(r14); // -2
+
+	maybeApply(Some(8.9), printVal);
+	maybeApply(Some(6474), printVal);
+	maybeApply(None(), printVal);
+
+	arr1 = [None(), Some(176), Some(2)];
+	r15 = switch (arr1[1]) {
+		None(): -1;
+		Some(v): v;
+	}
+	println(r15); // 176
+
+	{}
+}
+
+// shadowing 
+/* 	if (((_tmp1 == 5) || (_tmp1 == 3))) {
+		v : i32 = {getStructValue[(i32, i32, i32)](a).2};
+		v
+	} else {
+		v : i32 = {getStructValue[(i32, i32, i32)](a).2};
+		v
+	} */

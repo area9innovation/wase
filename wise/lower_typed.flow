@@ -48,7 +48,7 @@ lowerWiseAstToWaseAst(env : LowerWiseAstEnv, w : WiseAst) -> WaseAst {
 
 	switch (w : WiseAst) {
 		WiseAstList(value): WaseAstList(mapList(value, rec));
-		WiseAstBool(value): WaseAstBool(value);
+		WiseAstBool(value): WaseAstInt(if (value) 1 else 0);
 		WiseAstInt(value): WaseAstInt(value);
 		WiseAstDouble(value): WaseAstDouble(value);
 		WiseAstString(value): WaseAstString(value);
@@ -333,14 +333,14 @@ WeBoolNegate(b : WeExp) -> WeExp {
 WiType2WeType(w : WiType) -> WeType {
 	rec = \w1 -> WiType2WeType(w1);
 	switch (w : WiType) {
-		WiBasictype(s, __): WeType(s);
+		WiBasictype(s, __): WeType(if (s == "bool") "i32" else s);
 		WiFntype(types, type, __): WeType("i32");
 		WiTupletype(types, __): if (types == []) WeType("") else rec(types[0]); // TODO
 	}
 }
 
 WiType2WeTypes(w : WiType) -> [WeType] {
-	unrollAndMapWiType(w, \t -> WeType(t.s));
+	unrollAndMapWiType(w, WiType2WeType);
 }
 
 unrollAndMapWiType(w : WiType, fn : (WiBasictype) -> ?) -> [?] {

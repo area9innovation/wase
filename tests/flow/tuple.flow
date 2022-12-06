@@ -1,13 +1,13 @@
 import runtime;
 
-native trunc : (d : double) -> int = Native.trunc;
+ native trunc : (d : double) -> int = Native.trunc;
 
 Tuple(
 	i : int,
 	f : double,
 );
  
- mktuple() -> Tuple {
+mktuple() -> Tuple {
 	Tuple(1, 3.141)
 }
 
@@ -44,6 +44,12 @@ Tuple2(
 makeTuple1(t : Tuple) -> Tuple1 {
 	Tuple1(87, Tuple2(t, 1.56), Tuple2(Tuple(9, 9.08), 21.9), -8);
 }
+
+Nested3(
+	t : Tuple3,
+	l : int,
+);
+Tuple3();
 
 main() {
 	t10 = Tuple(1, 3.141);
@@ -99,5 +105,10 @@ main() {
 
 	r3 : Nested = if (true) t31 else Nested(1, Tuple(2, 1.1));
 	println(r3.t.i); // 7
+
+	t60 = Nested3(Tuple3(), 11);
+	r4 = t60.l;
+	println(r4); // 11
+
 	{} 
 }

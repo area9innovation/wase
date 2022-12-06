@@ -173,7 +173,7 @@ collectPolyCallsFromAst(
 	value : WiseAst,
 	declarations : Tree<string, [string]>,
 	acc : Pair<Tree<string, Tree<string, Set<WiType>>>, Set<Pair<string, string>>>,
-	scope : Tree<string, Set<WiType>>
+	scope : Tree<string, Set<WiType>>, // tmplId -  types
 ) -> Pair<Tree<string, Tree<string, Set<WiType>>>, Set<Pair<string, string>>> {
 	rec = \v -> collectPolyCallsFromAst(v, declarations, acc, scope);
 	recNewScope = \v -> collectPolyCallsFromAst(v, declarations, acc, makeTree());
@@ -275,25 +275,19 @@ collectPolyCallsFromAst(
 	}
 }
 
+// first = fixed, second-todo
+// fnname-basictype
 collectTemplateRealTypes(type : WiType, scope : Tree<string, Set<WiType>>, fnName : string, acc : Pair<Set<WiType>, Set<Pair<string, string>>>) -> Pair<Set<WiType>, Set<Pair<string, string>>> {
 	recA = \types -> {
-		existsChanges = \newType, oldType -> switch (newType.tree) {
-			TreeEmpty() : true;
-			TreeNode(key, __, left, right, depth) : key == oldType && depth == 1;
-		}
 		fixedTypes = map(types, \t -> collectTemplateRealTypes(t, scope, fnName, Pair(makeSet(), makeSet())));
-		newTypes = if (foldi(types, false, \i, isEqual, t -> isEqual && existsChanges((fixedTypes[i]).first, t))) {
-			[];
-		} else {
-			fold(tail(fixedTypes), map(set2array(fixedTypes[0].first), v2a), \tupleTypes, fieldTypes -> {
-				mapConcat(set2array(fieldTypes.first), \ft -> map(tupleTypes, \tt -> arrayPush(tt, ft)))
-			});
-		}
-		Pair(newTypes, fold(fixedTypes, makeSet(), \acc2, p -> mergeSets(acc2, p.second)))
+		newTypes = fold(tail(fixedTypes), map(set2array(fixedTypes[0].first), v2a), \tupleTypes, fieldTypes -> {
+			mapConcat(set2array(fieldTypes.first), \ft -> map(tupleTypes, \tt -> arrayPush(tt, ft)))
+		});
+		Pair(newTypes, fold(fixedTypes, makeSet(), \acc2, p -> mergeSets(acc2, p.second)));
 	}
 
 	rec = \t -> Pair(insertSet(acc.first, t), acc.second);
-	
+
 	switch (type : WiType) {
 		WiBasictype(s, __) : if (contains(getSimpleWiseTypes(), s)) {
 			rec(type);
@@ -317,7 +311,7 @@ collectTemplateRealTypes(type : WiType, scope : Tree<string, Set<WiType>>, fnNam
 		} else {
 			fixedTypes = recA(types);
 			if (fixedTypes.first == []) {
-				rec(type);
+				Pair(insertSet(acc.first, type), mergeSets(acc.second, fixedTypes.second));
 			} else {
 				Pair(fold(fixedTypes.first, acc.first, \acc2, t -> insertSet(acc2, WiTupletype(t, eclass))), mergeSets(acc.second, fixedTypes.second));
 			}
@@ -494,9 +488,15 @@ expandPolyCallsDecl(value : WiDecl, declarations : Tree<string, [string]>, polyV
 createPolyFunctions(fn : WiFunction, templates : Tree<string, Set<WiType>>, polyVars : Tree<string, Tree<string, Set<WiType>>>, declarations : Tree<string, [string]>) -> [WiFunction] {
 	sfxs : [Pair<string, [Pair<string, WiType>]>] = fold(sortCustom(tree2pairs(templates), firstOfPair, true), [], \acc, p -> unpair(p, \templName, types -> {
 		mapConcat(set2array(types), \t -> {
-			typeSfx = "_" + wiType2polySfx(t);
-			inf = Pair(templName, t);
-			if (acc == []) [Pair(typeSfx, [inf])] else map(acc, unpairC(\ft, finf -> Pair(ft + typeSfx, arrayPush(finf, inf))));
+			polySfx = wiType2polySfx(t, lookupTreeDef(polyVars, fn.id, makeTree()), false);
+			if (polySfx.second) {
+				// println("WARNING: poly fn '" + fn.id + "' with unknown types : " + toString(p)); // ?
+				[]
+			} else {
+				typeSfx = "_" + polySfx.first;
+				inf = Pair(templName, t);
+				if (acc == []) [Pair(typeSfx, [inf])] else map(acc, unpairC(\ft, finf -> Pair(ft + typeSfx, arrayPush(finf, inf))));
+			}
 		});
 	}));
 	fixArgTypes = \types, templTypes -> map(types, \t -> WiIdtype(t.id, wiType2realType(t.type, templTypes), 0)); // templName -> realType // eclass?
@@ -524,11 +524,26 @@ wiType2realType(t : WiType, templTypes : [Pair<string, WiType>]) -> WiType {
 	}
 }
 
-wiType2polySfx(t : WiType) -> string {
+wiType2polySfx(t : WiType, polyVars : Tree<string, Set<WiType>>, error: bool) -> Pair<string, bool> {
 	switch (t : WiType) {
-		WiBasictype(s, eclass) : "_" + s + "_";
-		WiFntype(types, retType, eclass) : "_fn" + concatStrings(map(types, wiType2polySfx)) + "r" + wiType2polySfx(retType);
-		WiTupletype(types, eclass) : "_tuple" + concatStrings(map(types, wiType2polySfx));
+		WiBasictype(s, eclass) : {
+			if (contains(getSimpleWiseTypes(), s)) Pair("_" + s + "_", error) else Pair("", true);
+		}
+		WiFntype(types, retType, eclass) : {
+			newRetType = wiType2polySfx(retType, polyVars, error);
+			newTypes = map(types, \tt -> wiType2polySfx(tt, polyVars, error));
+			Pair(
+				"_fn" + concatStrings(map(newTypes, firstOfPair)) + "r" + newRetType.first,
+				fold(newTypes, newRetType.second, \acc, v -> acc || v.second)
+			);
+		}
+		WiTupletype(types, eclass) : {
+			newTypes = map(types, \tt -> wiType2polySfx(tt, polyVars, error));
+			Pair(
+				"_tuple" + concatStrings(map(newTypes, firstOfPair)),
+				fold(newTypes, error, \acc, v -> acc || v.second)
+			);
+		}
 	}
 }
 
@@ -547,10 +562,16 @@ fixPolyFnName(
 	orderedTemplates = sortCustom(mapi(lookupTreeDef(declarations, fnName, []), \i, v -> Pair(v, i)), firstOfPair, true);
 	if (length(orderedTemplates) == length(types)) {
 		orderedTypes = map(orderedTemplates, unpairC(\__, ind -> types[ind]));
-		fixedFnName = fnName + "_" + superglue(orderedTypes, wiType2polySfx, "_");
-		replaceFnName(newFn, fnName, fixedFnName);
+		typeNames = map(orderedTypes, \t -> wiType2polySfx(t, lookupTreeDef(polyVars, fnid, makeTree()), false));
+		if (exists(typeNames, secondOfPair)) {
+			println("ERROR: can't fix polyCall : " + fnName + " " + toString(types) + ". Wrong types");
+			newFn
+		} else {
+			fixedFnName = fnName + "_" + superglue(typeNames, firstOfPair, "_");
+			replaceFnName(newFn, fnName, fixedFnName);
+		}
 	} else {
-		println("can't fix polyCall : " + fnName + " " + toString(types));
+		println("ERROR: can't fix polyCall : " + fnName + " " + toString(types));
 		newFn
 	}
 }

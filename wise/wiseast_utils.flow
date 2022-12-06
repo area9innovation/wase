@@ -8,6 +8,7 @@ export {
 	wiseAstType2wiType(t : WiseAstType, eclass : int, unionFindMap : UnionFindMap<[WiseAstType]>) -> WiType;
 	getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAstType, resType : Maybe<WiseAstType>) -> WiseAstType;
 	extractWiExpFromWiseAst(e : WiseAst) -> WiExp;
+	getWiseVoidType() -> WiseAstType;
 }
 
 
@@ -84,9 +85,8 @@ extractEclassFromWiseAstType(t : WiseAstType) -> int {
 
 // the list of types : https://webassembly.github.io/spec/core/appendix/index-instructions.html
 getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAstType, resType : Maybe<WiseAstType>) -> WiseAstType {
-	voidType = WiseAstTypeTuple([]);
 	if (id == "store" || id == "store8" || id == "store16" || id == "store32") {
-		if (length(args) == 2) voidType else defType;
+		if (length(args) == 2) getWiseVoidType() else defType;
 	} else if (id == "load" || id == "load8_s" || id == "load8_u" || id == "load16_s" || id == "load16_u" || id == "load32_s" || id == "load32_u") {
 		knownResType = maybeBind(resType, \t -> if (t == WiseAstTypeI64() || t == WiseAstTypeI32() || t == WiseAstTypeF64() || t == WiseAstTypeF32() || t == WiseAstTypeSIMD()) Some(t) else None());
 		either(knownResType, defType);
@@ -223,9 +223,9 @@ getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAs
 		else if (args[0] == WiseAstTypeF64()) WiseAstTypeF64()
 		else defType;
 	} else if (id == "memory.copy") {
-		voidType;
+		getWiseVoidType();
 	} else if (id == "v128.store") {
-		voidType;
+		getWiseVoidType();
 	} else {
 		println("Can't detect the result type. Unknown wasm instruction : " + id + "[" + toString(args) + "]");
 		defType;
@@ -240,4 +240,8 @@ extractWiExpFromWiseAst(e : WiseAst) -> WiExp {
 			WiBrace([], 0);
 		}
 	}
+}
+
+getWiseVoidType() -> WiseAstType {
+	WiseAstTypeTuple([]);
 }

@@ -383,7 +383,7 @@ bindNewEclassToType(state : TypeWiseAstState, vtype : WiseAstType, setEclass : (
 
 isAutoType(t : WiType) -> bool {
 	switch (t : WiType) {
-		WiBasictype(s, __) : s == "auto";
+		WiBasictype(s, __) : s == "auto" || s == "";
 		default : false;
 	}
 }
@@ -396,8 +396,9 @@ typecheckWiType(state : TypeWiseAstState, t : WiType) -> Pair<WiseAstType, WiTyp
 		else if (s == "f64") WiseAstTypeF64()
 		else if (s == "v128") WiseAstTypeSIMD()
 		else if (s == "auto") getNewEclassType(state)
+		else if (s == "bool") WiseAstTypeBool()
 		else {
-			println("ERROR: unknown basic type '" + s + "'");
+			println("ERROR: unknown Basic Type '" + s + "'");
 			WiseAstTypeEclass(-1);
 		}
 	}
@@ -459,7 +460,11 @@ typecheckWiBrace(state : TypeWiseAstState, v : WiBrace, resType : Maybe<WiseAstT
 		t;
 	}
 	if (v.expsemi == []) {
-		Pair(WiseAstTypeEclass(v.eclass), v);
+		if (v.eclass == 0) {
+			bindNewEclassToType(state, getWiseVoidType(), \id -> WiBrace([], id))
+		} else {
+			Pair(WiseAstTypeEclass(v.eclass), v);
+		}
 	} else {
 		lastInd = length(v.expsemi) - 1;
 		exps = mapi(v.expsemi, \i, e -> rec(e, if (i == lastInd) resType else None()));

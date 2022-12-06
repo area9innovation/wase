@@ -119,7 +119,7 @@ lowerTuplesInWiExp(v : WiExp, unionFindMap : UnionFindMap<[WiseAstType]>, tmpCnt
 		WiLessEqual(exp1, exp2, eclass): WiLessEqual(rec(exp1), rec(exp2), eclass);
 		WiLessEqualu(exp1, exp2, eclass): WiLessEqualu(rec(exp1), rec(exp2), eclass);
 		WiLessu(exp1, exp2, eclass): WiLessu(rec(exp1), rec(exp2), eclass);
-		WiLet(id, i, opttype, e, brace, eclass): WiLet(id, i, lowerTuplesInWiType(opttype), recWithType(e, eclass), lowerTuplesInWiBrace(brace), eclass);
+		WiLet(id, i, opttype, e, brace, eclass): WiLet(id, i, lowerTuplesInWiType(opttype), recWithType(e, opttype.eclass), lowerTuplesInWiBrace(brace), eclass);
 		WiMod(exp1, exp2, eclass): WiMod(rec(exp1), rec(exp2), eclass);
 		WiMul(exp1, exp2, eclass): WiMul(rec(exp1), rec(exp2), eclass);
 		WiNegate(e, eclass): WiNegate(rec(e), eclass);
@@ -183,7 +183,7 @@ lowerTuplesInWiWasmOp(v : WiWasmOp, unionFindMap : UnionFindMap<[WiseAstType]>, 
 	if (startsWith(v.s, "load") && v.exps != [] && eclass > 0) {
 		fieldType = resolveWiseAstTypeByEclass(unionFindMap, eclass, onError);
 		if (isSameStructType(fieldType, WiseAstTypeTuple([]))) {
-			// flat tuple
+			// tree tuple
 			fieldTypes = WiseAstTypeTuple2WiTypes(fieldType, eclass, unionFindMap);
 			WiTuple(
 				fold2(fieldTypes, rec(v.exps[0]), [], \adr : WiExp, ops, valType : WiType -> Pair(
@@ -197,7 +197,7 @@ lowerTuplesInWiWasmOp(v : WiWasmOp, unionFindMap : UnionFindMap<[WiseAstType]>, 
 		}
 	} else if (startsWith(v.s, "store") && length(v.exps) == 2 && exps[1].second) {
 		tmpVar = makeTmpVarForTuple(tmpCntr);
-		fieldTypes = WiseAstTypeTuple2WiTypes(exps[1].first, v.exps[1].eclass, unionFindMap);
+		fieldTypes = unrollWiTupletype(WiseAstTypeTuple2WiTypes(exps[1].first, v.exps[1].eclass, unionFindMap));
 		WiLet(
 			tmpVar.id,
 			0,
@@ -281,7 +281,7 @@ unrollWiTupleFields(exps : [WiExp], unionFindMap : UnionFindMap<[WiseAstType]>, 
 			default : Pair(beforeExps, arrayPush(tupleFields, fe));
 			WiseAstTypeTuple(__) : {
 				tmpVar = makeTmpVarForTuple(tmpCntr);
-				fieldTypes = WiseAstTypeTuple2WiTypes(fieldType, fe.eclass, unionFindMap);
+				fieldTypes = unrollWiTupletype(WiseAstTypeTuple2WiTypes(fieldType, fe.eclass, unionFindMap));
 				value = lowerTuplesInWiExp(fe, unionFindMap, tmpCntr, 0, onError);
 				newLet = WiLet(tmpVar.id, 0, WiTupletype(fieldTypes, 0), value, WiBrace([], 0), 0);
 				tmpTuple = Some(eitherMap(beforeExps, \b -> setLastEmptyBrace(b, newLet), newLet));
@@ -307,7 +307,7 @@ WiseAstTypeTuple2WiTypes(type : WiseAstType, eclass : int, unionFindMap : UnionF
 			[];
 		}
 	}
-	unrollWiTupletype(types);
+	types
 }
 
 setLastEmptyBrace(l : WiLet, v : WiExp) -> WiLet {

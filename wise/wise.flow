@@ -40,25 +40,28 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 		// TODO: resolve the order of imports (dependecies)
 		lowered0 = if (gringoParser) {
 			program = parseWiDecl(code, \err -> println("Error in '" + filename + "': " + err));
+			if (debug) println("			Parsed file: \n"+toString(program));
 			// TODO: don't use transformations (wise->dsl->wise->...)
 
 			include = WiseAstInclude(includes, [".wise"], \path, file, content -> {
 				parseWiDecl(content, \err -> println("Error in '" + path + "': " + err));
 			}, ref makeSet());
 			combinedProgram = processWiseAstIncludes(include, program);
+			if (debug) println("			Parsed prog: \n"+toString(combinedProgram));
 			wiseProgram = decomposePolyWiseAst(combinedProgram);
+			if (debug) println("			Removed polymorphism: \n"+toString(wiseProgram));
 			// Here, we should lower Wise constructs to Wase constructs
 			typeEnv = makeTypeWiseAstState(\ast, error -> println(error + " at: " + toString(ast)));
 			onErrorStep = if (debug) \ast, error -> println(error + " at: " + toString(ast)) else nop2; // don't print errors. we'll check types below
 			checkedTypes = typeWiseAst(TypeWiseAstState(typeEnv with onError = onErrorStep), wiseProgram);
 			if (debug) println("			typedWise: \n"+toString(checkedTypes));
 			tmpCntr = ref 0;
-			loweredTuples = lowerTuplesInWiseAst(checkedTypes, typeEnv.unionFindMap, tmpCntr, onErrorStep);
+			loweredTuples = lowerTuplesInWiseAst(checkedTypes, typeEnv.unionFindMap, tmpCntr, onErrorStep); // result is flat tuples
 			if (debug) println("			loweredTuples: \n"+toString(loweredTuples));
 			checkedLoweredTypes = typeWiseAst(typeEnv, loweredTuples);
 			if (debug) println("			TYPED loweredTuples: \n"+toString(checkedLoweredTypes));
 			dots  = ref makeSet();
-			loweredWase = lowerWiseAst2WaseAst(checkedLoweredTypes, typeEnv, dots, tmpCntr);
+			loweredWase = lowerWiseAst2WaseAst(checkedLoweredTypes, typeEnv, dots, tmpCntr); // no tuples anymore
 			if (debug) println("			LOWERED WISE: \n"+toString(loweredWase));
 			waseCode = addDotNFunctionsToWase(^dots, loweredWase);
 			// TODO: WaseAst2Wase

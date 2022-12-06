@@ -84,7 +84,7 @@ applyTypeFn(templateVars : [Pair<string, WiType>], type : WiBasictype, defVal : 
 			fn(mtype)
 		}
 	} : {
-		println("ERROR: Unknown template var " + type.s + " in " + fnName);
+		println("ERROR: Unknown template var '" + type.s + "' in " + fnName);
 		defVal
 	}
 }
