@@ -70,7 +70,7 @@ compileWise2File(includes : [string], filename : string, code : string, outputPa
 			// typeWise makes type duplicates(?) what necessary for dsl2wase
 			// waseAst2DslAst doesn't have the real types. We have to fix it
 			// auto == () doesn't work. greate = bool type (should be int)
-			if (debug) println("			CHECKED TYPE\n");
+			if (debug) println("			CHECKED TYPE\n" + prettyDsl(loweredAst));
 			typeWase(loweredAst); // TODO: delete
 		} else {
 			program = parseWise(filename, code);

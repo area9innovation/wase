@@ -180,12 +180,3 @@ main() {
 
 	{}
 }
-
-// shadowing 
-/* 	if (((_tmp1 == 5) || (_tmp1 == 3))) {
-		v : i32 = {getStructValue[(i32, i32, i32)](a).2};
-		v
-	} else {
-		v : i32 = {getStructValue[(i32, i32, i32)](a).2};
-		v
-	} */

@@ -1,0 +1,8 @@
+native println : io (flow) -> void = Native.println;
+
+main() {
+	if (true) { v = 1; v;} else {0};
+	if (false) { v = -1; v;} else {0};
+	//println(v); // TODO: print error instead of 1
+	{}
+}

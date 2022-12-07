@@ -268,7 +268,10 @@ typecheckWase(acc : DslTypeAcc<?>, deep : bool, node : DslAst, getChildType : (i
 				etype = getChildType(3);
 				acc.unifyTypes(acc, type, etype);
 
-				getChildType(4);
+				res = getChildType(4);
+				// remove local var
+				acc.env := removeFromTree(^(acc.env), vname);
+				res;
 				
 			} else if (name == "lettuple") {
 				// (id, type, exp, body)
