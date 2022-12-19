@@ -347,7 +347,7 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp, resType : Maybe<WiseAstTyp
 					WiseAstTypeI64() : {}
 					WiseAstTypeF32() : {}
 					WiseAstTypeF64() : {}
-					WiseAstTypeFunc(__, __) : onErrorWaspOpArgType(i, p.first);
+					WiseAstTypeFunc(__, __) : {}; // ok. fn is a pointer
 					WiseAstTypeSIMD() : {}
 					WiseAstTypeBool() : {}
 					WiseAstTypeString() : onErrorWaspOpArgType(i, p.first);

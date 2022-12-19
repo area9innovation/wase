@@ -64,7 +64,7 @@ WiIdtype2WeIdtype(w : WiIdtype) -> WeIdtype {
 }
 
 wiFnData2weFnData(args : [WiIdtype], body : WeExp) -> Pair<[WeIdtype], WeExp> {
-	prefix  = fold(args, "_", \acc, arg -> acc + arg.id);
+	prefix  = fold(args, "_", \acc, arg -> acc + arg.id)+ "TMP";
 	foldi2(args, [], body, \i, newArgs, newBody, arg -> {
 		switch (arg.type : WiType) {
 			WiBasictype(__, __): Pair(arrayPush(newArgs, WiIdtype2WeIdtype(arg)), newBody);
@@ -343,10 +343,10 @@ WiType2WeTypes(w : WiType) -> [WeType] {
 	unrollAndMapWiType(w, WiType2WeType);
 }
 
-unrollAndMapWiType(w : WiType, fn : (WiBasictype) -> ?) -> [?] {
+unrollAndMapWiType(w : WiType, fn : (WiType) -> ?) -> [?] {
 	switch (w : WiType) {
 		WiBasictype(s, __): [fn(w)];
-		WiFntype(types, type, __): concat(fold(types, [], \acc, t -> concat(acc, unrollAndMapWiType(t, fn))), unrollAndMapWiType(type, fn));
+		WiFntype(types, type, eclass): [fn(WiBasictype("i32", eclass))];
 		WiTupletype(types, __): fold(types, [], \acc, t -> concat(acc, unrollAndMapWiType(t, fn)));
 	}
 }

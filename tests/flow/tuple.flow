@@ -1,6 +1,6 @@
-import runtime;
-
- native trunc : (d : double) -> int = Native.trunc;
+//import runtime;
+native println : io (flow) -> void = Native.println;
+native trunc : (d : double) -> int = Native.trunc;
 
 Tuple(
 	i : int,

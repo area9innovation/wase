@@ -75,7 +75,10 @@ lowerTuplesInWiType(v : WiType) -> WiType {
 unrollWiTupletype(types : [WiType]) -> [WiType] {
 	mapConcat(types, \t -> switch (t : WiType) {
 		WiBasictype(__, __) : [t];
-		WiFntype(ttypes, type0, eclass): [WiFntype(unrollWiTupletype(ttypes), unrollWiTupletype([type0])[0], eclass)];
+		WiFntype(ttypes, type0, eclass): {
+			retTypes = unrollWiTupletype([type0]);
+			[WiFntype(unrollWiTupletype(ttypes), if (retTypes == []) type0 else retTypes[0], eclass)];
+		}
 		WiTupletype(ttypes, eclass) : unrollWiTupletype(ttypes);
 	});
 }
@@ -196,22 +199,30 @@ lowerTuplesInWiWasmOp(v : WiWasmOp, unionFindMap : UnionFindMap<[WiseAstType]>, 
 			makeDefOp();
 		}
 	} else if (startsWith(v.s, "store") && length(v.exps) == 2 && exps[1].second) {
-		tmpVar = makeTmpVarForTuple(tmpCntr);
 		fieldTypes = unrollWiTupletype(WiseAstTypeTuple2WiTypes(exps[1].first, v.exps[1].eclass, unionFindMap));
-		WiLet(
-			tmpVar.id,
-			0,
-			WiTupletype(fieldTypes, 0),
-			rec(v.exps[1]),
-			WiBrace(
-				foldi2(fieldTypes, rec(v.exps[0]), [], \i, adr : WiExp, ops, valType : WiType -> Pair(
-					makeAdr(adr, valType),
-					arrayPush(ops, WiWasmOp(v.s, wargs, [adr, WiTupledot(tmpVar, i, valType.eclass)], 0))
-				)).second,
-				v.eclass
-			),
-			0
-		);
+		if (fieldTypes == []) {
+			onError(v, "ERROR : Can't find tuple fields in wasmOp.");
+			WiBrace([], v.eclass);
+		} else if (length(fieldTypes) == 1) {
+			adr = rec(v.exps[0]);
+			WiWasmOp(v.s, wargs, [adr, WiTupledot(v.exps[1], 0, fieldTypes[0].eclass)], 0);
+		} else {
+			tmpVar = makeTmpVarForTuple(tmpCntr);
+			WiLet(
+				tmpVar.id,
+				0,
+				WiTupletype(fieldTypes, 0),
+				rec(v.exps[1]),
+				WiBrace(
+					foldi2(fieldTypes, rec(v.exps[0]), [], \i, adr : WiExp, ops, valType : WiType -> Pair(
+						makeAdr(adr, valType),
+						arrayPush(ops, WiWasmOp(v.s, wargs, [adr, WiTupledot(tmpVar, i, valType.eclass)], 0))
+					)).second,
+					v.eclass
+				),
+				0
+			);
+		}
 	} else  if (hasTuple()) {
 		onError(v, "ERROR : Can't apply wasmOp for tuple.");
 		WiBrace([], v.eclass);

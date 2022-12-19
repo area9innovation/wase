@@ -1,0 +1,60 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ deci(v : i32, __closure__ : i32) -> i32 {
+	
+	(v - 1)
+}
+
+ inci(v : i32, __closure__ : i32) -> i32 {
+	
+	(v + 1)
+}
+
+ myFn(val : i32, addFn : i32, subFn : i32, __closure__ : i32) -> () {
+	
+	{
+	printlni32(getStructValue[(i32, i32, (i32, i32) -> i32, i32)](addFn).2((val + 1), getStructValue[(i32, i32, (i32, i32) -> i32, i32)](addFn).3));
+	printlni32(getStructValue[(i32, i32, (i32, i32) -> i32, i32)](subFn).2((val + 2), getStructValue[(i32, i32, (i32, i32) -> i32, i32)](subFn).3));
+	}
+}
+
+ export _start() -> () {
+	initMemory();
+	step : i32 = {100};
+	rate : i32 = {3};
+	delta : i32 = {5};
+	localFn2 : i32 = {createStruct[((i32, i32) -> i32, i32)](1, (lambda__lambda__629__0, createStruct[(i32, i32, i32)](2, (delta, rate, step,)),))};
+	r1 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](localFn2).2(10, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](localFn2).3)};
+	{
+	printlni32(r1);
+	aliasFn : i32 = {createStruct[((i32, i32) -> i32, i32)](4, (inci, 0,))};
+	{
+	printlni32(getStructValue[(i32, i32, (i32, i32) -> i32, i32)](aliasFn).2(2, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](aliasFn).3));
+	aliasLambda : i32 = {localFn2};
+	{
+	myFn(20, createStruct[((i32, i32) -> i32, i32)](13, (lambda__lambda__791__1, createStruct[(i32, i32)](14, (rate, step,)),)), createStruct[((i32, i32) -> i32, i32)](11, (lambda__lambda__816__2, createStruct[(i32, i32)](12, (rate, step,)),)), 0);
+	myFn(21, aliasFn, createStruct[((i32, i32) -> i32, i32)](6, (deci, 0,)), 0);
+	myFn(21, localFn2, aliasLambda, 0);
+	();
+	};
+	};
+	}
+}
+
+ lambda__lambda__629__0(v1 : i32, __closure__ : i32) -> i32 {
+	
+	((v1 + (getStructValue[(i32, i32, i32, i32, i32)](__closure__).4 * getStructValue[(i32, i32, i32, i32, i32)](__closure__).3)) + getStructValue[(i32, i32, i32, i32, i32)](__closure__).2)
+}
+
+ lambda__lambda__791__1(v2 : i32, __closure__ : i32) -> i32 {
+	
+	(v2 + (getStructValue[(i32, i32, i32, i32)](__closure__).3 * getStructValue[(i32, i32, i32, i32)](__closure__).2))
+}
+
+ lambda__lambda__816__2(v2 : i32, __closure__ : i32) -> i32 {
+	
+	(v2 - (getStructValue[(i32, i32, i32, i32)](__closure__).3 * getStructValue[(i32, i32, i32, i32)](__closure__).2))
+}

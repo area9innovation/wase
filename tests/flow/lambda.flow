@@ -1,0 +1,44 @@
+native println : io (flow) -> void = Native.println;
+
+myFn(val : int, addFn : (int) -> int, subFn : (int) -> int) -> void{
+	println(addFn(val + 1));
+	println(subFn(val + 2));
+}
+
+inci(v : int) -> int {v + 1;}
+deci(v : int) -> int {v - 1;}
+
+// myFn1( vfn1 : ((int) -> int) -> void) -> void { vfn1(inci); }
+// myFn2( vfn : (int) -> int) -> void { println(vfn(31)); }
+
+main() {
+	step = 100; // capture local var, fn arg, lambda, global var/fn; templates
+	rate = 3;
+	delta = 5;
+	// TODO
+	//localFn = \v1 : int -> println(v1 + step* rate);
+	//localFn(10);
+	// TODO
+	// ifFn = if (true) (\v1 : int -> v1 * rate) else inci;
+
+	localFn2 = \v1 : int -> v1 + step * rate + delta;
+	r1 = localFn2(10);
+	println(r1); // 315
+
+	aliasFn = inci;
+	println(aliasFn(2)); // 3
+
+	aliasLambda = localFn2;
+
+	myFn(20, \v2 -> v2 + step * rate, \v2 -> v2 - step * rate); // 321  -278
+	myFn(21, aliasFn, deci); // 23 22
+	myFn(21, localFn2, aliasLambda); // 327 328
+	
+
+	// TODO
+	// myFn1(\incfn -> println(incfn(30)));
+	// myFn1(myFn2);
+	// myFn1(localFn);
+	
+	{}
+}
