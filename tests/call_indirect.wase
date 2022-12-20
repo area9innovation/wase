@@ -18,6 +18,10 @@ sub1(v : i32) -> i32 {
 	v - 1;
 }
 
+voidfn(v : i32) -> () {
+	printi32(v);
+}
+
 export _start() -> () {
 	// This is bar
 	printi32(call_indirect<>(fn<bar>()));
@@ -38,4 +42,7 @@ export _start() -> () {
 	myfn : i32 = if (true) fn<bar>() else fn<foo>();
 	printi32(call_indirect<>(myfn)); // 666
 	printByte(10);
+
+	// print 43
+	call_indirect<>(43, fn<voidfn>());
 }
