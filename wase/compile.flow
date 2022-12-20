@@ -475,7 +475,7 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 					acc;
 				} else {
 					pars = unwrapDslPrimitiveList(args[1]);
-					type = args[3];
+					type = args[3];// here is an empty node
 					nacc = dsl2WaseInstruction(onError, acc, args[2]);
 					fargs = getDslList(args[2]);
 					argTypes = map(list2array(fargs), waseType);
@@ -834,7 +834,7 @@ dslWasmOp2WaseInstruction(onError : (DslAst, string) -> void, node : DslAst, id 
 		WaseTableFill(getDslString(pars[0]))
 	} else if (id == "call_indirect") {
 		params = mapConcat(subrange(types, 0, length(types) - 1), \t -> dsl2WasmValTypes(onError, t));
-		returnTypes = dsl2WasmValTypes(onError, retType);
+		returnTypes = dsl2WasmValTypes(onError, if (retType == DslNode("", [], 0)) DslList(makeList()) else retType); // void result is an empty list
 		fnType = WasmFuncType(params, returnTypes);
 
 		tableId = if (pars == []) "" else getDslString(pars[0]);

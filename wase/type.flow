@@ -727,7 +727,7 @@ typecheckWaseInstruction(acc : DslTypeAcc, op : string, pars : [DslAst], opargs 
 			if (i == nargs - 1) i32 else infer();
 		}));
 		acc.unifyTypes(acc, opargs, argTypes);
-		infer();
+		if (false) list0 else infer();
 	} else if (op == "fn") {
 		if (length(pars) != 1) {
 			println("fn requires a function id parameter");
