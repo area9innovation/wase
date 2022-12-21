@@ -128,7 +128,7 @@ isVoidWiType(type : WiType) -> bool {
 	switch (type : WiType) {
 		WiBasictype(s, __) : s == "" || s == "void";
 		WiFntype(__, __, __) : false;
-		WiTupletype(__, __) : false;
+		WiTupletype(args, __) : args == []; // todo: check the structure name ?
 	}
 }
 
@@ -251,7 +251,7 @@ WiExp2WeExp(env : LowerWiseAstEnv, w : WiExp, withResult : bool) -> WeExp {
 					indirect(WeVar(fnId))
 				} else {
 					// TODO: WeCall2 ?
-					newExps = map(exps, \ee -> unrollTupleForWeCall(env, ee, withResult));
+					newExps = map(exps, \ee -> unrollTupleForWeCall(env, ee, true));
 					fnCall = WeCall(WeVar(fnId), mapConcat(newExps, firstOfPair));
 					fold(mapConcat(newExps, secondOfPair), fnCall, \acc, conExp -> WeLettuple(conExp with brace = WeBrace([acc])));
 				}
@@ -390,7 +390,7 @@ wiLet2weLet(env : LowerWiseAstEnv, w : WiLet, withResult : bool) -> WeExp {
 		w.id,
 		w.i,
 		WiType2WeType(w.opttype),
-		WiExp2WeExp(env, w.exp, false),
+		WiExp2WeExp(env, w.exp, true),
 		WeBrace(mapi(w.brace.expsemi, \i, v -> WiExp2WeExp(newEnv, v, withResult && (i + 1) == length(w.brace.expsemi))))
 	);
 	switch (w.opttype : WiType) {
