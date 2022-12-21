@@ -8,8 +8,10 @@ myFn(val : int, addFn : (int) -> int, subFn : (int) -> int) -> void{
 inci(v : int) -> int {v + 1;}
 deci(v : int) -> int {v - 1;}
 
-// myFn1( vfn1 : ((int) -> int) -> void) -> void { vfn1(inci); }
-// myFn2( vfn : (int) -> int) -> void { println(vfn(31)); }
+myFn1( vfn1 : ((int) -> int) -> void) -> void { vfn1(inci); }
+myFn2( vfn : (int) -> int) -> void { println(vfn(31)); }
+
+printi(v : int) -> void {println(v)}
 
 main() {
 	step = 100; // capture local var, fn arg, lambda, global var/fn; templates
@@ -33,11 +35,15 @@ main() {
 	myFn(21, aliasFn, deci); // 23 22
 	myFn(21, localFn2, aliasLambda); // 327 328
 	
+	myFn1(\incfn : (int) -> int -> println(incfn(30))); // 31
 
-	// TODO
-	// myFn1(\incfn -> println(incfn(30)));
-	// myFn1(myFn2);
-	// myFn1(localFn);
+	myFn1(\incfn -> printi(incfn(30))); // 31
+	// TODO: flow2type for println ? or just toString
+	// myFn1(\incfn -> println(incfn(30))); // incfn without a type
+
+	myFn1(myFn2); // 32
+	localFn3 = \localFn32 : (int) -> int -> println(localFn32(79));
+	myFn1(localFn3); // 80
 	
 	{}
 }
