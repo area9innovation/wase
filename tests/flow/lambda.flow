@@ -15,9 +15,8 @@ main() {
 	step = 100; // capture local var, fn arg, lambda, global var/fn; templates
 	rate = 3;
 	delta = 5;
-	// TODO
-	//localFn = \v1 : int -> println(v1 + step* rate);
-	//localFn(10);
+	localFn = \v1 : int -> println(v1 + step* rate);
+	localFn(10); // 310
 	// TODO
 	// ifFn = if (true) (\v1 : int -> v1 * rate) else inci;
 
