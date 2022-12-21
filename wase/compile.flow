@@ -475,7 +475,7 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 					acc;
 				} else {
 					pars = unwrapDslPrimitiveList(args[1]);
-					type = args[3];// here is an empty node
+					type = args[3];
 					nacc = dsl2WaseInstruction(onError, acc, args[2]);
 					fargs = getDslList(args[2]);
 					argTypes = map(list2array(fargs), waseType);
