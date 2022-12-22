@@ -38,6 +38,11 @@ main() {
 	myFn1(\incfn : (int) -> int -> println(incfn(30))); // 31
 
 	myFn1(\incfn -> printi(incfn(30))); // 31
+	
+	myFn1(\incfn -> {
+		printiL = \v : int -> println(v + step);
+		printiL(incfn(30 + rate));
+	}); // 134
 	// TODO: flow2type for println ? or just toString
 	// myFn1(\incfn -> println(incfn(30))); // incfn without a type
 
