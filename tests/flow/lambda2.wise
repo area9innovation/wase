@@ -1,0 +1,45 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ myFn[A,B](val : A, val2 : B, addFn : i32, __closure__ : i32) -> A {
+	
+	localFn3 : i32 = {createStruct[((i32) -> A, i32)](2, (lambda2__lambda__116__2[A, B], createStruct[(A, B)](3, (val, val2,)),))};
+	localFn4 : i32 = {createStruct[((i32) -> B, i32)](4, (lambda2__lambda__145__3[B], createStruct[(B)](5, (val2,)),))};
+	resTempl : A = {getStructValue[(i32, i32, (i32) -> A, i32)](localFn3).2(getStructValue[(i32, i32, (i32) -> A, i32)](localFn3).3)};
+	getStructValue[(i32, i32, (A, i32) -> A, i32)](addFn).2(val, getStructValue[(i32, i32, (A, i32) -> A, i32)](addFn).3)
+}
+
+ export _start() -> () {
+	initMemory();
+	step : i32 = {100};
+	{
+	printlni32(myFn[i32, f64](20, 1.1, createStruct[((i32, i32) -> i32, i32)](10, (lambda2__lambda__386__0, createStruct[(i32)](11, (step,)),)), 0));
+	printlnf64(myFn[f64, f64](20.02, 2.2, createStruct[((f64, i32) -> f64, i32)](8, (lambda2__lambda__439__1, createStruct[()](9, ()),)), 0));
+	();
+	}
+}
+
+ lambda2__lambda__116__2[A,B](__closure__ : i32) -> A {
+	
+	{
+	getStructValue[(i32, i32, A, B)](__closure__).3;
+	getStructValue[(i32, i32, A, B)](__closure__).2;
+	}
+}
+
+ lambda2__lambda__145__3[A](__closure__ : i32) -> A {
+	
+	getStructValue[(i32, i32, A)](__closure__).2
+}
+
+ lambda2__lambda__386__0(v2 : i32, __closure__ : i32) -> i32 {
+	
+	(v2 + getStructValue[(i32, i32, i32)](__closure__).2)
+}
+
+ lambda2__lambda__439__1(v2 : f64, __closure__ : i32) -> f64 {
+	
+	(v2 + 1.5)
+}
