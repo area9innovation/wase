@@ -5,8 +5,8 @@ myFn(val : int, addFn : (int) -> int, subFn : (int) -> int) -> void{
 	println(subFn(val + 2));
 }
 
-inci(v : int) -> int {v + 1;}
 deci(v : int) -> int {v - 1;}
+inci(v : int) -> int {v + 1;}
 
 myFn1( vfn1 : ((int) -> int) -> void) -> void { vfn1(inci); }
 myFn2( vfn : (int) -> int) -> void { println(vfn(31)); }
@@ -49,6 +49,14 @@ main() {
 	myFn1(myFn2); // 32
 	localFn3 = \localFn32 : (int) -> int -> println(localFn32(79));
 	myFn1(localFn3); // 80
+
+	myFn1(\incfn -> {
+        printiL = \v : int -> {
+			lambda2 = \v2 -> v2 + rate;
+			println(lambda2(v + step));
+		}
+        printiL(incfn(30 + rate));
+    }); // 137
 	
 	{}
 }
