@@ -33,38 +33,55 @@ include tools/flowc/backends/wise/lib/string;
 
  myFn1(vfn1 : i32, __closure__ : i32) -> () {
 	
-	getStructValue[(i32, i32, (i32, i32) -> (), i32)](vfn1).2(createStruct[((i32, i32) -> i32, i32)](17, (inci, 0,)), getStructValue[(i32, i32, (i32, i32) -> (), i32)](vfn1).3)
+	getStructValue[(i32, i32, (i32, i32) -> (), i32)](vfn1).2(createStruct[((i32, i32) -> i32, i32)](27, (inci, 0,)), getStructValue[(i32, i32, (i32, i32) -> (), i32)](vfn1).3)
 }
 
  export _start() -> () {
 	initMemory();
 	step : i32 = {100};
 	rate : i32 = {3};
-	delta : i32 = {5};
-	localFn : i32 = {createStruct[((i32, i32) -> (), i32)](1, (lambda__lambda__516__0, createStruct[(i32, i32)](2, (rate, step,)),))};
+	localFn : i32 = {createStruct[((i32, i32) -> (), i32)](53, (lambda__lambda__555__0, createStruct[(i32, i32)](54, (rate, step,)),))};
 	{
 	getStructValue[(i32, i32, (i32, i32) -> (), i32)](localFn).2(10, getStructValue[(i32, i32, (i32, i32) -> (), i32)](localFn).3);
-	localFn2 : i32 = {createStruct[((i32, i32) -> i32, i32)](4, (lambda__lambda__655__1, createStruct[(i32, i32, i32)](5, (delta, rate, step,)),))};
+	delta : i32 = {5};
+	localFn2 : i32 = {createStruct[((i32, i32) -> i32, i32)](51, (lambda__lambda__641__1, createStruct[(i32, i32, i32)](52, (delta, rate, step,)),))};
 	r1 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](localFn2).2(10, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](localFn2).3)};
 	{
 	printlni32(r1);
-	aliasFn : i32 = {createStruct[((i32, i32) -> i32, i32)](7, (inci, 0,))};
+	aliasFn : i32 = {createStruct[((i32, i32) -> i32, i32)](5, (inci, 0,))};
 	{
 	printlni32(getStructValue[(i32, i32, (i32, i32) -> i32, i32)](aliasFn).2(2, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](aliasFn).3));
 	aliasLambda : i32 = {localFn2};
 	{
-	myFn(20, createStruct[((i32, i32) -> i32, i32)](39, (lambda__lambda__817__2, createStruct[(i32, i32)](40, (rate, step,)),)), createStruct[((i32, i32) -> i32, i32)](37, (lambda__lambda__842__3, createStruct[(i32, i32)](38, (rate, step,)),)), 0);
-	myFn(21, aliasFn, createStruct[((i32, i32) -> i32, i32)](9, (deci, 0,)), 0);
+	myFn(20, createStruct[((i32, i32) -> i32, i32)](49, (lambda__lambda__803__2, createStruct[(i32, i32)](50, (rate, step,)),)), createStruct[((i32, i32) -> i32, i32)](47, (lambda__lambda__828__3, createStruct[(i32, i32)](48, (rate, step,)),)), 0);
+	myFn(21, aliasFn, createStruct[((i32, i32) -> i32, i32)](8, (deci, 0,)), 0);
 	myFn(21, localFn2, aliasLambda, 0);
-	myFn1(createStruct[(((i32) -> i32, i32) -> (), i32)](35, (lambda__lambda__970__4, createStruct[()](36, ()),)), 0);
-	myFn1(createStruct[(((i32) -> i32, i32) -> (), i32)](57, (lambda__lambda__1030__5, createStruct[()](58, ()),)), 0);
-	myFn1(createStruct[(((i32) -> i32, i32) -> (), i32)](55, (lambda__lambda__1075__6, createStruct[(i32, i32)](56, (rate, step,)),)), 0);
-	myFn1(createStruct[((i32, i32) -> (), i32)](10, (myFn2, 0,)), 0);
-	localFn3 : i32 = {createStruct[((i32, i32) -> (), i32)](11, (lambda__lambda__1321__8, 0,))};
+	myFn1(createStruct[(((i32) -> i32, i32) -> (), i32)](45, (lambda__lambda__956__4, createStruct[()](46, ()),)), 0);
+	myFn1(createStruct[(((i32) -> i32, i32) -> (), i32)](73, (lambda__lambda__1016__5, createStruct[()](74, ()),)), 0);
+	myFn1(createStruct[((i32, i32) -> (), i32)](9, (myFn2, 0,)), 0);
+	localFn3 : i32 = {createStruct[(((i32) -> i32, i32) -> (), i32)](71, (lambda__lambda__1204__6, createStruct[()](72, ()),))};
 	{
 	myFn1(localFn3, 0);
-	myFn1(createStruct[(((i32) -> i32, i32) -> (), i32)](49, (lambda__lambda__1406__9, createStruct[(i32, i32)](50, (rate, step,)),)), 0);
+	myFn1(createStruct[(((i32) -> i32, i32) -> (), i32)](69, (lambda__lambda__1289__7, createStruct[(i32, i32)](70, (rate, step,)),)), 0);
+	localFn4 : i32 = {createStruct[((i32, i32) -> i32, i32)](63, (lambda__lambda__1462__10, createStruct[(i32)](64, (step,)),))};
+	{
+	tmp0 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](localFn4).2(4, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](localFn4).3)};
+	tmp1 : () = {getStructValue[(i32, i32, (i32) -> (), i32)](tmp0).2(getStructValue[(i32, i32, (i32) -> (), i32)](tmp0).3)};
+	tmp1;
+	localFn5 : i32 = {createStruct[((i32, i32) -> i32, i32)](59, (lambda__lambda__1532__12, createStruct[(i32)](60, (step,)),))};
+	{
+	tmp2 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](localFn5).2(4, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](localFn5).3)};
+	tmp3 : () = {getStructValue[(i32, i32, (i32) -> (), i32)](tmp2).2(getStructValue[(i32, i32, (i32) -> (), i32)](tmp2).3)};
+	tmp3;
+	st1 : i32 = {createStruct[(i32, f64)](76, (createStruct[((i32, i32) -> (), i32)](55, (lambda__lambda__1605__14, createStruct[(i32)](56, (step,)),)), 768.74,))};
+	{
+	tmp4 : i32 = {getStructValue[(i32, i32, i32, f64)](st1).2};
+	tmp5 : () = {getStructValue[(i32, i32, (i32, i32) -> (), i32)](tmp4).2(5, getStructValue[(i32, i32, (i32, i32) -> (), i32)](tmp4).3)};
+	tmp5;
 	();
+	};
+	};
+	};
 	};
 	};
 	};
@@ -72,75 +89,87 @@ include tools/flowc/backends/wise/lib/string;
 	}
 }
 
- lambda__lambda__1030__5(incfn : i32, __closure__ : i32) -> () {
+ lambda__lambda__1016__5(incfn : i32, __closure__ : i32) -> () {
 	
-	printi(tmp0 : i32 = {incfn};
-	tmp1 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp0).2(30, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp0).3)};
-	tmp1, __closure__)
+	printi(tmp6 : i32 = {incfn};
+	tmp7 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp6).2(30, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp6).3)};
+	tmp7, __closure__)
 }
 
- lambda__lambda__1075__6(incfn : i32, __closure__ : i32) -> () {
+ lambda__lambda__1204__6(localFn32 : i32, __closure__ : i32) -> () {
 	
-	printiL : i32 = {createStruct[((i32, i32) -> (), i32)](22, (lambda__lambda__1099__7, createStruct[(i32)](23, (__closure__,)),))};
-	getStructValue[(i32, i32, (i32, i32) -> (), i32)](printiL).2(tmp2 : i32 = {incfn};
-	tmp3 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp2).2((30 + getStructValue[(i32, i32, i32, i32)](__closure__).2), getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp2).3)};
-	tmp3, getStructValue[(i32, i32, (i32, i32) -> (), i32)](printiL).3)
+	printlni32(tmp8 : i32 = {localFn32};
+	tmp9 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp8).2(79, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp8).3)};
+	tmp9)
 }
 
- lambda__lambda__1099__7(v : i32, __closure__ : i32) -> () {
+ lambda__lambda__1289__7(incfn : i32, __closure__ : i32) -> () {
 	
-	printlni32((v + getStructValue[(i32, i32, i32, i32)](getStructValue[(i32, i32, i32)](__closure__).2).3))
+	printiL : i32 = {createStruct[((i32, i32) -> (), i32)](67, (lambda__lambda__1319__8, createStruct[(i32)](68, (__closure__,)),))};
+	getStructValue[(i32, i32, (i32, i32) -> (), i32)](printiL).2(tmp10 : i32 = {incfn};
+	tmp11 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp10).2((30 + getStructValue[(i32, i32, i32, i32)](__closure__).2), getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp10).3)};
+	tmp11, getStructValue[(i32, i32, (i32, i32) -> (), i32)](printiL).3)
 }
 
- lambda__lambda__1321__8(localFn32 : i32, __closure__ : i32) -> () {
+ lambda__lambda__1319__8(v : i32, __closure__ : i32) -> () {
 	
-	printlni32(tmp4 : i32 = {localFn32};
-	tmp5 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp4).2(79, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp4).3)};
-	tmp5)
-}
-
- lambda__lambda__1406__9(incfn : i32, __closure__ : i32) -> () {
-	
-	printiL : i32 = {createStruct[((i32, i32) -> (), i32)](27, (lambda__lambda__1436__10, createStruct[(i32)](28, (__closure__,)),))};
-	getStructValue[(i32, i32, (i32, i32) -> (), i32)](printiL).2(tmp6 : i32 = {incfn};
-	tmp7 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp6).2((30 + getStructValue[(i32, i32, i32, i32)](__closure__).2), getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp6).3)};
-	tmp7, getStructValue[(i32, i32, (i32, i32) -> (), i32)](printiL).3)
-}
-
- lambda__lambda__1436__10(v : i32, __closure__ : i32) -> () {
-	
-	lambda2 : i32 = {createStruct[((i32, i32) -> i32, i32)](31, (lambda__lambda__1463__11, createStruct[(i32)](32, (__closure__,)),))};
+	lambda2 : i32 = {createStruct[((i32, i32) -> i32, i32)](65, (lambda__lambda__1346__9, createStruct[(i32)](66, (__closure__,)),))};
 	printlni32(getStructValue[(i32, i32, (i32, i32) -> i32, i32)](lambda2).2((v + getStructValue[(i32, i32, i32, i32)](getStructValue[(i32, i32, i32)](__closure__).2).3), getStructValue[(i32, i32, (i32, i32) -> i32, i32)](lambda2).3))
 }
 
- lambda__lambda__1463__11(v2 : i32, __closure__ : i32) -> i32 {
+ lambda__lambda__1346__9(v2 : i32, __closure__ : i32) -> i32 {
 	
 	(v2 + getStructValue[(i32, i32, i32, i32)](getStructValue[(i32, i32, i32)](getStructValue[(i32, i32, i32)](__closure__).2).2).2)
 }
 
- lambda__lambda__516__0(v1 : i32, __closure__ : i32) -> () {
+ lambda__lambda__1462__10(v : i32, __closure__ : i32) -> i32 {
+	
+	createStruct[((i32) -> (), i32)](61, (lambda__lambda__1472__11, createStruct[(i32, i32)](62, (__closure__, v,)),))
+}
+
+ lambda__lambda__1472__11(__closure__ : i32) -> () {
+	
+	printlni32((getStructValue[(i32, i32, i32, i32)](__closure__).3 + getStructValue[(i32, i32, i32)](getStructValue[(i32, i32, i32, i32)](__closure__).2).2))
+}
+
+ lambda__lambda__1532__12(v : i32, __closure__ : i32) -> i32 {
+	
+	createStruct[((i32) -> (), i32)](57, (lambda__lambda__1542__13, createStruct[(i32, i32)](58, (__closure__, v,)),))
+}
+
+ lambda__lambda__1542__13(__closure__ : i32) -> () {
+	
+	printi((getStructValue[(i32, i32, i32, i32)](__closure__).3 + getStructValue[(i32, i32, i32)](getStructValue[(i32, i32, i32, i32)](__closure__).2).2), __closure__)
+}
+
+ lambda__lambda__1605__14(v : i32, __closure__ : i32) -> () {
+	
+	printlni32((v + getStructValue[(i32, i32, i32)](__closure__).2))
+}
+
+ lambda__lambda__555__0(v1 : i32, __closure__ : i32) -> () {
 	
 	printlni32((v1 + (getStructValue[(i32, i32, i32, i32)](__closure__).3 * getStructValue[(i32, i32, i32, i32)](__closure__).2)))
 }
 
- lambda__lambda__655__1(v1 : i32, __closure__ : i32) -> i32 {
+ lambda__lambda__641__1(v1 : i32, __closure__ : i32) -> i32 {
 	
 	((v1 + (getStructValue[(i32, i32, i32, i32, i32)](__closure__).4 * getStructValue[(i32, i32, i32, i32, i32)](__closure__).3)) + getStructValue[(i32, i32, i32, i32, i32)](__closure__).2)
 }
 
- lambda__lambda__817__2(v2 : i32, __closure__ : i32) -> i32 {
+ lambda__lambda__803__2(v2 : i32, __closure__ : i32) -> i32 {
 	
 	(v2 + (getStructValue[(i32, i32, i32, i32)](__closure__).3 * getStructValue[(i32, i32, i32, i32)](__closure__).2))
 }
 
- lambda__lambda__842__3(v2 : i32, __closure__ : i32) -> i32 {
+ lambda__lambda__828__3(v2 : i32, __closure__ : i32) -> i32 {
 	
 	(v2 - (getStructValue[(i32, i32, i32, i32)](__closure__).3 * getStructValue[(i32, i32, i32, i32)](__closure__).2))
 }
 
- lambda__lambda__970__4(incfn : i32, __closure__ : i32) -> () {
+ lambda__lambda__956__4(incfn : i32, __closure__ : i32) -> () {
 	
-	printlni32(tmp8 : i32 = {incfn};
-	tmp9 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp8).2(30, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp8).3)};
-	tmp9)
+	printlni32(tmp12 : i32 = {incfn};
+	tmp13 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp12).2(30, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](tmp12).3)};
+	tmp13)
 }

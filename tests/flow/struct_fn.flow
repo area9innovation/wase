@@ -2,22 +2,24 @@ native println : io (flow) -> void = Native.println;
 
 StructFn(
 	fn : (int) -> void,
+	ffield : double,
 );
 printi(v : int) -> void { println(v)};
 
 
 StructFn2(
 	fn : (int) -> int,
+	ffield : double,
 );
 printi2(v : int) -> int { println(v); 15;};
 
 main() {
-	v = StructFn(printi);
-	v.fn(1);
+	v = StructFn(printi, 3.14);
+	v.fn(196); // 1
 	
-	v2 = StructFn2(printi2);
+	v2 = StructFn2(printi2, 1.1);
 	fn2 = v2.fn;
-	res2 = fn2(1);
+	res2 = fn2(10); // 10
 
 	{}
 }

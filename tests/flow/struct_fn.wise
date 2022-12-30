@@ -1,24 +1,31 @@
 include lib/wise/runtime;
 include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
 
-printi(v : i32) -> () { printlni32(v) }
+ printi(v : i32, __closure__ : i32) -> () {
+	
+	printlni32(v)
+}
 
-printi2(v : i32) -> i32 { printlni32(v); 15; }
-
+ printi2(v : i32, __closure__ : i32) -> i32 {
+	
+	{
+	printlni32(v);
+	15;
+	}
+}
 
  export _start() -> () {
 	initMemory();
-// test 1
-	v : i32 = {createStruct[((i32) -> ())](2, (printi,))};
-	//getStructValue[(i32, i32, (i32) -> ())](v).2(1);
-
-// test 2
-	v2 : i32 = createStruct[((i32) -> i32)](1, (printi2,));
-
-	fn2 : (i32) -> i32 = getStructValue[(i32, i32, (i32) -> i32)](v2).2;
-	res2 : i32 = fn2(1989);
-
-	res : i32 = getStructValue[(i32, i32, (i32) -> i32)](v2).2(647);
-
+	v : i32 = {createStruct[(i32, f64)](10, (createStruct[((i32, i32) -> (), i32)](1, (printi, 0,)), 3.14,))};
+	{
+	tmp0 : i32 = {getStructValue[(i32, i32, i32, f64)](v).2};
+	tmp1 : () = {getStructValue[(i32, i32, (i32, i32) -> (), i32)](tmp0).2(196, getStructValue[(i32, i32, (i32, i32) -> (), i32)](tmp0).3)};
+	tmp1;
+	v2 : i32 = {createStruct[(i32, f64)](9, (createStruct[((i32, i32) -> i32, i32)](5, (printi2, 0,)), 1.1,))};
+	fn2 : i32 = {getStructValue[(i32, i32, i32, f64)](v2).2};
+	res2 : i32 = {getStructValue[(i32, i32, (i32, i32) -> i32, i32)](fn2).2(10, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](fn2).3)};
 	();
+	}
 }
