@@ -1,0 +1,10 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ export _start() -> () {
+	initMemory();
+	i : i32 = {56};
+	printlni32(i)
+}

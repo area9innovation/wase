@@ -1,5 +1,6 @@
 
-import runtime;
+// import runtime;
+native println : io (flow) -> void = Native.println;
 
 Union1 ::= Struct11, Struct12, Struct14;
 Struct11();

@@ -3,17 +3,17 @@ include tools/flowc/backends/wise/lib/tuple;
 include tools/flowc/backends/wise/lib/array;
 include tools/flowc/backends/wise/lib/string;
 
- addT[A](v : A) -> A {
+ addT[A](v : A, __closure__ : i32) -> A {
 	
 	v
 }
 
- mapT[A](arr : A, fn : (A) -> A) -> A {
+ mapT[A](arr : A, fn : i32, __closure__ : i32) -> A {
 	
-	fn(arr)
+	getStructValue[(i32, i32, (A, i32) -> A, i32)](fn).2(arr, getStructValue[(i32, i32, (A, i32) -> A, i32)](fn).3)
 }
 
- myFnTemplate2[A,B](value1 : A, value2 : B) -> () {
+ myFnTemplate2[A,B](value1 : A, value2 : B, __closure__ : i32) -> () {
 	
 	()
 }
@@ -29,10 +29,10 @@ include tools/flowc/backends/wise/lib/string;
 	;
 	}};
 	{
-	myFnTemplate2[i32, f64](1, 1.1);
-	myFnTemplate2[f64, i32](2.2, 2);
-	myFnTemplate2[i32, f64](a, 3.3);
-	mapT[i32](10, addT[i32]);
-	mapT[f64](0.45, addT[f64]);
+	myFnTemplate2[i32, f64](1, 1.1, 0);
+	myFnTemplate2[f64, i32](2.2, 2, 0);
+	myFnTemplate2[i32, f64](a, 3.3, 0);
+	mapT[i32](10, createStruct[((i32, i32) -> i32, i32)](1, (addT[i32], 0,)), 0);
+	mapT[f64](0.45, createStruct[((f64, i32) -> f64, i32)](2, (addT[f64], 0,)), 0);
 	}
 }

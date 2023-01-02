@@ -1,5 +1,11 @@
 
-import runtime;
+// import runtime;
+native println : io (flow) -> void = Native.println;
+native length : ([?]) -> int = Native.length;
+native subrange : (a : [?], index : int, length : int) -> [?] = Native.subrange;
+native replace : ([?], int, ?) -> [?] = Native.replace;
+native concat : ([?], [?]) -> [?] = Native.concat;
+arrayPush(array, value) { replace(array, length(array), value); }
 
 printArr(a : [int]) -> void {
 	if (a != []) {

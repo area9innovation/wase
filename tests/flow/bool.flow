@@ -1,4 +1,5 @@
-import runtime;
+// import runtime;
+native println : io (flow) -> void = Native.println;
 
 // print 111011
 main() {
