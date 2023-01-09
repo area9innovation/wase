@@ -5,7 +5,8 @@ native length : ([?]) -> int = Native.length;
 native subrange : (a : [?], index : int, length : int) -> [?] = Native.subrange;
 native replace : ([?], int, ?) -> [?] = Native.replace;
 native concat : ([?], [?]) -> [?] = Native.concat;
-arrayPush(array, value) { replace(array, length(array), value); }
+native arrayPush : ([?], ?) -> [?] = Native.arrayPush;
+arrayPush2(array : [?], value : ?) -> [?] { replace(array, length(array), value); }
 
 printArr(a : [int]) -> void {
 	if (a != []) {
@@ -15,6 +16,7 @@ printArr(a : [int]) -> void {
 }
 
 main() {
+	a2v = arrayPush2([], 2);
 	a = [10, 20, 30];
 	println(a[-1]); // 0
 	println(a[3]); // 0

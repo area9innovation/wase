@@ -1,0 +1,78 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ add1(v : i32, __closure__ : i32) -> i32 {
+	
+	(v + 1)
+}
+
+ bar(__closure__ : i32) -> i32 {
+	
+	666
+}
+
+ foo(__closure__ : i32) -> i32 {
+	
+	42
+}
+
+ sub1(v : i32, __closure__ : i32) -> i32 {
+	
+	(v - 1)
+}
+
+ export _start() -> () {
+	initMemory();
+	b0 : i32 = {createStruct[((i32) -> i32, i32)](1, (bar, 0,))};
+	{
+	printlni32(getStructValue[(i32, i32, (i32) -> i32, i32)](b0).2(getStructValue[(i32, i32, (i32) -> i32, i32)](b0).3));
+	f0 : i32 = {createStruct[((i32) -> i32, i32)](4, (foo, 0,))};
+	{
+	printlni32(getStructValue[(i32, i32, (i32) -> i32, i32)](f0).2(getStructValue[(i32, i32, (i32) -> i32, i32)](f0).3));
+	a0 : i32 = {createStruct[((i32, i32) -> i32, i32)](7, (add1, 0,))};
+	{
+	printlni32(getStructValue[(i32, i32, (i32, i32) -> i32, i32)](a0).2(41, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](a0).3));
+	s0 : i32 = {createStruct[((i32, i32) -> i32, i32)](10, (sub1, 0,))};
+	{
+	printlni32(getStructValue[(i32, i32, (i32, i32) -> i32, i32)](s0).2(43, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](s0).3));
+	myfn2 : i32 = {if (false) {
+	createStruct[((i32) -> i32, i32)](13, (bar, 0,))
+} else {
+	createStruct[((i32) -> i32, i32)](26, (fn__lambda__422__0, createStruct[()](27, ()),))
+}};
+	myfn : i32 = {if (true) {
+	createStruct[((i32) -> i32, i32)](14, (bar, 0,))
+} else {
+	createStruct[((i32) -> i32, i32)](15, (foo, 0,))
+}};
+	myfn3 : i32 = {if (false) {
+	createStruct[((i32) -> i32, i32)](16, (bar, 0,))
+} else {
+	if (true) {
+	createStruct[((i32) -> i32, i32)](24, (fn__lambda__539__1, createStruct[()](25, ()),))
+} else {
+	createStruct[((i32) -> i32, i32)](17, (bar, 0,))
+}
+}};
+	{
+	printlni32(getStructValue[(i32, i32, (i32) -> i32, i32)](myfn2).2(getStructValue[(i32, i32, (i32) -> i32, i32)](myfn2).3));
+	printlni32(getStructValue[(i32, i32, (i32) -> i32, i32)](myfn).2(getStructValue[(i32, i32, (i32) -> i32, i32)](myfn).3));
+	printlni32(getStructValue[(i32, i32, (i32) -> i32, i32)](myfn3).2(getStructValue[(i32, i32, (i32) -> i32, i32)](myfn3).3));
+	};
+	};
+	};
+	};
+	}
+}
+
+ fn__lambda__422__0(__closure__ : i32) -> i32 {
+	
+	5
+}
+
+ fn__lambda__539__1(__closure__ : i32) -> i32 {
+	
+	346
+}

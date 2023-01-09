@@ -34,6 +34,13 @@ main() {
 	s0 = sub1;
 	println(s0(43));
 
+	myfn2 : () -> int = if (false) bar else {\-> 5};
 	myfn : () -> int = if (true) bar else foo; // var fn
+	myfn3 : () -> int = if (false) bar else {
+		if (true) \-> 346 else bar;
+	};
+
+	println(myfn2()); // 5
 	println(myfn()); // 666
+	println(myfn3()); // 346
 }
