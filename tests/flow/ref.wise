@@ -1,0 +1,176 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/reference;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ extractor(v : i32, __closure__ : i32) -> i32 {
+	
+	getStructValue[(i32, i32, f64, i32)](v).3
+}
+
+ getRefAlias(v : i32, __closure__ : i32) -> i32 {
+	
+	v
+}
+
+ getRefValue(v : i32, __closure__ : i32) -> f64 {
+	
+	getRef[f64](v)
+}
+
+ makeStruct1(init1 : f64, init2 : f64, __closure__ : i32) -> i32 {
+	
+	createStruct[(f64, i32)](21, (init1, createRef[f64](init2),))
+}
+
+ mapper(v : i32, extr : i32, __closure__ : i32) -> i32 {
+	
+	getStructValue[(i32, i32, (i32, i32) -> i32, i32)](extr).2(v, getStructValue[(i32, i32, (i32, i32) -> i32, i32)](extr).3)
+}
+
+ updateStruct(s : i32, newVal : f64, __closure__ : i32) -> i32 {
+	
+	{
+	tmp15 : bool = {setRef[f64](getStructValue[(i32, i32, f64, i32)](s).3, newVal)};
+	;
+	s;
+	}
+}
+
+ export _start() -> () {
+	initMemory();
+	a1 : i32 = {createRef[f64](10.1)};
+	{
+	printlnf64(getRef[f64](a1));
+	tmp2 : bool = {setRef[f64](a1, 10.5)};
+	;
+	printlnf64(getRef[f64](a1));
+	s1 : i32 = {createStruct[(f64, i32)](21, (10.7, createRef[f64](11.4),))};
+	{
+	tmp3 : bool = {setRef[f64](getStructValue[(i32, i32, f64, i32)](s1).3, 12.1)};
+	;
+	printlnf64(getRef[f64](getStructValue[(i32, i32, f64, i32)](s1).3));
+	r1 : i32 = {extractor(s1, 0)};
+	{
+	printlnf64(getRef[f64](r1));
+	tmp4 : bool = {setRef[f64](r1, 13.2)};
+	;
+	printlnf64(getRef[f64](getStructValue[(i32, i32, f64, i32)](s1).3));
+	r3 : i32 = {createRef[f64](50.6)};
+	r4 : i32 = {getRefAlias(r3, 0)};
+	{
+	tmp5 : bool = {setRef[f64](r4, 15.3)};
+	;
+	printlnf64(getRef[f64](r3));
+	printlnf64(getRef[f64](r4));
+	tmp6 : bool = {setRef[f64](r3, 16.67)};
+	;
+	printlnf64(getRef[f64](r3));
+	printlnf64(getRef[f64](r1));
+	r2 : i32 = {mapper(s1, createStruct[((i32, i32) -> i32, i32)](18, (ref__lambda__1029__0, createStruct[()](19, ()),)), 0)};
+	{
+	printlnf64(getRef[f64](getStructValue[(i32, i32, f64, i32)](r2).3));
+	tmp7 : bool = {setRef[f64](getStructValue[(i32, i32, f64, i32)](r2).3, 14.1)};
+	;
+	printlnf64(getRef[f64](getStructValue[(i32, i32, f64, i32)](s1).3));
+	printlnf64(getRef[f64](getStructValue[(i32, i32, f64, i32)](r2).3));
+	s2 : i32 = {makeStruct1(10.6, 20.1, 0)};
+	{
+	printlnf64(getRef[f64](getStructValue[(i32, i32, f64, i32)](s2).3));
+	updateStruct(s2, 100.9, 0);
+	printlnf64(getRef[f64](getStructValue[(i32, i32, f64, i32)](s2).3));
+	printlnf64(getRefValue(getStructValue[(i32, i32, f64, i32)](s2).3, 0));
+	lambdaR : i32 = {createStruct[((i32) -> i32, i32)](16, (ref__lambda__1306__1, createStruct[()](17, ()),))};
+	{
+	printlnf64(getRef[f64](getStructValue[(i32, i32, (i32) -> i32, i32)](lambdaR).2(getStructValue[(i32, i32, (i32) -> i32, i32)](lambdaR).3)));
+	s5 : i32 = {createStruct[((i32) -> (), i32)](14, (ref__lambda__1353__2, createStruct[(i32)](15, (r3,)),))};
+	{
+	getStructValue[(i32, i32, (i32) -> (), i32)](s5).2(getStructValue[(i32, i32, (i32) -> (), i32)](s5).3);
+	s4 : i32 = {createRef[i32](createStruct[((i32) -> f64, i32)](12, (ref__lambda__1398__3, createStruct[()](13, ()),)))};
+	{
+	tmp8 : bool = {setRef[i32](s4, createStruct[((i32) -> f64, i32)](10, (ref__lambda__1414__4, createStruct[()](11, ()),)))};
+	;
+	printlnf64(tmp0 : i32 = {getRef[i32](s4)};
+	tmp1 : f64 = {getStructValue[(i32, i32, (i32) -> f64, i32)](tmp0).2(getStructValue[(i32, i32, (i32) -> f64, i32)](tmp0).3)};
+	tmp1);
+	arrR : i32 = {createRef[i32](createArray[i32](0))};
+	{
+	tmp11 : bool = {setRef[i32](arrR, {
+	0;
+	tmp10 : i32 = {createArray[f64](3)};
+	
+	setValueArray[f64](tmp10, 0, 1.1);
+	setValueArray[f64](tmp10, 1, 2.2);
+	setValueArray[f64](tmp10, 2, 3.3);
+	tmp10;
+	;
+	})};
+	;
+	printlnf64(getValueArray[f64](getRef[i32](arrR), 2));
+	s3 : i32 = {createRef[i32](createStruct[(f64)](20, (33.1,)))};
+	{
+	tmp12 : bool = {setRef[i32](s3, createStruct[(f64)](20, (34.2,)))};
+	;
+	printlnf64(getStructValue[(i32, i32, f64)](getRef[i32](s3)).2);
+	arrRs : i32 = {{
+	0;
+	tmp13 : i32 = {createArray[i32](2)};
+	
+	setValueArray[i32](tmp13, 0, createRef[f64](1.1));
+	setValueArray[i32](tmp13, 1, createRef[f64](54.7));
+	tmp13;
+	;
+	}};
+	{
+	tmp14 : bool = {setRef[f64](getValueArray[i32](arrRs, 1), 29.3)};
+	;
+	printlnf64(getRef[f64](getValueArray[i32](arrRs, 0)));
+	printlnf64(getRef[f64](getValueArray[i32](arrRs, 1)));
+	v1 : i32 = {createRef[i32](2)};
+	v2 : i32 = {createRef[i32](27)};
+	v3 : i32 = {createRef[i32](2)};
+	{
+	printlnb((v1 == v2));
+	printlnb((v1 == v3));
+	printlnb((getRef[i32](v1) == getRef[i32](v2)));
+	printlnb((getRef[i32](v1) == getRef[i32](v3)));
+	};
+	};
+	};
+	};
+	};
+	};
+	};
+	};
+	};
+	};
+	};
+	};
+	}
+}
+
+ ref__lambda__1029__0(a : i32, __closure__ : i32) -> i32 {
+	
+	a
+}
+
+ ref__lambda__1306__1(__closure__ : i32) -> i32 {
+	
+	createRef[f64](489.198)
+}
+
+ ref__lambda__1353__2(__closure__ : i32) -> () {
+	
+	printlnf64(getRef[f64](getStructValue[(i32, i32, i32)](__closure__).2))
+}
+
+ ref__lambda__1398__3(__closure__ : i32) -> f64 {
+	
+	5.3
+}
+
+ ref__lambda__1414__4(__closure__ : i32) -> f64 {
+	
+	2.3
+}
