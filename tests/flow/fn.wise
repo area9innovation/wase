@@ -1,4 +1,5 @@
 include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/reference;
 include tools/flowc/backends/wise/lib/tuple;
 include tools/flowc/backends/wise/lib/array;
 include tools/flowc/backends/wise/lib/string;

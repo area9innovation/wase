@@ -1,0 +1,39 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/reference;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ foldRange[A](start : i32, end : i32, acc : A, fn : i32, __closure__ : i32) -> A {
+	
+	if ((start <= end)) {
+	foldRange[A]((start + 1), end, getStructValue[(i32, i32, (A, i32, i32) -> A, i32)](fn).2(acc, start, getStructValue[(i32, i32, (A, i32, i32) -> A, i32)](fn).3), fn, __closure__)
+} else {
+	acc
+}
+}
+
+ euler6(limit : i32, __closure__ : i32) -> f64 {
+	
+	sumsquares : f64 = {foldRange[f64](1, limit, 0.0, createStruct[((f64, i32, i32) -> f64, i32)](6, (euler_euler6__lambda__832__0, createStruct[()](7, ()),)), __closure__)};
+	natsum : f64 = {foldRange[f64](1, limit, 0.0, createStruct[((f64, i32, i32) -> f64, i32)](4, (euler_euler6__lambda__900__1, createStruct[()](5, ()),)), __closure__)};
+	({
+	0;
+	(natsum * natsum);
+	} - sumsquares)
+}
+
+ export _start() -> () {
+	initMemory();
+	printlnf64(euler6(100, 0))
+}
+
+ euler_euler6__lambda__832__0(acc : f64, n : i32, __closure__ : i32) -> f64 {
+	
+	(acc + convert_s<>(extend_s<>((n * n))))
+}
+
+ euler_euler6__lambda__900__1(acc : f64, n : i32, __closure__ : i32) -> f64 {
+	
+	(acc + convert_s<>(extend_s<>(n)))
+}

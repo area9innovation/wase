@@ -1,0 +1,47 @@
+// OK. but
+// Warning : can't find the real type for 'foldRange' fn with '?' template at FiVar("foldRange", FiTypeFunction([FiFunArg("start", FiTypeInt()), FiFunArg("end", FiTypeInt()), FiFunArg("acc", FiTypeParameter("?")), FiFunArg("fn", FiTypeInt()), FiFunArg("__closure__", FiTypeInt())], FiTypeParameter("?")), 294)
+
+// import runtime;
+native println : io (flow) -> void = Native.println;
+// import math/math;
+// greatest common divisor
+gcd(a : int, b : int) -> int {
+	if (b == 0) {
+		a
+	} else {
+		gcd(b, a % b)
+	}
+}
+foldRange(start : int, end : int, acc : ?, fn : (?, int) -> ?) -> ? {
+	if (start <= end) {
+		foldRange(start + 1, end, fn(acc, start), fn)
+	} else {
+		acc;
+	}
+}
+/*
+2520 is the smallest number that can be divided by each of the numbers 
+from 1 to 10 without any remainder.
+
+What is the smallest positive number that is evenly divisible by all of 
+the numbers from 1 to 20?
+*/
+
+euler5(limit : int) -> int {
+    foldRange(1, limit, 1, \acc, n -> {
+        if (acc % n == 0) {
+            // We already are a factor
+            acc;
+        } else {
+            // We are not a factor. Figure out what
+            // factors are missing, and add those
+            required = n / gcd(acc, n);
+            acc * required;
+        }        
+    })
+}
+
+main() {
+	println(euler5(20)); // Correct: 232792560
+	// quit(0);
+}

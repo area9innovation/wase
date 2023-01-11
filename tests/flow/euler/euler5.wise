@@ -1,0 +1,42 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ foldRange[A](start : i32, end : i32, acc : A, fn : i32, __closure__ : i32) -> A {
+	
+	if ((start <= end)) {
+	foldRange[i32]((start + 1), end, getStructValue[(i32, i32, (A, i32, i32) -> A, i32)](fn).2(acc, start, getStructValue[(i32, i32, (A, i32, i32) -> A, i32)](fn).3), fn, __closure__)
+} else {
+	acc
+}
+}
+
+ gcd(a : i32, b : i32, __closure__ : i32) -> i32 {
+	
+	if ((b == 0)) {
+	a
+} else {
+	gcd(b, (a % b), __closure__)
+}
+}
+
+ euler5(limit : i32, __closure__ : i32) -> i32 {
+	
+	foldRange[i32](1, limit, 1, createStruct[((i32, i32, i32) -> i32, i32)](4, (euler_euler5__lambda__633__0, createStruct[()](5, ()),)), __closure__)
+}
+
+ export _start() -> () {
+	initMemory();
+	printlni32(euler5(20, 0))
+}
+
+ euler_euler5__lambda__633__0(acc : i32, n : i32, __closure__ : i32) -> i32 {
+	
+	if (((acc % n) == 0)) {
+	acc
+} else {
+	required : i32 = {(n / gcd(acc, n, __closure__))};
+	(acc * required)
+}
+}

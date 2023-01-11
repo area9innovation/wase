@@ -1,4 +1,5 @@
 include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/reference;
 include tools/flowc/backends/wise/lib/tuple;
 include tools/flowc/backends/wise/lib/array;
 include tools/flowc/backends/wise/lib/string;
@@ -149,22 +150,37 @@ include tools/flowc/backends/wise/lib/string;
 
  lambda__lambda__555__0(v1 : i32, __closure__ : i32) -> () {
 	
-	printlni32((v1 + (getStructValue[(i32, i32, i32, i32)](__closure__).3 * getStructValue[(i32, i32, i32, i32)](__closure__).2)))
+	printlni32((v1 + {
+	0;
+	(getStructValue[(i32, i32, i32, i32)](__closure__).3 * getStructValue[(i32, i32, i32, i32)](__closure__).2);
+	}))
 }
 
  lambda__lambda__641__1(v1 : i32, __closure__ : i32) -> i32 {
 	
-	((v1 + (getStructValue[(i32, i32, i32, i32, i32)](__closure__).4 * getStructValue[(i32, i32, i32, i32, i32)](__closure__).3)) + getStructValue[(i32, i32, i32, i32, i32)](__closure__).2)
+	({
+	0;
+	(v1 + {
+	0;
+	(getStructValue[(i32, i32, i32, i32, i32)](__closure__).4 * getStructValue[(i32, i32, i32, i32, i32)](__closure__).3);
+	});
+	} + getStructValue[(i32, i32, i32, i32, i32)](__closure__).2)
 }
 
  lambda__lambda__803__2(v2 : i32, __closure__ : i32) -> i32 {
 	
-	(v2 + (getStructValue[(i32, i32, i32, i32)](__closure__).3 * getStructValue[(i32, i32, i32, i32)](__closure__).2))
+	(v2 + {
+	0;
+	(getStructValue[(i32, i32, i32, i32)](__closure__).3 * getStructValue[(i32, i32, i32, i32)](__closure__).2);
+	})
 }
 
  lambda__lambda__828__3(v2 : i32, __closure__ : i32) -> i32 {
 	
-	(v2 - (getStructValue[(i32, i32, i32, i32)](__closure__).3 * getStructValue[(i32, i32, i32, i32)](__closure__).2))
+	(v2 - {
+	0;
+	(getStructValue[(i32, i32, i32, i32)](__closure__).3 * getStructValue[(i32, i32, i32, i32)](__closure__).2);
+	})
 }
 
  lambda__lambda__956__4(incfn : i32, __closure__ : i32) -> () {
