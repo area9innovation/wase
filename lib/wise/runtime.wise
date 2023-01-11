@@ -101,3 +101,8 @@ printlnf64(f : f64) -> () {
 	printf64(f);
 	printByte(10);
 }
+
+remf64(v1 : f64, v2 : f64) -> f64 {
+	res : f64 = v1 - floor<>(v1 / v2) * v2;
+	res;
+}

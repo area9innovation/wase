@@ -1,0 +1,29 @@
+// import runtime; // <- fix import (maybe)
+native println : io (flow) -> void = Native.println;
+foldRange(start : int, end : int, acc : ?, fn : (?, int) -> ?) -> ? {
+	if (start <= end) {
+		foldRange(start + 1, end, fn(acc, start), fn)
+	} else {
+		acc;
+	}
+}
+
+/*
+If we list all the natural numbers below 10 that are multiples of 3 or 5, 
+we get 3, 5, 6 and 9. The sum of these multiples is 23.
+
+Find the sum of all the multiples of 3 or 5 below 1000.
+*/
+
+euler1(limit : int) -> int {
+    foldRange(1, limit - 1, 0, \acc, i -> {
+        if (i % 3 == 0 || i % 5 == 0) {
+            acc + i;
+        } else acc;
+    });
+}
+
+main() {
+    println(euler1(1000)); // Correct: 233168
+    // quit(0);
+}

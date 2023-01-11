@@ -1,0 +1,25 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/reference;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ euler2(a : f64, b : f64, sum : f64, __closure__ : i32) -> f64 {
+	
+	fib : f64 = {(a + b)};
+	nsum : f64 = {if ((remf64(fib, 2.0) == 0.0)) {
+	(sum + fib)
+} else {
+	sum
+}};
+	if ((fib < 4000000.0)) {
+	euler2(b, fib, nsum, __closure__)
+} else {
+	nsum
+}
+}
+
+ export _start() -> () {
+	initMemory();
+	printlnf64(euler2(0.0, 1.0, 0.0, 0))
+}
