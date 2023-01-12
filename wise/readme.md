@@ -126,6 +126,19 @@ clearArray[T](adr : i32) -> i32 {
 }
 ```
 
+# Loops
+
+There is only 1 type of loops. This is _while_.
+Example: 
+```
+var i = 0;
+while (i < 10) {
+	...
+	i := i + 1;
+};
+...
+```
+
 # Plan
 - Typedef
 - Heap
