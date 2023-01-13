@@ -1,0 +1,101 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/reference;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ foldRange[A](start : i32, end : i32, acc : A, fn : i32, __closure__ : i32) -> A {
+	
+	_RES__TMP_TAILCALL_foldRange : i32 = {createRef[A](defoftype(A))};
+	_TMP_TAILCALL_foldRange : i32 = {createRef[bool](true)};
+	_ARG_FN__TMP_TAILCALL_foldRange : i32 = {createRef[i32](fn)};
+	_ARG_ACC__TMP_TAILCALL_foldRange : i32 = {createRef[A](acc)};
+	_ARG_END__TMP_TAILCALL_foldRange : i32 = {createRef[i32](end)};
+	_ARG_START__TMP_TAILCALL_foldRange : i32 = {createRef[i32](start)};
+	{
+	while (getRef[bool](_TMP_TAILCALL_foldRange))
+	{
+	tmp2 : bool = {setRef[bool](_TMP_TAILCALL_foldRange, false)};
+	;
+	if ((getRef[i32](_ARG_START__TMP_TAILCALL_foldRange) <= getRef[i32](_ARG_END__TMP_TAILCALL_foldRange))) {
+	tmp0 : bool = {setRef[A](_RES__TMP_TAILCALL_foldRange, foldRange[A]((getRef[i32](_ARG_START__TMP_TAILCALL_foldRange) + 1), getRef[i32](_ARG_END__TMP_TAILCALL_foldRange), getStructValue[(i32, i32, (A, i32, i32) -> A, i32)](getRef[i32](_ARG_FN__TMP_TAILCALL_foldRange)).2(getRef[A](_ARG_ACC__TMP_TAILCALL_foldRange), getRef[i32](_ARG_START__TMP_TAILCALL_foldRange), getStructValue[(i32, i32, (A, i32, i32) -> A, i32)](getRef[i32](_ARG_FN__TMP_TAILCALL_foldRange)).3), getRef[i32](_ARG_FN__TMP_TAILCALL_foldRange), __closure__))};
+	
+} else {
+	tmp1 : bool = {setRef[A](_RES__TMP_TAILCALL_foldRange, getRef[A](_ARG_ACC__TMP_TAILCALL_foldRange))};
+	
+};
+	}
+;
+	getRef[A](_RES__TMP_TAILCALL_foldRange);
+	}
+}
+
+ max[A](a : A, b : A, __closure__ : i32) -> A {
+	
+	if ((a > b)) {
+	a
+} else {
+	b
+}
+}
+
+ euler9(limit : i32, __closure__ : i32) -> i32 {
+	
+	foldRange[i32](1, (limit - 1), 0, createStruct[((i32, i32, i32) -> i32, i32)](4, (euler_euler9__lambda__843__0, createStruct[()](5, ()),)), __closure__)
+}
+
+ export _start() -> () {
+	initMemory();
+	printlni32(euler9(1000, 0))
+}
+
+ euler_euler9__lambda__843__0(biggest : i32, a : i32, __closure__ : i32) -> i32 {
+	
+	b : i32 = {({
+	0;
+	(1000 * {
+	0;
+	(a - 500);
+	});
+	} / {
+	0;
+	(a - 1000);
+	})};
+	c : i32 = {({
+	0;
+	(1000 - b);
+	} - a)};
+	if (({
+	0;
+	({
+	0;
+	(b < 0);
+	} || {
+	0;
+	(c < 0);
+	});
+	} || {
+	0;
+	({
+	0;
+	({
+	0;
+	(a * a);
+	} + {
+	0;
+	(b * b);
+	});
+	} != {
+	0;
+	(c * c);
+	});
+	})) {
+	biggest
+} else {
+	product : i32 = {({
+	0;
+	(a * b);
+	} * c)};
+	max[i32](product, biggest, __closure__)
+}
+}
