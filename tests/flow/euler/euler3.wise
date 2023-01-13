@@ -1,0 +1,62 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/reference;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ biggestFactor(factor : f64, limit : f64, biggest : f64, n : f64, __closure__ : i32) -> f64 {
+	
+	_RES__TMP_TAILCALL_biggestFactor : i32 = {createRef[f64](defoftype(f64))};
+	_TMP_TAILCALL_biggestFactor : i32 = {createRef[bool](true)};
+	_ARG_N__TMP_TAILCALL_biggestFactor : i32 = {createRef[f64](n)};
+	_ARG_BIGGEST__TMP_TAILCALL_biggestFactor : i32 = {createRef[f64](biggest)};
+	_ARG_LIMIT__TMP_TAILCALL_biggestFactor : i32 = {createRef[f64](limit)};
+	_ARG_FACTOR__TMP_TAILCALL_biggestFactor : i32 = {createRef[f64](factor)};
+	{
+	while (getRef[bool](_TMP_TAILCALL_biggestFactor))
+	{
+	tmp11 : bool = {setRef[bool](_TMP_TAILCALL_biggestFactor, false)};
+	;
+	if ((getRef[f64](_ARG_FACTOR__TMP_TAILCALL_biggestFactor) < getRef[f64](_ARG_LIMIT__TMP_TAILCALL_biggestFactor))) {
+	if (({
+	0;
+	remf64(getRef[f64](_ARG_N__TMP_TAILCALL_biggestFactor), getRef[f64](_ARG_FACTOR__TMP_TAILCALL_biggestFactor));
+	} == 0.0)) {
+	tmp0 : bool = {setRef[bool](_TMP_TAILCALL_biggestFactor, true)};
+	tmp4 : bool = {setRef[f64](_ARG_N__TMP_TAILCALL_biggestFactor, (getRef[f64](_ARG_N__TMP_TAILCALL_biggestFactor) / getRef[f64](_ARG_FACTOR__TMP_TAILCALL_biggestFactor)))};
+	tmp3 : bool = {setRef[f64](_ARG_BIGGEST__TMP_TAILCALL_biggestFactor, getRef[f64](_ARG_FACTOR__TMP_TAILCALL_biggestFactor))};
+	tmp2 : bool = {setRef[f64](_ARG_LIMIT__TMP_TAILCALL_biggestFactor, getRef[f64](_ARG_LIMIT__TMP_TAILCALL_biggestFactor))};
+	tmp1 : bool = {setRef[f64](_ARG_FACTOR__TMP_TAILCALL_biggestFactor, getRef[f64](_ARG_FACTOR__TMP_TAILCALL_biggestFactor))};
+	
+} else {
+	newFactor : f64 = {if ((getRef[f64](_ARG_FACTOR__TMP_TAILCALL_biggestFactor) == 2.0)) {
+	3.0
+} else {
+	(getRef[f64](_ARG_FACTOR__TMP_TAILCALL_biggestFactor) + 2.0)
+}};
+	tmp5 : bool = {setRef[bool](_TMP_TAILCALL_biggestFactor, true)};
+	tmp9 : bool = {setRef[f64](_ARG_N__TMP_TAILCALL_biggestFactor, getRef[f64](_ARG_N__TMP_TAILCALL_biggestFactor))};
+	tmp8 : bool = {setRef[f64](_ARG_BIGGEST__TMP_TAILCALL_biggestFactor, getRef[f64](_ARG_BIGGEST__TMP_TAILCALL_biggestFactor))};
+	tmp7 : bool = {setRef[f64](_ARG_LIMIT__TMP_TAILCALL_biggestFactor, getRef[f64](_ARG_LIMIT__TMP_TAILCALL_biggestFactor))};
+	tmp6 : bool = {setRef[f64](_ARG_FACTOR__TMP_TAILCALL_biggestFactor, newFactor)};
+	
+}
+} else {
+	tmp10 : bool = {setRef[f64](_RES__TMP_TAILCALL_biggestFactor, getRef[f64](_ARG_BIGGEST__TMP_TAILCALL_biggestFactor))};
+	
+};
+	}
+;
+	getRef[f64](_RES__TMP_TAILCALL_biggestFactor);
+	}
+}
+
+ findBiggestDivisor(n : f64, __closure__ : i32) -> f64 {
+	
+	biggestFactor(2.0, sqrt<>(n), 1.0, n, __closure__)
+}
+
+ export _start() -> () {
+	initMemory();
+	printlnf64(findBiggestDivisor(600851475143.0, 0))
+}

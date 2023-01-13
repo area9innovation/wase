@@ -1,0 +1,44 @@
+native println : io (flow) -> void = Native.println;
+
+
+recursiveFn(i : int, limit : int) -> int {
+	if (i < limit) {
+		recursiveFn(i + 1, limit);
+	} else {
+		-1 * i; // TODO: -i
+	}
+}
+
+recursiveFn2(i : int, limit : int) -> void {
+	if (i < limit) {
+		recursiveFn2(i + 1, limit);
+	} else {
+		println(i);
+	}
+}
+
+nonRecursiveFn1(i : int, limit : int) -> int {
+	if (i < limit) {
+		nonRecursiveFn1(i + 1, limit) + 1;
+	} else {
+		-i;
+	}
+}
+nonRecursiveFn2(i : int, limit : int) -> int {
+	if (i < limit) {
+		nonRecursiveFn2(i + 1, limit);
+		nonRecursiveFn2(i + 2, limit);
+	} else {
+		-1 * i;
+	}
+}
+
+main() {
+	
+	println(recursiveFn(0, 700000));
+	recursiveFn2(0, 700000);
+
+	println(nonRecursiveFn1(0, 700000));
+	println(nonRecursiveFn2(0, 700000));
+
+}

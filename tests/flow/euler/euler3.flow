@@ -1,0 +1,43 @@
+// import runtime;
+// import math/math;
+native println : io (flow) -> void = Native.println;
+
+// native exp : (double) -> double = Native.exp; // TODO
+// native log : (double) -> double = Native.log; // TODO
+// sqrt(x) { exp(log(x) * 0.5) }
+
+
+
+// ERROR: stk_ovf
+native sqrt : (double) -> double = Native.sqrt;
+
+
+/*
+The prime factors of 13195 are 5, 7, 13 and 29.
+
+What is the largest prime factor of the number 600851475143 ?
+*/
+
+biggestFactor(factor : double, limit : double, biggest : double, n : double) -> double {
+	if (factor < limit) {
+		if (n % factor == 0.0) {
+			//println(factor);
+			biggestFactor(factor, limit, factor, n / factor);
+		} else {
+			newFactor = if (factor == 2.0) 3.0 else factor + 2.0;
+			//println(-1.0*newFactor);
+			biggestFactor(newFactor, limit, biggest, n)
+		}
+	} else {
+		biggest;
+	}
+}
+
+findBiggestDivisor(n : double) -> double {
+	biggestFactor(2.0, sqrt(n), 1.0, n);
+}
+
+main() {
+	println(findBiggestDivisor(600851475143.0)); // Correct: 6857
+	// quit(0);
+}

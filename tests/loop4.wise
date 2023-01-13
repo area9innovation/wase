@@ -1,0 +1,11 @@
+include lib/wise/runtime;
+
+export _start() -> () {
+	var i = 0;
+	while (i < 10) {
+		printlni32(i);
+		i := i + 1;
+	};
+	printlni32(10000);
+	();
+}
