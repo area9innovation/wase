@@ -1,0 +1,25 @@
+
+native println : io (flow) -> void = Native.println;
+native i2s : (int) -> string = Native.i2s;
+
+main() {
+	v1 = 12;
+	s1 = i2s(v1);
+	println(s1);
+
+	v2 = -156;
+	s2 = i2s(v2);
+	println(s2);
+
+	v3 = -2;
+	s3 = i2s(v3);
+	println(s3);
+
+	v4 = 0;
+	s4 = i2s(v4);
+	println(s4);
+
+	v5 = 12342;
+	s5 = i2s(v5);
+	println(s5);
+}

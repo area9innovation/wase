@@ -1,0 +1,32 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/reference;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ export _start() -> () {
+	initMemory();
+	v1 : i32 = {12};
+	s1 : i32 = {i2s(v1)};
+	{
+	printlnStr(s1);
+	v2 : i32 = {-156};
+	s2 : i32 = {i2s(v2)};
+	{
+	printlnStr(s2);
+	v3 : i32 = {-2};
+	s3 : i32 = {i2s(v3)};
+	{
+	printlnStr(s3);
+	v4 : i32 = {0};
+	s4 : i32 = {i2s(v4)};
+	{
+	printlnStr(s4);
+	v5 : i32 = {12342};
+	s5 : i32 = {i2s(v5)};
+	printlnStr(s5);
+	};
+	};
+	};
+	}
+}
