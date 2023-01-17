@@ -17,6 +17,10 @@ recursiveFn2(i : int, limit : int) -> void {
 	}
 }
 
+recursiveFn3(i : int, limit : int) -> bool {
+	i >= limit || recursiveFn3(i + 1, limit);
+}
+
 nonRecursiveFn1(i : int, limit : int) -> int {
 	if (i < limit) {
 		nonRecursiveFn1(i + 1, limit) + 1;
@@ -32,12 +36,17 @@ nonRecursiveFn2(i : int, limit : int) -> int {
 		-1 * i;
 	}
 }
+nonRecursiveFn3(i : int, limit : int) -> bool {
+	i >= limit || nonRecursiveFn3(i + 1, limit) || nonRecursiveFn3(i + 2, limit);
+}
 
 main() {
 	
 	println(recursiveFn(0, 700000));
 	recursiveFn2(0, 700000);
+	println(recursiveFn3(0, 700000));
 
+	println(nonRecursiveFn3(0, 700000));
 	println(nonRecursiveFn1(0, 700000));
 	println(nonRecursiveFn2(0, 700000));
 
