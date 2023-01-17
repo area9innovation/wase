@@ -1,0 +1,13 @@
+
+export _start() -> () {
+	len : i32 = getIntCharLen(10);
+	{};
+}
+
+getIntCharLen(v : i32) -> i32 {
+	var len = 1;
+	while (len < 2) {
+		len := len + 1;
+	};
+	len;
+}

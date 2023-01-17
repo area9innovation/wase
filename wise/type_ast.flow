@@ -644,7 +644,7 @@ resolveWiseAst(unionFindMap : UnionFindMap<[WiseAstType]>, ast : WiseAst, onErro
 
 resolveWiseAstTypeByEclass(unionFindMap : UnionFindMap<[WiseAstType]>, eclass : int, onError : (WiseAst, string) -> void) -> WiseAstType {
 	types = getUnionMapValue(unionFindMap, eclass);
-	if (length(types) == 0) {
+	if (eclass == 0 || length(types) == 0) {
 		onError(WiWaseEmpty(eclass), "ERROR: Could not find a type: " + toString(eclass));
 		WiseAstTypeEclass(-1);
 	} else {
