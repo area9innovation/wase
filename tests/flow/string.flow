@@ -3,6 +3,7 @@ native println : io (flow) -> void = Native.println;
 
 native substring : (s : string, start : int, length : int) -> string = Native.substring;
 native strlen : (string) -> int = Native.strlen;
+native getCharCodeAt : (s : string, i : int) -> int = Native.getCharCodeAt;
 
 main() {
 	s = "hello, world!";
@@ -11,6 +12,27 @@ main() {
 	println(substring(s, 7, 5)); // world
 
 	println("https://music.youtube.com/channel/UCSaZ0fxvVzTGxmtAQut1tVw");
+
+	s1 = "a";
+	s2 = "b";
+	s3 = "a";
+	s4 = "a1";
+	println(s1 == s2); // false
+	println(s1 == s3); // true
+	println(s1 == s1); // true
+	println(s1 > s2); // false
+	println(s1 >= s2); // false
+	println(s1 < s2); // true
+	println(s1 <= s2); // true
+	println(s1 <= s3); // true
+	println(s1 >= s3); // true
+	println(s1 > s4); // false
+	println(s1 < s4); // true
+	println("" == ""); // true
+
+	println(getCharCodeAt(s4, 0)); // 97
+	println(getCharCodeAt(s4, 1)); // 49
+	println(getCharCodeAt(s4, 2)); // -1
 	
 	// TODO : unicode
 	println("Danish: Stødgrænsen \"The Stød border\"");
