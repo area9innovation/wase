@@ -21,7 +21,7 @@ export {
 }
 
 makeTypeWiseAstState(onError : (WiseAst, string) -> void) -> TypeWiseAstState {
-	TypeWiseAstState(makeTree(), makeTree(), onError, makeUnionFindMap([], \l, r -> { sortUnique(concat(l, r)) }), ref 0);
+	TypeWiseAstState(makeTree(), makeTree(), onError, makeUnionFindMap([], \l, r -> { sortUnique(concat(l, r)) }), ref 1);
 }
 
 typeWiseAst(state : TypeWiseAstState, ast : WiseAst) -> WiseAst {
@@ -158,7 +158,7 @@ typecheckWiExp(state : TypeWiseAstState, ast : WiExp, resType : Maybe<WiseAstTyp
 			vtype = lookupTree(state.vars, id);
 			vtype ?? {
 				t = rec2(e, vtype);
-				bindNewEclassToType(state, t.first, \id1 -> WiSet(id, t.second, id1));
+				bindNewEclassToType(state, getWiseVoidType(), \id1 -> WiSet(id, t.second, id1));
 			} : {
 				state.onError(ast, "can't find variable '" + id + "' to check types");
 				def(WiseAstTypeEclass(eclass));
