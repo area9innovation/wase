@@ -1,5 +1,11 @@
-// import runtime;
 native println : io (flow) -> void = Native.println;
+native log : (double) -> double = Native.log;
+
+
+native bitNot : (int) -> int = Native.bitNot;
+native bitAnd : (int, int) -> int = Native.bitAnd;
+native bitOr : (int, int) -> int = Native.bitOr;
+native bitXor : (int, int) -> int = Native.bitXor;
 
 main() {
 	println((2 + 3 - 4) * 5); // 5
@@ -12,4 +18,20 @@ main() {
 	println(2 == 3); // false
 	println(2 != 3); // true
 	println((2 > 3) || 5*(-1) <= 0); // true
+
+	E_CONST : double = 2.718281828459045235360287471352662497757247093699959574966967;
+
+	println(log(E_CONST)); // 1.0
+	println(log(-1.)); // error
+	println(log(0.)); // error
+	println(log(10.0)); // 2.30258509299405
+	println(log(100.0)); // 4.60517018598809
+	println(log(1000.0)); // 6.90775527898214
+	println(log(10000.0)); // 9.21034037197618
+	println(log(100000.0)); // 11.5129254649702
+
+	println(bitAnd(13, 52)); // 4
+	println(bitOr(13, 52)); // 61
+	println(bitXor(13, 52)); // 57
+	println(bitNot(13)); // -14
 }
