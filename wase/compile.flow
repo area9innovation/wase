@@ -402,8 +402,8 @@ dsl2WaseInstruction(onError : (DslAst, string) -> void, acc : [WaseInstruction],
 				nacc = fold(subrange(args, 0, 2), acc, \a, aa -> dsl2WaseInstruction(onError, a, aa));
 				if (argtype == WasmI32Type()) arrayPush(nacc, WasmI32Gt_s())
 				else if (argtype == WasmI64Type()) arrayPush(nacc, WasmI64Gt_s())
-				else if (argtype == WasmF32Type()) arrayPush(nacc, WasmF32Lt())
-				else if (argtype == WasmF64Type()) arrayPush(nacc, WasmF64Lt())
+				else if (argtype == WasmF32Type()) arrayPush(nacc, WasmF32Gt())
+				else if (argtype == WasmF64Type()) arrayPush(nacc, WasmF64Gt())
 				else {
 					onError(d, "Can not > type " + toString(argtype));
 					nacc;

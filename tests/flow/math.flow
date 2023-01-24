@@ -8,7 +8,7 @@ native bitOr : (int, int) -> int = Native.bitOr;
 native bitXor : (int, int) -> int = Native.bitXor;
 
 main() {
-	println((2 + 3 - 4) * 5); // 5
+	/* println((2 + 3 - 4) * 5); // 5
 	println(-2 + (5 % 2)); // -1
 	println(-2 + 5 / 2 ); // 0
 	println(2 >= 3); // false
@@ -33,5 +33,15 @@ main() {
 	println(bitAnd(13, 52)); // 4
 	println(bitOr(13, 52)); // 61
 	println(bitXor(13, 52)); // 57
-	println(bitNot(13)); // -14
+	println(bitNot(13)); // -14 */
+
+
+	println(1>2); // false
+	println(3>2); // true
+	println(1<2); // true
+	println(3<2); // false
+	println(1.0>2.0); // false
+	println(3.0>2.0); // true
+	println(1.0<2.0); // true
+	println(3.0<2.0); // false
 }
