@@ -43,7 +43,7 @@ wiseAstType2wiType(t : WiseAstType, eclass : int, unionFindMap : UnionFindMap<[W
 			);
 		}
 		WiseAstTypeSIMD() : WiBasictype("v128", eclass);
-		WiseAstTypeBool() : WiBasictype("i32", eclass);
+		WiseAstTypeBool() : WiBasictype("bool", eclass);
 		WiseAstTypeString() : WiBasictype("i32", eclass);
 		WiseAstTypeTuple(fields) : {
 			typeWithClasses = getTypeWithEclass();
@@ -98,7 +98,8 @@ getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAs
 	} else if (id == "trunc_s" || id == "trunc_u" || id == "trunc_sat_s" || id == "trunc_sat_u") { 
 		knownResType = maybeBind(resType, \t -> if (t == WiseAstTypeI64() || t == WiseAstTypeI32()) Some(t) else None());
 		if (args == []) defType
-		else if (args[0] == WiseAstTypeF64()) either(knownResType, WiseAstTypeI64())
+		// we don't have i64 yet
+		//else if (args[0] == WiseAstTypeF64()) either(knownResType, WiseAstTypeI64())
 		else if (args[0] == WiseAstTypeF32()) either(knownResType, WiseAstTypeI32())
 		else defType;
 	} else if (id == "wrap") {
