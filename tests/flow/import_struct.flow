@@ -2,4 +2,6 @@ import export_struct;
 
 main() {
 	v = MyStruct(9);
+
+	arr = enumFromTo(1, 3);
 }

@@ -1,8 +1,12 @@
 export {
 	MyStruct(i : int);
 	fnExport() -> void;
+
+	native enumFromTo : (start : int, end : int) -> [int] = Native.enumFromTo;
 }
 
 fnExport() {
 
 }
+
+// native println : io (flow) -> void = Native.println;
