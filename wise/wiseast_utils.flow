@@ -227,6 +227,10 @@ getWaseInstructionResultType(id : string, args : [WiseAstType], defType : WiseAs
 		getWiseVoidType();
 	} else if (id == "v128.store") {
 		getWiseVoidType();
+	} else if (id == "memory.size") {
+		WiseAstTypeI32();
+	} else if (id == "memory.grow") {
+		WiseAstTypeI32();
 	} else {
 		println("Can't detect the result type. Unknown wasm instruction : " + id + "[" + toString(args) + "]");
 		defType;
