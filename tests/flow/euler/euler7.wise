@@ -1,0 +1,158 @@
+include wase/tests/flow/euler/bitset_euler;
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/math;
+include tools/flowc/backends/wise/lib/reference;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ clearFactors(n : i32, step : i32, set : i32, __closure__ : i32) -> () {
+	
+	var _TMP_TAILCALL_clearFactors : bool = {true};
+	var _ARG_SET__TMP_TAILCALL_clearFactors : i32 = {set};
+	var _ARG_STEP__TMP_TAILCALL_clearFactors : i32 = {step};
+	var _ARG_N__TMP_TAILCALL_clearFactors : i32 = {n};
+	while (_TMP_TAILCALL_clearFactors)
+	{
+	_TMP_TAILCALL_clearFactors := false;
+	if ((_ARG_N__TMP_TAILCALL_clearFactors < getStructValue[(i32, i32, i32, i32)](_ARG_SET__TMP_TAILCALL_clearFactors).3)) {
+	{
+	unsetBitSet(_ARG_SET__TMP_TAILCALL_clearFactors, _ARG_N__TMP_TAILCALL_clearFactors, __closure__);
+	_TMP_TAILCALL_clearFactors := true;
+	_ARG_SET__TMP_TAILCALL_clearFactors := _ARG_SET__TMP_TAILCALL_clearFactors;
+	_ARG_STEP__TMP_TAILCALL_clearFactors := _ARG_STEP__TMP_TAILCALL_clearFactors;
+	_ARG_N__TMP_TAILCALL_clearFactors := (_ARG_N__TMP_TAILCALL_clearFactors + _ARG_STEP__TMP_TAILCALL_clearFactors);
+	}
+	};
+	}
+
+}
+
+ either[A](m : i32, alternative : A, __closure__ : i32) -> A {
+	
+	{
+	0;
+	_tmp3 : i32 = {getStructId(m)};
+	if ((_tmp3 < 10)) {
+	alternative
+} else {
+	if ((_tmp3 == 10)) {
+	alternative
+} else {
+	if ((_tmp3 == 12)) {
+	v : A = {getStructValue[(i32, i32, A)](m).2};
+	v
+} else {
+	alternative
+}
+}
+};
+	}
+}
+
+ floor(d : f64, __closure__ : i32) -> i32 {
+	
+	trunc_s<>(if ((d >= 0.0)) {
+	d
+} else {
+	if (({
+	0;
+	(-d - convert_s<>(extend_s<>(trunc_s<>(-d))));
+	} > 0.0)) {
+	(d - 1.0)
+} else {
+	d
+}
+})
+}
+
+ fori(start : i32, end : i32, fn : i32, __closure__ : i32) -> () {
+	
+	var _TMP_TAILCALL_fori : bool = {true};
+	var _ARG_FN__TMP_TAILCALL_fori : i32 = {fn};
+	var _ARG_END__TMP_TAILCALL_fori : i32 = {end};
+	var _ARG_START__TMP_TAILCALL_fori : i32 = {start};
+	while (_TMP_TAILCALL_fori)
+	{
+	_TMP_TAILCALL_fori := false;
+	if ((_ARG_START__TMP_TAILCALL_fori <= _ARG_END__TMP_TAILCALL_fori)) {
+	{
+	getStructValue[(i32, i32, (i32, i32) -> (), i32)](_ARG_FN__TMP_TAILCALL_fori).2(_ARG_START__TMP_TAILCALL_fori, getStructValue[(i32, i32, (i32, i32) -> (), i32)](_ARG_FN__TMP_TAILCALL_fori).3);
+	_TMP_TAILCALL_fori := true;
+	_ARG_FN__TMP_TAILCALL_fori := _ARG_FN__TMP_TAILCALL_fori;
+	_ARG_END__TMP_TAILCALL_fori := _ARG_END__TMP_TAILCALL_fori;
+	_ARG_START__TMP_TAILCALL_fori := (_ARG_START__TMP_TAILCALL_fori + 1);
+	}
+	};
+	}
+
+}
+
+ round(d : f64, __closure__ : i32) -> i32 {
+	
+	floor((d + 0.5), __closure__)
+}
+
+ sieve(n : i32, set : i32, onPrime : i32, __closure__ : i32) -> () {
+	
+	var _TMP_TAILCALL_sieve : bool = {true};
+	var _ARG_ONPRIME__TMP_TAILCALL_sieve : i32 = {onPrime};
+	var _ARG_SET__TMP_TAILCALL_sieve : i32 = {set};
+	var _ARG_N__TMP_TAILCALL_sieve : i32 = {n};
+	while (_TMP_TAILCALL_sieve)
+	{
+	_TMP_TAILCALL_sieve := false;
+	if ((_ARG_N__TMP_TAILCALL_sieve < getStructValue[(i32, i32, i32, i32)](_ARG_SET__TMP_TAILCALL_sieve).3)) {
+	{
+	if (either[bool](getBitSet(_ARG_SET__TMP_TAILCALL_sieve, _ARG_N__TMP_TAILCALL_sieve, __closure__), false, __closure__)) {
+	{
+	clearFactors((_ARG_N__TMP_TAILCALL_sieve + _ARG_N__TMP_TAILCALL_sieve), _ARG_N__TMP_TAILCALL_sieve, _ARG_SET__TMP_TAILCALL_sieve, __closure__);
+	getStructValue[(i32, i32, (i32, i32) -> (), i32)](_ARG_ONPRIME__TMP_TAILCALL_sieve).2(_ARG_N__TMP_TAILCALL_sieve, getStructValue[(i32, i32, (i32, i32) -> (), i32)](_ARG_ONPRIME__TMP_TAILCALL_sieve).3);
+	}
+	};
+	_TMP_TAILCALL_sieve := true;
+	_ARG_ONPRIME__TMP_TAILCALL_sieve := _ARG_ONPRIME__TMP_TAILCALL_sieve;
+	_ARG_SET__TMP_TAILCALL_sieve := _ARG_SET__TMP_TAILCALL_sieve;
+	_ARG_N__TMP_TAILCALL_sieve := (_ARG_N__TMP_TAILCALL_sieve + 1);
+	}
+	};
+	}
+
+}
+
+ euler7(target : i32, __closure__ : i32) -> () {
+	
+	E_CONST : f64 = {2.71828182845904};
+	size : i32 = {(target * round((E_CONST * log(convert_s<>(extend_s<>(target)))), __closure__))};
+	set : i32 = {makeBitSet(size, __closure__)};
+	{
+	fori(2, size, createStruct[((i32, i32) -> (), i32)](15, (euler_euler7__lambda__1966__1, createStruct[(i32)](16, (set,)),)), __closure__);
+	count : i32 = {createRef[i32](0)};
+	sieve(2, set, createStruct[((i32, i32) -> (), i32)](13, (euler_euler7__lambda__2173__2, createStruct[(i32, i32)](14, (count, target,)),)), __closure__);
+	}
+}
+
+ export _start() -> () {
+	initMemory();
+	euler7(10001, 0)
+}
+
+ euler_euler7__lambda__1966__1(i : i32, __closure__ : i32) -> () {
+	
+	{
+	setBitSet(getStructValue[(i32, i32, i32)](__closure__).2, i, __closure__);
+	();
+	}
+}
+
+ euler_euler7__lambda__2173__2(prime : i32, __closure__ : i32) -> () {
+	
+	{
+	tmp2 : bool = {setRef[i32](getStructValue[(i32, i32, i32, i32)](__closure__).2, (getRef[i32](getStructValue[(i32, i32, i32, i32)](__closure__).2) + 1))};
+	;
+	if ((getRef[i32](getStructValue[(i32, i32, i32, i32)](__closure__).2) == getStructValue[(i32, i32, i32, i32)](__closure__).3)) {
+		//println[auto](prime)
+		printlni32(prime)
+	};
+	}
+}

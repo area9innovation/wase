@@ -1,0 +1,128 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/math;
+include tools/flowc/backends/wise/lib/reference;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ foldRange[A](start : i32, end : i32, acc : A, fn : i32, __closure__ : i32) -> A {
+	
+	var _RES__TMP_TAILCALL_foldRange : A = {defoftype(A)};
+	var _TMP_TAILCALL_foldRange : bool = {true};
+	var _ARG_FN__TMP_TAILCALL_foldRange : i32 = {fn};
+	var _ARG_ACC__TMP_TAILCALL_foldRange : A = {acc};
+	var _ARG_END__TMP_TAILCALL_foldRange : i32 = {end};
+	var _ARG_START__TMP_TAILCALL_foldRange : i32 = {start};
+	{
+	while (_TMP_TAILCALL_foldRange)
+	{
+	_TMP_TAILCALL_foldRange := false;
+	if ((_ARG_START__TMP_TAILCALL_foldRange <= _ARG_END__TMP_TAILCALL_foldRange)) {
+	{
+	_TMP_TAILCALL_foldRange := true;
+	_ARG_FN__TMP_TAILCALL_foldRange := _ARG_FN__TMP_TAILCALL_foldRange;
+	_ARG_ACC__TMP_TAILCALL_foldRange := getStructValue[(i32, i32, (A, i32, i32) -> A, i32)](_ARG_FN__TMP_TAILCALL_foldRange).2(_ARG_ACC__TMP_TAILCALL_foldRange, _ARG_START__TMP_TAILCALL_foldRange, getStructValue[(i32, i32, (A, i32, i32) -> A, i32)](_ARG_FN__TMP_TAILCALL_foldRange).3);
+	_ARG_END__TMP_TAILCALL_foldRange := _ARG_END__TMP_TAILCALL_foldRange;
+	_ARG_START__TMP_TAILCALL_foldRange := (_ARG_START__TMP_TAILCALL_foldRange + 1);
+	}
+} else {
+	_RES__TMP_TAILCALL_foldRange := _ARG_ACC__TMP_TAILCALL_foldRange
+};
+	}
+;
+	_RES__TMP_TAILCALL_foldRange;
+	}
+}
+
+ strsubsmart(s : i32, start : i32, len : i32, __closure__ : i32) -> i32 {
+	
+	if (({
+	0;
+	(start >= 0);
+	} && {
+	0;
+	(len > 0);
+	})) {
+	substring(s, start, len)
+} else {
+	slen : i32 = {strlen(s)};
+	trueStart : i32 = {if ((start >= 0)) {
+	start
+} else {
+	ss : i32 = {(slen + start)};
+	if ((ss >= 0)) {
+	ss
+} else {
+	0
+}
+}};
+	trueLength : i32 = {if ((len > 0)) {
+	len
+} else {
+	({
+	0;
+	(slen + len);
+	} - trueStart)
+}};
+	substring(s, trueStart, trueLength)
+}
+}
+
+ isPalindromic(s : i32, __closure__ : i32) -> bool {
+	
+	var _RES__TMP_TAILCALL_isPalindromic : bool = {defoftype(bool)};
+	var _TMP_TAILCALL_isPalindromic : bool = {true};
+	var _ARG_S__TMP_TAILCALL_isPalindromic : i32 = {s};
+	{
+	while (_TMP_TAILCALL_isPalindromic)
+	{
+	_TMP_TAILCALL_isPalindromic := false;
+	l : i32 = {strlen(_ARG_S__TMP_TAILCALL_isPalindromic)};
+	_RES__TMP_TAILCALL_isPalindromic := ({
+	0;
+	(l <= 1);
+	} || {
+	0;
+	first : i32 = {getCharCodeAt(_ARG_S__TMP_TAILCALL_isPalindromic, 0)};
+	last : i32 = {getCharCodeAt(_ARG_S__TMP_TAILCALL_isPalindromic, (l - 1))};
+	({
+	0;
+	(first == last);
+	} && {
+	_TMP_TAILCALL_isPalindromic := true;
+	_ARG_S__TMP_TAILCALL_isPalindromic := strsubsmart(_ARG_S__TMP_TAILCALL_isPalindromic, 1, -1, __closure__);
+	_RES__TMP_TAILCALL_isPalindromic;
+	});
+	});
+	}
+;
+	_RES__TMP_TAILCALL_isPalindromic;
+	}
+}
+
+ euler4(__closure__ : i32) -> i32 {
+	
+	foldRange[i32](100, 999, 0, createStruct[((i32, i32, i32) -> i32, i32)](6, (euler_euler4__lambda__2023__0, createStruct[()](7, ()),)), __closure__)
+}
+
+ export _start() -> () {
+	initMemory();
+	printlni32(euler4(0))
+}
+
+ euler_euler4__lambda__2023__0(acc : i32, a : i32, __closure__ : i32) -> i32 {
+	
+	foldRange[i32](100, 999, acc, createStruct[((i32, i32, i32) -> i32, i32)](4, (euler_euler4__lambda__2069__1, createStruct[(i32)](5, (a,)),)), __closure__)
+}
+
+ euler_euler4__lambda__2069__1(acc2 : i32, b : i32, __closure__ : i32) -> i32 {
+	p : i32 = {(getStructValue[(i32, i32, i32)](__closure__).2 * b)};
+	if (({
+	0;
+	(p < acc2);
+	} || !isPalindromic(i2s(p), __closure__))) {
+	acc2
+} else {
+	p
+}
+}

@@ -1,0 +1,1330 @@
+include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/math;
+include tools/flowc/backends/wise/lib/reference;
+include tools/flowc/backends/wise/lib/tuple;
+include tools/flowc/backends/wise/lib/array;
+include tools/flowc/backends/wise/lib/string;
+
+ b2i(b : bool, __closure__ : i32) -> i32 {
+	
+	if (b) {
+	1
+} else {
+	0
+}
+}
+
+ foldRange[A](start : i32, end : i32, acc : A, fn : i32, __closure__ : i32) -> A {
+	
+	var _RES__TMP_TAILCALL_foldRange : A = {defoftype(A)};
+	var _TMP_TAILCALL_foldRange : bool = {true};
+	var _ARG_FN__TMP_TAILCALL_foldRange : i32 = {fn};
+	var _ARG_ACC__TMP_TAILCALL_foldRange : A = {acc};
+	var _ARG_END__TMP_TAILCALL_foldRange : i32 = {end};
+	var _ARG_START__TMP_TAILCALL_foldRange : i32 = {start};
+	{
+	while (_TMP_TAILCALL_foldRange)
+	{
+	_TMP_TAILCALL_foldRange := false;
+	if ((_ARG_START__TMP_TAILCALL_foldRange <= _ARG_END__TMP_TAILCALL_foldRange)) {
+	{
+	_TMP_TAILCALL_foldRange := true;
+	_ARG_FN__TMP_TAILCALL_foldRange := _ARG_FN__TMP_TAILCALL_foldRange;
+	_ARG_ACC__TMP_TAILCALL_foldRange := getStructValue[(i32, i32, (A, i32, i32) -> A, i32)](_ARG_FN__TMP_TAILCALL_foldRange).2(_ARG_ACC__TMP_TAILCALL_foldRange, _ARG_START__TMP_TAILCALL_foldRange, getStructValue[(i32, i32, (A, i32, i32) -> A, i32)](_ARG_FN__TMP_TAILCALL_foldRange).3);
+	_ARG_END__TMP_TAILCALL_foldRange := _ARG_END__TMP_TAILCALL_foldRange;
+	_ARG_START__TMP_TAILCALL_foldRange := (_ARG_START__TMP_TAILCALL_foldRange + 1);
+	}
+} else {
+	_RES__TMP_TAILCALL_foldRange := _ARG_ACC__TMP_TAILCALL_foldRange
+};
+	}
+;
+	_RES__TMP_TAILCALL_foldRange;
+	}
+}
+
+ getCharAt(s : i32, n : i32, __closure__ : i32) -> i32 {
+	
+	substring(s, n, 1)
+}
+
+ getDigitCode(c : i32, __closure__ : i32) -> i32 {
+	
+	if (({
+	0;
+	(48 <= c);
+	} && {
+	0;
+	(c <= 57);
+	})) {
+	(c - 48)
+} else {
+	-1
+}
+}
+
+ isNanOrInf(d : f64, __closure__ : i32) -> bool {
+	
+	({
+	0;
+	({
+	0;
+	(d == {
+	0;
+	(2.0 * d);
+	});
+	} && {
+	0;
+	(d != 0.0);
+	});
+	} || {
+	0;
+	(d != d);
+	})
+}
+
+ max[A](a : A, b : A, __closure__ : i32) -> A {
+	
+	if ((a > b)) {
+	a
+} else {
+	b
+}
+}
+
+ shiftExponent(acc : f64, exponent : i32, __closure__ : i32) -> f64 {
+	
+	var _RES__TMP_TAILCALL_shiftExponent : f64 = {defoftype(f64)};
+	var _TMP_TAILCALL_shiftExponent : bool = {true};
+	var _ARG_EXPONENT__TMP_TAILCALL_shiftExponent : i32 = {exponent};
+	var _ARG_ACC__TMP_TAILCALL_shiftExponent : f64 = {acc};
+	{
+	while (_TMP_TAILCALL_shiftExponent)
+	{
+	_TMP_TAILCALL_shiftExponent := false;
+	if ((_ARG_EXPONENT__TMP_TAILCALL_shiftExponent == 0)) {
+	_RES__TMP_TAILCALL_shiftExponent := _ARG_ACC__TMP_TAILCALL_shiftExponent
+} else {
+	if ((_ARG_EXPONENT__TMP_TAILCALL_shiftExponent < 0)) {
+	{
+	_TMP_TAILCALL_shiftExponent := true;
+	_ARG_EXPONENT__TMP_TAILCALL_shiftExponent := (_ARG_EXPONENT__TMP_TAILCALL_shiftExponent + 1);
+	_ARG_ACC__TMP_TAILCALL_shiftExponent := (_ARG_ACC__TMP_TAILCALL_shiftExponent / 10.0);
+	}
+} else {
+	{
+	_TMP_TAILCALL_shiftExponent := true;
+	_ARG_EXPONENT__TMP_TAILCALL_shiftExponent := (_ARG_EXPONENT__TMP_TAILCALL_shiftExponent - 1);
+	_ARG_ACC__TMP_TAILCALL_shiftExponent := (_ARG_ACC__TMP_TAILCALL_shiftExponent * 10.0);
+	}
+}
+};
+	}
+;
+	_RES__TMP_TAILCALL_shiftExponent;
+	}
+}
+
+ s2i2(s : i32, i : i32, n : i32, acc : i32, __closure__ : i32) -> i32 {
+	
+	var _RES__TMP_TAILCALL_s2i2 : i32 = {defoftype(i32)};
+	var _TMP_TAILCALL_s2i2 : bool = {true};
+	var _ARG_ACC__TMP_TAILCALL_s2i2 : i32 = {acc};
+	var _ARG_N__TMP_TAILCALL_s2i2 : i32 = {n};
+	var _ARG_I__TMP_TAILCALL_s2i2 : i32 = {i};
+	var _ARG_S__TMP_TAILCALL_s2i2 : i32 = {s};
+	{
+	while (_TMP_TAILCALL_s2i2)
+	{
+	_TMP_TAILCALL_s2i2 := false;
+	if ((_ARG_I__TMP_TAILCALL_s2i2 < _ARG_N__TMP_TAILCALL_s2i2)) {
+	c : i32 = {getCharCodeAt(_ARG_S__TMP_TAILCALL_s2i2, _ARG_I__TMP_TAILCALL_s2i2)};
+	d : i32 = {getDigitCode(c, __closure__)};
+	if ((d != -1)) {
+	{
+	_TMP_TAILCALL_s2i2 := true;
+	_ARG_ACC__TMP_TAILCALL_s2i2 := ({
+	0;
+	(10 * _ARG_ACC__TMP_TAILCALL_s2i2);
+	} + d);
+	_ARG_N__TMP_TAILCALL_s2i2 := _ARG_N__TMP_TAILCALL_s2i2;
+	_ARG_I__TMP_TAILCALL_s2i2 := (_ARG_I__TMP_TAILCALL_s2i2 + 1);
+	_ARG_S__TMP_TAILCALL_s2i2 := _ARG_S__TMP_TAILCALL_s2i2;
+	}
+} else {
+	_RES__TMP_TAILCALL_s2i2 := _ARG_ACC__TMP_TAILCALL_s2i2
+}
+} else {
+	_RES__TMP_TAILCALL_s2i2 := _ARG_ACC__TMP_TAILCALL_s2i2
+};
+	}
+;
+	_RES__TMP_TAILCALL_s2i2;
+	}
+}
+
+ stringFoldChar[A](s : i32, a : A, f : i32, __closure__ : i32) -> A {
+	
+	foldRange[A](0, (strlen(s) - 1), a, createStruct[((A, i32, i32) -> A, i32)](11, (euler_euler8__lambda__3226__2[A], createStruct[(i32, i32)](14, (f, s,)),)), __closure__)
+}
+
+ s2dexp(s : i32, i : i32, n : i32, acc : f64, __closure__ : i32) -> f64 {
+	
+	if ((i < n)) {
+	c : i32 = {getCharCodeAt(s, i)};
+	expNeg : bool = {(c == 45)};
+	expPos : bool = {(c == 43)};
+	exponent : i32 = {s2i2(s, (i + b2i((expNeg || expPos), __closure__)), n, 0, __closure__)};
+	shiftExponent(acc, if (expNeg) {
+	(0 - exponent)
+} else {
+	exponent
+}, __closure__)
+} else {
+	acc
+}
+}
+
+ s2dfrac(s : i32, i : i32, n : i32, acc : f64, fracacc : f64, __closure__ : i32) -> i32 {
+	
+	if ((i < n)) {
+	c : i32 = {getCharCodeAt(s, i)};
+	d : i32 = {getDigitCode(c, __closure__)};
+	if ((d != -1)) {
+	fracres : i32 = {s2dfrac(s, (i + 1), n, ({
+	0;
+	(acc * 10.0);
+	} + convert_s<>(extend_s<>(d))), (fracacc * 10.0), __closure__)};
+	createStruct[(f64, f64)](18, (getStructValue[(i32, i32, f64, f64)](fracres).2, getStructValue[(i32, i32, f64, f64)](fracres).3,))
+} else {
+	if (({
+	0;
+	(c == 69);
+	} || {
+	0;
+	(c == 101);
+	})) {
+	createStruct[(f64, f64)](18, (s2dexp(s, (i + 1), n, (acc / fracacc), __closure__), 1.0,))
+} else {
+	createStruct[(f64, f64)](18, (acc, fracacc,))
+}
+}
+} else {
+	createStruct[(f64, f64)](18, (acc, fracacc,))
+}
+}
+
+ s2dint(s : i32, i : i32, n : i32, acc : f64, __closure__ : i32) -> f64 {
+	
+	var _RES__TMP_TAILCALL_s2dint : f64 = {defoftype(f64)};
+	var _TMP_TAILCALL_s2dint : bool = {true};
+	var _ARG_ACC__TMP_TAILCALL_s2dint : f64 = {acc};
+	var _ARG_N__TMP_TAILCALL_s2dint : i32 = {n};
+	var _ARG_I__TMP_TAILCALL_s2dint : i32 = {i};
+	var _ARG_S__TMP_TAILCALL_s2dint : i32 = {s};
+	{
+	while (_TMP_TAILCALL_s2dint)
+	{
+	_TMP_TAILCALL_s2dint := false;
+	if ((_ARG_I__TMP_TAILCALL_s2dint < _ARG_N__TMP_TAILCALL_s2dint)) {
+	c : i32 = {getCharCodeAt(_ARG_S__TMP_TAILCALL_s2dint, _ARG_I__TMP_TAILCALL_s2dint)};
+	d : i32 = {getDigitCode(c, __closure__)};
+	if ((d != -1)) {
+	{
+	_TMP_TAILCALL_s2dint := true;
+	_ARG_ACC__TMP_TAILCALL_s2dint := ({
+	0;
+	(10.0 * _ARG_ACC__TMP_TAILCALL_s2dint);
+	} + convert_s<>(extend_s<>(d)));
+	_ARG_N__TMP_TAILCALL_s2dint := _ARG_N__TMP_TAILCALL_s2dint;
+	_ARG_I__TMP_TAILCALL_s2dint := (_ARG_I__TMP_TAILCALL_s2dint + 1);
+	_ARG_S__TMP_TAILCALL_s2dint := _ARG_S__TMP_TAILCALL_s2dint;
+	}
+} else {
+	if ((c == 46)) {
+	fracres : i32 = {s2dfrac(_ARG_S__TMP_TAILCALL_s2dint, (_ARG_I__TMP_TAILCALL_s2dint + 1), _ARG_N__TMP_TAILCALL_s2dint, _ARG_ACC__TMP_TAILCALL_s2dint, 10.0, __closure__)};
+	mult : f64 = {(10.0 * getStructValue[(i32, i32, f64, f64)](fracres).2)};
+	if (isNanOrInf(mult, __closure__)) {
+	_RES__TMP_TAILCALL_s2dint := ({
+	0;
+	(getStructValue[(i32, i32, f64, f64)](fracres).2 / getStructValue[(i32, i32, f64, f64)](fracres).3);
+	} * 10.0)
+} else {
+	_RES__TMP_TAILCALL_s2dint := (mult / getStructValue[(i32, i32, f64, f64)](fracres).3)
+}
+} else {
+	if (({
+	0;
+	(c == 69);
+	} || {
+	0;
+	(c == 101);
+	})) {
+	_RES__TMP_TAILCALL_s2dint := s2dexp(_ARG_S__TMP_TAILCALL_s2dint, (_ARG_I__TMP_TAILCALL_s2dint + 1), _ARG_N__TMP_TAILCALL_s2dint, _ARG_ACC__TMP_TAILCALL_s2dint, __closure__)
+} else {
+	_RES__TMP_TAILCALL_s2dint := _ARG_ACC__TMP_TAILCALL_s2dint
+}
+}
+}
+} else {
+	_RES__TMP_TAILCALL_s2dint := _ARG_ACC__TMP_TAILCALL_s2dint
+};
+	}
+;
+	_RES__TMP_TAILCALL_s2dint;
+	}
+}
+
+ s2d(s : i32, __closure__ : i32) -> f64 {
+	
+	n : i32 = {strlen(s)};
+	if ((n == 0)) {
+	0.0
+} else {
+	negative : bool = {(getCharCodeAt(s, 0) == 45)};
+	if (negative) {
+	-s2dint(s, 1, n, 0.0, __closure__)
+} else {
+	s2dint(s, 0, n, 0.0, __closure__)
+}
+}
+}
+
+ euler8(digits : i32, len : i32, __closure__ : i32) -> f64 {
+	
+	foldRange[f64](0, ({
+	0;
+	(strlen(digits) - len);
+	} - 1), 0.0, createStruct[((f64, i32, i32) -> f64, i32)](9, (euler_euler8__lambda__4697__0, createStruct[(i32, i32)](10, (digits, len,)),)), __closure__)
+}
+
+ export _start() -> () {
+	initMemory();
+	digits : i32 = {{
+	0;
+	tmp2 : i32 = {createString(1000)};
+	
+	setCharString(tmp2, 0, 55);
+	setCharString(tmp2, 1, 51);
+	setCharString(tmp2, 2, 49);
+	setCharString(tmp2, 3, 54);
+	setCharString(tmp2, 4, 55);
+	setCharString(tmp2, 5, 49);
+	setCharString(tmp2, 6, 55);
+	setCharString(tmp2, 7, 54);
+	setCharString(tmp2, 8, 53);
+	setCharString(tmp2, 9, 51);
+	setCharString(tmp2, 10, 49);
+	setCharString(tmp2, 11, 51);
+	setCharString(tmp2, 12, 51);
+	setCharString(tmp2, 13, 48);
+	setCharString(tmp2, 14, 54);
+	setCharString(tmp2, 15, 50);
+	setCharString(tmp2, 16, 52);
+	setCharString(tmp2, 17, 57);
+	setCharString(tmp2, 18, 49);
+	setCharString(tmp2, 19, 57);
+	setCharString(tmp2, 20, 50);
+	setCharString(tmp2, 21, 50);
+	setCharString(tmp2, 22, 53);
+	setCharString(tmp2, 23, 49);
+	setCharString(tmp2, 24, 49);
+	setCharString(tmp2, 25, 57);
+	setCharString(tmp2, 26, 54);
+	setCharString(tmp2, 27, 55);
+	setCharString(tmp2, 28, 52);
+	setCharString(tmp2, 29, 52);
+	setCharString(tmp2, 30, 50);
+	setCharString(tmp2, 31, 54);
+	setCharString(tmp2, 32, 53);
+	setCharString(tmp2, 33, 55);
+	setCharString(tmp2, 34, 52);
+	setCharString(tmp2, 35, 55);
+	setCharString(tmp2, 36, 52);
+	setCharString(tmp2, 37, 50);
+	setCharString(tmp2, 38, 51);
+	setCharString(tmp2, 39, 53);
+	setCharString(tmp2, 40, 53);
+	setCharString(tmp2, 41, 51);
+	setCharString(tmp2, 42, 52);
+	setCharString(tmp2, 43, 57);
+	setCharString(tmp2, 44, 49);
+	setCharString(tmp2, 45, 57);
+	setCharString(tmp2, 46, 52);
+	setCharString(tmp2, 47, 57);
+	setCharString(tmp2, 48, 51);
+	setCharString(tmp2, 49, 52);
+	setCharString(tmp2, 50, 57);
+	setCharString(tmp2, 51, 54);
+	setCharString(tmp2, 52, 57);
+	setCharString(tmp2, 53, 56);
+	setCharString(tmp2, 54, 51);
+	setCharString(tmp2, 55, 53);
+	setCharString(tmp2, 56, 50);
+	setCharString(tmp2, 57, 48);
+	setCharString(tmp2, 58, 51);
+	setCharString(tmp2, 59, 49);
+	setCharString(tmp2, 60, 50);
+	setCharString(tmp2, 61, 55);
+	setCharString(tmp2, 62, 55);
+	setCharString(tmp2, 63, 52);
+	setCharString(tmp2, 64, 53);
+	setCharString(tmp2, 65, 48);
+	setCharString(tmp2, 66, 54);
+	setCharString(tmp2, 67, 51);
+	setCharString(tmp2, 68, 50);
+	setCharString(tmp2, 69, 54);
+	setCharString(tmp2, 70, 50);
+	setCharString(tmp2, 71, 51);
+	setCharString(tmp2, 72, 57);
+	setCharString(tmp2, 73, 53);
+	setCharString(tmp2, 74, 55);
+	setCharString(tmp2, 75, 56);
+	setCharString(tmp2, 76, 51);
+	setCharString(tmp2, 77, 49);
+	setCharString(tmp2, 78, 56);
+	setCharString(tmp2, 79, 48);
+	setCharString(tmp2, 80, 49);
+	setCharString(tmp2, 81, 54);
+	setCharString(tmp2, 82, 57);
+	setCharString(tmp2, 83, 56);
+	setCharString(tmp2, 84, 52);
+	setCharString(tmp2, 85, 56);
+	setCharString(tmp2, 86, 48);
+	setCharString(tmp2, 87, 49);
+	setCharString(tmp2, 88, 56);
+	setCharString(tmp2, 89, 54);
+	setCharString(tmp2, 90, 57);
+	setCharString(tmp2, 91, 52);
+	setCharString(tmp2, 92, 55);
+	setCharString(tmp2, 93, 56);
+	setCharString(tmp2, 94, 56);
+	setCharString(tmp2, 95, 53);
+	setCharString(tmp2, 96, 49);
+	setCharString(tmp2, 97, 56);
+	setCharString(tmp2, 98, 52);
+	setCharString(tmp2, 99, 51);
+	setCharString(tmp2, 100, 56);
+	setCharString(tmp2, 101, 53);
+	setCharString(tmp2, 102, 56);
+	setCharString(tmp2, 103, 54);
+	setCharString(tmp2, 104, 49);
+	setCharString(tmp2, 105, 53);
+	setCharString(tmp2, 106, 54);
+	setCharString(tmp2, 107, 48);
+	setCharString(tmp2, 108, 55);
+	setCharString(tmp2, 109, 56);
+	setCharString(tmp2, 110, 57);
+	setCharString(tmp2, 111, 49);
+	setCharString(tmp2, 112, 49);
+	setCharString(tmp2, 113, 50);
+	setCharString(tmp2, 114, 57);
+	setCharString(tmp2, 115, 52);
+	setCharString(tmp2, 116, 57);
+	setCharString(tmp2, 117, 52);
+	setCharString(tmp2, 118, 57);
+	setCharString(tmp2, 119, 53);
+	setCharString(tmp2, 120, 52);
+	setCharString(tmp2, 121, 53);
+	setCharString(tmp2, 122, 57);
+	setCharString(tmp2, 123, 53);
+	setCharString(tmp2, 124, 48);
+	setCharString(tmp2, 125, 49);
+	setCharString(tmp2, 126, 55);
+	setCharString(tmp2, 127, 51);
+	setCharString(tmp2, 128, 55);
+	setCharString(tmp2, 129, 57);
+	setCharString(tmp2, 130, 53);
+	setCharString(tmp2, 131, 56);
+	setCharString(tmp2, 132, 51);
+	setCharString(tmp2, 133, 51);
+	setCharString(tmp2, 134, 49);
+	setCharString(tmp2, 135, 57);
+	setCharString(tmp2, 136, 53);
+	setCharString(tmp2, 137, 50);
+	setCharString(tmp2, 138, 56);
+	setCharString(tmp2, 139, 53);
+	setCharString(tmp2, 140, 51);
+	setCharString(tmp2, 141, 50);
+	setCharString(tmp2, 142, 48);
+	setCharString(tmp2, 143, 56);
+	setCharString(tmp2, 144, 56);
+	setCharString(tmp2, 145, 48);
+	setCharString(tmp2, 146, 53);
+	setCharString(tmp2, 147, 53);
+	setCharString(tmp2, 148, 49);
+	setCharString(tmp2, 149, 49);
+	setCharString(tmp2, 150, 49);
+	setCharString(tmp2, 151, 50);
+	setCharString(tmp2, 152, 53);
+	setCharString(tmp2, 153, 52);
+	setCharString(tmp2, 154, 48);
+	setCharString(tmp2, 155, 54);
+	setCharString(tmp2, 156, 57);
+	setCharString(tmp2, 157, 56);
+	setCharString(tmp2, 158, 55);
+	setCharString(tmp2, 159, 52);
+	setCharString(tmp2, 160, 55);
+	setCharString(tmp2, 161, 49);
+	setCharString(tmp2, 162, 53);
+	setCharString(tmp2, 163, 56);
+	setCharString(tmp2, 164, 53);
+	setCharString(tmp2, 165, 50);
+	setCharString(tmp2, 166, 51);
+	setCharString(tmp2, 167, 56);
+	setCharString(tmp2, 168, 54);
+	setCharString(tmp2, 169, 51);
+	setCharString(tmp2, 170, 48);
+	setCharString(tmp2, 171, 53);
+	setCharString(tmp2, 172, 48);
+	setCharString(tmp2, 173, 55);
+	setCharString(tmp2, 174, 49);
+	setCharString(tmp2, 175, 53);
+	setCharString(tmp2, 176, 54);
+	setCharString(tmp2, 177, 57);
+	setCharString(tmp2, 178, 51);
+	setCharString(tmp2, 179, 50);
+	setCharString(tmp2, 180, 57);
+	setCharString(tmp2, 181, 48);
+	setCharString(tmp2, 182, 57);
+	setCharString(tmp2, 183, 54);
+	setCharString(tmp2, 184, 51);
+	setCharString(tmp2, 185, 50);
+	setCharString(tmp2, 186, 57);
+	setCharString(tmp2, 187, 53);
+	setCharString(tmp2, 188, 50);
+	setCharString(tmp2, 189, 50);
+	setCharString(tmp2, 190, 55);
+	setCharString(tmp2, 191, 52);
+	setCharString(tmp2, 192, 52);
+	setCharString(tmp2, 193, 51);
+	setCharString(tmp2, 194, 48);
+	setCharString(tmp2, 195, 52);
+	setCharString(tmp2, 196, 51);
+	setCharString(tmp2, 197, 53);
+	setCharString(tmp2, 198, 53);
+	setCharString(tmp2, 199, 55);
+	setCharString(tmp2, 200, 54);
+	setCharString(tmp2, 201, 54);
+	setCharString(tmp2, 202, 56);
+	setCharString(tmp2, 203, 57);
+	setCharString(tmp2, 204, 54);
+	setCharString(tmp2, 205, 54);
+	setCharString(tmp2, 206, 52);
+	setCharString(tmp2, 207, 56);
+	setCharString(tmp2, 208, 57);
+	setCharString(tmp2, 209, 53);
+	setCharString(tmp2, 210, 48);
+	setCharString(tmp2, 211, 52);
+	setCharString(tmp2, 212, 52);
+	setCharString(tmp2, 213, 53);
+	setCharString(tmp2, 214, 50);
+	setCharString(tmp2, 215, 52);
+	setCharString(tmp2, 216, 52);
+	setCharString(tmp2, 217, 53);
+	setCharString(tmp2, 218, 50);
+	setCharString(tmp2, 219, 51);
+	setCharString(tmp2, 220, 49);
+	setCharString(tmp2, 221, 54);
+	setCharString(tmp2, 222, 49);
+	setCharString(tmp2, 223, 55);
+	setCharString(tmp2, 224, 51);
+	setCharString(tmp2, 225, 49);
+	setCharString(tmp2, 226, 56);
+	setCharString(tmp2, 227, 53);
+	setCharString(tmp2, 228, 54);
+	setCharString(tmp2, 229, 52);
+	setCharString(tmp2, 230, 48);
+	setCharString(tmp2, 231, 51);
+	setCharString(tmp2, 232, 48);
+	setCharString(tmp2, 233, 57);
+	setCharString(tmp2, 234, 56);
+	setCharString(tmp2, 235, 55);
+	setCharString(tmp2, 236, 49);
+	setCharString(tmp2, 237, 49);
+	setCharString(tmp2, 238, 49);
+	setCharString(tmp2, 239, 50);
+	setCharString(tmp2, 240, 49);
+	setCharString(tmp2, 241, 55);
+	setCharString(tmp2, 242, 50);
+	setCharString(tmp2, 243, 50);
+	setCharString(tmp2, 244, 51);
+	setCharString(tmp2, 245, 56);
+	setCharString(tmp2, 246, 51);
+	setCharString(tmp2, 247, 49);
+	setCharString(tmp2, 248, 49);
+	setCharString(tmp2, 249, 51);
+	setCharString(tmp2, 250, 54);
+	setCharString(tmp2, 251, 50);
+	setCharString(tmp2, 252, 50);
+	setCharString(tmp2, 253, 50);
+	setCharString(tmp2, 254, 57);
+	setCharString(tmp2, 255, 56);
+	setCharString(tmp2, 256, 57);
+	setCharString(tmp2, 257, 51);
+	setCharString(tmp2, 258, 52);
+	setCharString(tmp2, 259, 50);
+	setCharString(tmp2, 260, 51);
+	setCharString(tmp2, 261, 51);
+	setCharString(tmp2, 262, 56);
+	setCharString(tmp2, 263, 48);
+	setCharString(tmp2, 264, 51);
+	setCharString(tmp2, 265, 48);
+	setCharString(tmp2, 266, 56);
+	setCharString(tmp2, 267, 49);
+	setCharString(tmp2, 268, 51);
+	setCharString(tmp2, 269, 53);
+	setCharString(tmp2, 270, 51);
+	setCharString(tmp2, 271, 51);
+	setCharString(tmp2, 272, 54);
+	setCharString(tmp2, 273, 50);
+	setCharString(tmp2, 274, 55);
+	setCharString(tmp2, 275, 54);
+	setCharString(tmp2, 276, 54);
+	setCharString(tmp2, 277, 49);
+	setCharString(tmp2, 278, 52);
+	setCharString(tmp2, 279, 50);
+	setCharString(tmp2, 280, 56);
+	setCharString(tmp2, 281, 50);
+	setCharString(tmp2, 282, 56);
+	setCharString(tmp2, 283, 48);
+	setCharString(tmp2, 284, 54);
+	setCharString(tmp2, 285, 52);
+	setCharString(tmp2, 286, 52);
+	setCharString(tmp2, 287, 52);
+	setCharString(tmp2, 288, 52);
+	setCharString(tmp2, 289, 56);
+	setCharString(tmp2, 290, 54);
+	setCharString(tmp2, 291, 54);
+	setCharString(tmp2, 292, 52);
+	setCharString(tmp2, 293, 53);
+	setCharString(tmp2, 294, 50);
+	setCharString(tmp2, 295, 51);
+	setCharString(tmp2, 296, 56);
+	setCharString(tmp2, 297, 55);
+	setCharString(tmp2, 298, 52);
+	setCharString(tmp2, 299, 57);
+	setCharString(tmp2, 300, 51);
+	setCharString(tmp2, 301, 48);
+	setCharString(tmp2, 302, 51);
+	setCharString(tmp2, 303, 53);
+	setCharString(tmp2, 304, 56);
+	setCharString(tmp2, 305, 57);
+	setCharString(tmp2, 306, 48);
+	setCharString(tmp2, 307, 55);
+	setCharString(tmp2, 308, 50);
+	setCharString(tmp2, 309, 57);
+	setCharString(tmp2, 310, 54);
+	setCharString(tmp2, 311, 50);
+	setCharString(tmp2, 312, 57);
+	setCharString(tmp2, 313, 48);
+	setCharString(tmp2, 314, 52);
+	setCharString(tmp2, 315, 57);
+	setCharString(tmp2, 316, 49);
+	setCharString(tmp2, 317, 53);
+	setCharString(tmp2, 318, 54);
+	setCharString(tmp2, 319, 48);
+	setCharString(tmp2, 320, 52);
+	setCharString(tmp2, 321, 52);
+	setCharString(tmp2, 322, 48);
+	setCharString(tmp2, 323, 55);
+	setCharString(tmp2, 324, 55);
+	setCharString(tmp2, 325, 50);
+	setCharString(tmp2, 326, 51);
+	setCharString(tmp2, 327, 57);
+	setCharString(tmp2, 328, 48);
+	setCharString(tmp2, 329, 55);
+	setCharString(tmp2, 330, 49);
+	setCharString(tmp2, 331, 51);
+	setCharString(tmp2, 332, 56);
+	setCharString(tmp2, 333, 49);
+	setCharString(tmp2, 334, 48);
+	setCharString(tmp2, 335, 53);
+	setCharString(tmp2, 336, 49);
+	setCharString(tmp2, 337, 53);
+	setCharString(tmp2, 338, 56);
+	setCharString(tmp2, 339, 53);
+	setCharString(tmp2, 340, 57);
+	setCharString(tmp2, 341, 51);
+	setCharString(tmp2, 342, 48);
+	setCharString(tmp2, 343, 55);
+	setCharString(tmp2, 344, 57);
+	setCharString(tmp2, 345, 54);
+	setCharString(tmp2, 346, 48);
+	setCharString(tmp2, 347, 56);
+	setCharString(tmp2, 348, 54);
+	setCharString(tmp2, 349, 54);
+	setCharString(tmp2, 350, 55);
+	setCharString(tmp2, 351, 48);
+	setCharString(tmp2, 352, 49);
+	setCharString(tmp2, 353, 55);
+	setCharString(tmp2, 354, 50);
+	setCharString(tmp2, 355, 52);
+	setCharString(tmp2, 356, 50);
+	setCharString(tmp2, 357, 55);
+	setCharString(tmp2, 358, 49);
+	setCharString(tmp2, 359, 50);
+	setCharString(tmp2, 360, 49);
+	setCharString(tmp2, 361, 56);
+	setCharString(tmp2, 362, 56);
+	setCharString(tmp2, 363, 51);
+	setCharString(tmp2, 364, 57);
+	setCharString(tmp2, 365, 57);
+	setCharString(tmp2, 366, 56);
+	setCharString(tmp2, 367, 55);
+	setCharString(tmp2, 368, 57);
+	setCharString(tmp2, 369, 55);
+	setCharString(tmp2, 370, 57);
+	setCharString(tmp2, 371, 48);
+	setCharString(tmp2, 372, 56);
+	setCharString(tmp2, 373, 55);
+	setCharString(tmp2, 374, 57);
+	setCharString(tmp2, 375, 50);
+	setCharString(tmp2, 376, 50);
+	setCharString(tmp2, 377, 55);
+	setCharString(tmp2, 378, 52);
+	setCharString(tmp2, 379, 57);
+	setCharString(tmp2, 380, 50);
+	setCharString(tmp2, 381, 49);
+	setCharString(tmp2, 382, 57);
+	setCharString(tmp2, 383, 48);
+	setCharString(tmp2, 384, 49);
+	setCharString(tmp2, 385, 54);
+	setCharString(tmp2, 386, 57);
+	setCharString(tmp2, 387, 57);
+	setCharString(tmp2, 388, 55);
+	setCharString(tmp2, 389, 50);
+	setCharString(tmp2, 390, 48);
+	setCharString(tmp2, 391, 56);
+	setCharString(tmp2, 392, 56);
+	setCharString(tmp2, 393, 56);
+	setCharString(tmp2, 394, 48);
+	setCharString(tmp2, 395, 57);
+	setCharString(tmp2, 396, 51);
+	setCharString(tmp2, 397, 55);
+	setCharString(tmp2, 398, 55);
+	setCharString(tmp2, 399, 54);
+	setCharString(tmp2, 400, 54);
+	setCharString(tmp2, 401, 53);
+	setCharString(tmp2, 402, 55);
+	setCharString(tmp2, 403, 50);
+	setCharString(tmp2, 404, 55);
+	setCharString(tmp2, 405, 51);
+	setCharString(tmp2, 406, 51);
+	setCharString(tmp2, 407, 51);
+	setCharString(tmp2, 408, 48);
+	setCharString(tmp2, 409, 48);
+	setCharString(tmp2, 410, 49);
+	setCharString(tmp2, 411, 48);
+	setCharString(tmp2, 412, 53);
+	setCharString(tmp2, 413, 51);
+	setCharString(tmp2, 414, 51);
+	setCharString(tmp2, 415, 54);
+	setCharString(tmp2, 416, 55);
+	setCharString(tmp2, 417, 56);
+	setCharString(tmp2, 418, 56);
+	setCharString(tmp2, 419, 49);
+	setCharString(tmp2, 420, 50);
+	setCharString(tmp2, 421, 50);
+	setCharString(tmp2, 422, 48);
+	setCharString(tmp2, 423, 50);
+	setCharString(tmp2, 424, 51);
+	setCharString(tmp2, 425, 53);
+	setCharString(tmp2, 426, 52);
+	setCharString(tmp2, 427, 50);
+	setCharString(tmp2, 428, 49);
+	setCharString(tmp2, 429, 56);
+	setCharString(tmp2, 430, 48);
+	setCharString(tmp2, 431, 57);
+	setCharString(tmp2, 432, 55);
+	setCharString(tmp2, 433, 53);
+	setCharString(tmp2, 434, 49);
+	setCharString(tmp2, 435, 50);
+	setCharString(tmp2, 436, 53);
+	setCharString(tmp2, 437, 52);
+	setCharString(tmp2, 438, 53);
+	setCharString(tmp2, 439, 52);
+	setCharString(tmp2, 440, 48);
+	setCharString(tmp2, 441, 53);
+	setCharString(tmp2, 442, 57);
+	setCharString(tmp2, 443, 52);
+	setCharString(tmp2, 444, 55);
+	setCharString(tmp2, 445, 53);
+	setCharString(tmp2, 446, 50);
+	setCharString(tmp2, 447, 50);
+	setCharString(tmp2, 448, 52);
+	setCharString(tmp2, 449, 51);
+	setCharString(tmp2, 450, 53);
+	setCharString(tmp2, 451, 50);
+	setCharString(tmp2, 452, 53);
+	setCharString(tmp2, 453, 56);
+	setCharString(tmp2, 454, 52);
+	setCharString(tmp2, 455, 57);
+	setCharString(tmp2, 456, 48);
+	setCharString(tmp2, 457, 55);
+	setCharString(tmp2, 458, 55);
+	setCharString(tmp2, 459, 49);
+	setCharString(tmp2, 460, 49);
+	setCharString(tmp2, 461, 54);
+	setCharString(tmp2, 462, 55);
+	setCharString(tmp2, 463, 48);
+	setCharString(tmp2, 464, 53);
+	setCharString(tmp2, 465, 53);
+	setCharString(tmp2, 466, 54);
+	setCharString(tmp2, 467, 48);
+	setCharString(tmp2, 468, 49);
+	setCharString(tmp2, 469, 51);
+	setCharString(tmp2, 470, 54);
+	setCharString(tmp2, 471, 48);
+	setCharString(tmp2, 472, 52);
+	setCharString(tmp2, 473, 56);
+	setCharString(tmp2, 474, 51);
+	setCharString(tmp2, 475, 57);
+	setCharString(tmp2, 476, 53);
+	setCharString(tmp2, 477, 56);
+	setCharString(tmp2, 478, 54);
+	setCharString(tmp2, 479, 52);
+	setCharString(tmp2, 480, 52);
+	setCharString(tmp2, 481, 54);
+	setCharString(tmp2, 482, 55);
+	setCharString(tmp2, 483, 48);
+	setCharString(tmp2, 484, 54);
+	setCharString(tmp2, 485, 51);
+	setCharString(tmp2, 486, 50);
+	setCharString(tmp2, 487, 52);
+	setCharString(tmp2, 488, 52);
+	setCharString(tmp2, 489, 49);
+	setCharString(tmp2, 490, 53);
+	setCharString(tmp2, 491, 55);
+	setCharString(tmp2, 492, 50);
+	setCharString(tmp2, 493, 50);
+	setCharString(tmp2, 494, 49);
+	setCharString(tmp2, 495, 53);
+	setCharString(tmp2, 496, 53);
+	setCharString(tmp2, 497, 51);
+	setCharString(tmp2, 498, 57);
+	setCharString(tmp2, 499, 55);
+	setCharString(tmp2, 500, 53);
+	setCharString(tmp2, 501, 51);
+	setCharString(tmp2, 502, 54);
+	setCharString(tmp2, 503, 57);
+	setCharString(tmp2, 504, 55);
+	setCharString(tmp2, 505, 56);
+	setCharString(tmp2, 506, 49);
+	setCharString(tmp2, 507, 55);
+	setCharString(tmp2, 508, 57);
+	setCharString(tmp2, 509, 55);
+	setCharString(tmp2, 510, 55);
+	setCharString(tmp2, 511, 56);
+	setCharString(tmp2, 512, 52);
+	setCharString(tmp2, 513, 54);
+	setCharString(tmp2, 514, 49);
+	setCharString(tmp2, 515, 55);
+	setCharString(tmp2, 516, 52);
+	setCharString(tmp2, 517, 48);
+	setCharString(tmp2, 518, 54);
+	setCharString(tmp2, 519, 52);
+	setCharString(tmp2, 520, 57);
+	setCharString(tmp2, 521, 53);
+	setCharString(tmp2, 522, 53);
+	setCharString(tmp2, 523, 49);
+	setCharString(tmp2, 524, 52);
+	setCharString(tmp2, 525, 57);
+	setCharString(tmp2, 526, 50);
+	setCharString(tmp2, 527, 57);
+	setCharString(tmp2, 528, 48);
+	setCharString(tmp2, 529, 56);
+	setCharString(tmp2, 530, 54);
+	setCharString(tmp2, 531, 50);
+	setCharString(tmp2, 532, 53);
+	setCharString(tmp2, 533, 54);
+	setCharString(tmp2, 534, 57);
+	setCharString(tmp2, 535, 51);
+	setCharString(tmp2, 536, 50);
+	setCharString(tmp2, 537, 49);
+	setCharString(tmp2, 538, 57);
+	setCharString(tmp2, 539, 55);
+	setCharString(tmp2, 540, 56);
+	setCharString(tmp2, 541, 52);
+	setCharString(tmp2, 542, 54);
+	setCharString(tmp2, 543, 56);
+	setCharString(tmp2, 544, 54);
+	setCharString(tmp2, 545, 50);
+	setCharString(tmp2, 546, 50);
+	setCharString(tmp2, 547, 52);
+	setCharString(tmp2, 548, 56);
+	setCharString(tmp2, 549, 50);
+	setCharString(tmp2, 550, 56);
+	setCharString(tmp2, 551, 51);
+	setCharString(tmp2, 552, 57);
+	setCharString(tmp2, 553, 55);
+	setCharString(tmp2, 554, 50);
+	setCharString(tmp2, 555, 50);
+	setCharString(tmp2, 556, 52);
+	setCharString(tmp2, 557, 49);
+	setCharString(tmp2, 558, 51);
+	setCharString(tmp2, 559, 55);
+	setCharString(tmp2, 560, 53);
+	setCharString(tmp2, 561, 54);
+	setCharString(tmp2, 562, 53);
+	setCharString(tmp2, 563, 55);
+	setCharString(tmp2, 564, 48);
+	setCharString(tmp2, 565, 53);
+	setCharString(tmp2, 566, 54);
+	setCharString(tmp2, 567, 48);
+	setCharString(tmp2, 568, 53);
+	setCharString(tmp2, 569, 55);
+	setCharString(tmp2, 570, 52);
+	setCharString(tmp2, 571, 57);
+	setCharString(tmp2, 572, 48);
+	setCharString(tmp2, 573, 50);
+	setCharString(tmp2, 574, 54);
+	setCharString(tmp2, 575, 49);
+	setCharString(tmp2, 576, 52);
+	setCharString(tmp2, 577, 48);
+	setCharString(tmp2, 578, 55);
+	setCharString(tmp2, 579, 57);
+	setCharString(tmp2, 580, 55);
+	setCharString(tmp2, 581, 50);
+	setCharString(tmp2, 582, 57);
+	setCharString(tmp2, 583, 54);
+	setCharString(tmp2, 584, 56);
+	setCharString(tmp2, 585, 54);
+	setCharString(tmp2, 586, 53);
+	setCharString(tmp2, 587, 50);
+	setCharString(tmp2, 588, 52);
+	setCharString(tmp2, 589, 49);
+	setCharString(tmp2, 590, 52);
+	setCharString(tmp2, 591, 53);
+	setCharString(tmp2, 592, 51);
+	setCharString(tmp2, 593, 53);
+	setCharString(tmp2, 594, 49);
+	setCharString(tmp2, 595, 48);
+	setCharString(tmp2, 596, 48);
+	setCharString(tmp2, 597, 52);
+	setCharString(tmp2, 598, 55);
+	setCharString(tmp2, 599, 52);
+	setCharString(tmp2, 600, 56);
+	setCharString(tmp2, 601, 50);
+	setCharString(tmp2, 602, 49);
+	setCharString(tmp2, 603, 54);
+	setCharString(tmp2, 604, 54);
+	setCharString(tmp2, 605, 51);
+	setCharString(tmp2, 606, 55);
+	setCharString(tmp2, 607, 48);
+	setCharString(tmp2, 608, 52);
+	setCharString(tmp2, 609, 56);
+	setCharString(tmp2, 610, 52);
+	setCharString(tmp2, 611, 52);
+	setCharString(tmp2, 612, 48);
+	setCharString(tmp2, 613, 51);
+	setCharString(tmp2, 614, 49);
+	setCharString(tmp2, 615, 57);
+	setCharString(tmp2, 616, 57);
+	setCharString(tmp2, 617, 56);
+	setCharString(tmp2, 618, 57);
+	setCharString(tmp2, 619, 48);
+	setCharString(tmp2, 620, 48);
+	setCharString(tmp2, 621, 48);
+	setCharString(tmp2, 622, 56);
+	setCharString(tmp2, 623, 56);
+	setCharString(tmp2, 624, 57);
+	setCharString(tmp2, 625, 53);
+	setCharString(tmp2, 626, 50);
+	setCharString(tmp2, 627, 52);
+	setCharString(tmp2, 628, 51);
+	setCharString(tmp2, 629, 52);
+	setCharString(tmp2, 630, 53);
+	setCharString(tmp2, 631, 48);
+	setCharString(tmp2, 632, 54);
+	setCharString(tmp2, 633, 53);
+	setCharString(tmp2, 634, 56);
+	setCharString(tmp2, 635, 53);
+	setCharString(tmp2, 636, 52);
+	setCharString(tmp2, 637, 49);
+	setCharString(tmp2, 638, 50);
+	setCharString(tmp2, 639, 50);
+	setCharString(tmp2, 640, 55);
+	setCharString(tmp2, 641, 53);
+	setCharString(tmp2, 642, 56);
+	setCharString(tmp2, 643, 56);
+	setCharString(tmp2, 644, 54);
+	setCharString(tmp2, 645, 54);
+	setCharString(tmp2, 646, 54);
+	setCharString(tmp2, 647, 56);
+	setCharString(tmp2, 648, 56);
+	setCharString(tmp2, 649, 49);
+	setCharString(tmp2, 650, 49);
+	setCharString(tmp2, 651, 54);
+	setCharString(tmp2, 652, 52);
+	setCharString(tmp2, 653, 50);
+	setCharString(tmp2, 654, 55);
+	setCharString(tmp2, 655, 49);
+	setCharString(tmp2, 656, 55);
+	setCharString(tmp2, 657, 49);
+	setCharString(tmp2, 658, 52);
+	setCharString(tmp2, 659, 55);
+	setCharString(tmp2, 660, 57);
+	setCharString(tmp2, 661, 57);
+	setCharString(tmp2, 662, 50);
+	setCharString(tmp2, 663, 52);
+	setCharString(tmp2, 664, 52);
+	setCharString(tmp2, 665, 52);
+	setCharString(tmp2, 666, 50);
+	setCharString(tmp2, 667, 57);
+	setCharString(tmp2, 668, 50);
+	setCharString(tmp2, 669, 56);
+	setCharString(tmp2, 670, 50);
+	setCharString(tmp2, 671, 51);
+	setCharString(tmp2, 672, 48);
+	setCharString(tmp2, 673, 56);
+	setCharString(tmp2, 674, 54);
+	setCharString(tmp2, 675, 51);
+	setCharString(tmp2, 676, 52);
+	setCharString(tmp2, 677, 54);
+	setCharString(tmp2, 678, 53);
+	setCharString(tmp2, 679, 54);
+	setCharString(tmp2, 680, 55);
+	setCharString(tmp2, 681, 52);
+	setCharString(tmp2, 682, 56);
+	setCharString(tmp2, 683, 49);
+	setCharString(tmp2, 684, 51);
+	setCharString(tmp2, 685, 57);
+	setCharString(tmp2, 686, 49);
+	setCharString(tmp2, 687, 57);
+	setCharString(tmp2, 688, 49);
+	setCharString(tmp2, 689, 50);
+	setCharString(tmp2, 690, 51);
+	setCharString(tmp2, 691, 49);
+	setCharString(tmp2, 692, 54);
+	setCharString(tmp2, 693, 50);
+	setCharString(tmp2, 694, 56);
+	setCharString(tmp2, 695, 50);
+	setCharString(tmp2, 696, 52);
+	setCharString(tmp2, 697, 53);
+	setCharString(tmp2, 698, 56);
+	setCharString(tmp2, 699, 54);
+	setCharString(tmp2, 700, 49);
+	setCharString(tmp2, 701, 55);
+	setCharString(tmp2, 702, 56);
+	setCharString(tmp2, 703, 54);
+	setCharString(tmp2, 704, 54);
+	setCharString(tmp2, 705, 52);
+	setCharString(tmp2, 706, 53);
+	setCharString(tmp2, 707, 56);
+	setCharString(tmp2, 708, 51);
+	setCharString(tmp2, 709, 53);
+	setCharString(tmp2, 710, 57);
+	setCharString(tmp2, 711, 49);
+	setCharString(tmp2, 712, 50);
+	setCharString(tmp2, 713, 52);
+	setCharString(tmp2, 714, 53);
+	setCharString(tmp2, 715, 54);
+	setCharString(tmp2, 716, 54);
+	setCharString(tmp2, 717, 53);
+	setCharString(tmp2, 718, 50);
+	setCharString(tmp2, 719, 57);
+	setCharString(tmp2, 720, 52);
+	setCharString(tmp2, 721, 55);
+	setCharString(tmp2, 722, 54);
+	setCharString(tmp2, 723, 53);
+	setCharString(tmp2, 724, 52);
+	setCharString(tmp2, 725, 53);
+	setCharString(tmp2, 726, 54);
+	setCharString(tmp2, 727, 56);
+	setCharString(tmp2, 728, 50);
+	setCharString(tmp2, 729, 56);
+	setCharString(tmp2, 730, 52);
+	setCharString(tmp2, 731, 56);
+	setCharString(tmp2, 732, 57);
+	setCharString(tmp2, 733, 49);
+	setCharString(tmp2, 734, 50);
+	setCharString(tmp2, 735, 56);
+	setCharString(tmp2, 736, 56);
+	setCharString(tmp2, 737, 51);
+	setCharString(tmp2, 738, 49);
+	setCharString(tmp2, 739, 52);
+	setCharString(tmp2, 740, 50);
+	setCharString(tmp2, 741, 54);
+	setCharString(tmp2, 742, 48);
+	setCharString(tmp2, 743, 55);
+	setCharString(tmp2, 744, 54);
+	setCharString(tmp2, 745, 57);
+	setCharString(tmp2, 746, 48);
+	setCharString(tmp2, 747, 48);
+	setCharString(tmp2, 748, 52);
+	setCharString(tmp2, 749, 50);
+	setCharString(tmp2, 750, 50);
+	setCharString(tmp2, 751, 52);
+	setCharString(tmp2, 752, 50);
+	setCharString(tmp2, 753, 49);
+	setCharString(tmp2, 754, 57);
+	setCharString(tmp2, 755, 48);
+	setCharString(tmp2, 756, 50);
+	setCharString(tmp2, 757, 50);
+	setCharString(tmp2, 758, 54);
+	setCharString(tmp2, 759, 55);
+	setCharString(tmp2, 760, 49);
+	setCharString(tmp2, 761, 48);
+	setCharString(tmp2, 762, 53);
+	setCharString(tmp2, 763, 53);
+	setCharString(tmp2, 764, 54);
+	setCharString(tmp2, 765, 50);
+	setCharString(tmp2, 766, 54);
+	setCharString(tmp2, 767, 51);
+	setCharString(tmp2, 768, 50);
+	setCharString(tmp2, 769, 49);
+	setCharString(tmp2, 770, 49);
+	setCharString(tmp2, 771, 49);
+	setCharString(tmp2, 772, 49);
+	setCharString(tmp2, 773, 49);
+	setCharString(tmp2, 774, 48);
+	setCharString(tmp2, 775, 57);
+	setCharString(tmp2, 776, 51);
+	setCharString(tmp2, 777, 55);
+	setCharString(tmp2, 778, 48);
+	setCharString(tmp2, 779, 53);
+	setCharString(tmp2, 780, 52);
+	setCharString(tmp2, 781, 52);
+	setCharString(tmp2, 782, 50);
+	setCharString(tmp2, 783, 49);
+	setCharString(tmp2, 784, 55);
+	setCharString(tmp2, 785, 53);
+	setCharString(tmp2, 786, 48);
+	setCharString(tmp2, 787, 54);
+	setCharString(tmp2, 788, 57);
+	setCharString(tmp2, 789, 52);
+	setCharString(tmp2, 790, 49);
+	setCharString(tmp2, 791, 54);
+	setCharString(tmp2, 792, 53);
+	setCharString(tmp2, 793, 56);
+	setCharString(tmp2, 794, 57);
+	setCharString(tmp2, 795, 54);
+	setCharString(tmp2, 796, 48);
+	setCharString(tmp2, 797, 52);
+	setCharString(tmp2, 798, 48);
+	setCharString(tmp2, 799, 56);
+	setCharString(tmp2, 800, 48);
+	setCharString(tmp2, 801, 55);
+	setCharString(tmp2, 802, 49);
+	setCharString(tmp2, 803, 57);
+	setCharString(tmp2, 804, 56);
+	setCharString(tmp2, 805, 52);
+	setCharString(tmp2, 806, 48);
+	setCharString(tmp2, 807, 51);
+	setCharString(tmp2, 808, 56);
+	setCharString(tmp2, 809, 53);
+	setCharString(tmp2, 810, 48);
+	setCharString(tmp2, 811, 57);
+	setCharString(tmp2, 812, 54);
+	setCharString(tmp2, 813, 50);
+	setCharString(tmp2, 814, 52);
+	setCharString(tmp2, 815, 53);
+	setCharString(tmp2, 816, 53);
+	setCharString(tmp2, 817, 52);
+	setCharString(tmp2, 818, 52);
+	setCharString(tmp2, 819, 52);
+	setCharString(tmp2, 820, 51);
+	setCharString(tmp2, 821, 54);
+	setCharString(tmp2, 822, 50);
+	setCharString(tmp2, 823, 57);
+	setCharString(tmp2, 824, 56);
+	setCharString(tmp2, 825, 49);
+	setCharString(tmp2, 826, 50);
+	setCharString(tmp2, 827, 51);
+	setCharString(tmp2, 828, 48);
+	setCharString(tmp2, 829, 57);
+	setCharString(tmp2, 830, 56);
+	setCharString(tmp2, 831, 55);
+	setCharString(tmp2, 832, 56);
+	setCharString(tmp2, 833, 55);
+	setCharString(tmp2, 834, 57);
+	setCharString(tmp2, 835, 57);
+	setCharString(tmp2, 836, 50);
+	setCharString(tmp2, 837, 55);
+	setCharString(tmp2, 838, 50);
+	setCharString(tmp2, 839, 52);
+	setCharString(tmp2, 840, 52);
+	setCharString(tmp2, 841, 50);
+	setCharString(tmp2, 842, 56);
+	setCharString(tmp2, 843, 52);
+	setCharString(tmp2, 844, 57);
+	setCharString(tmp2, 845, 48);
+	setCharString(tmp2, 846, 57);
+	setCharString(tmp2, 847, 49);
+	setCharString(tmp2, 848, 56);
+	setCharString(tmp2, 849, 56);
+	setCharString(tmp2, 850, 56);
+	setCharString(tmp2, 851, 52);
+	setCharString(tmp2, 852, 53);
+	setCharString(tmp2, 853, 56);
+	setCharString(tmp2, 854, 48);
+	setCharString(tmp2, 855, 49);
+	setCharString(tmp2, 856, 53);
+	setCharString(tmp2, 857, 54);
+	setCharString(tmp2, 858, 49);
+	setCharString(tmp2, 859, 54);
+	setCharString(tmp2, 860, 54);
+	setCharString(tmp2, 861, 48);
+	setCharString(tmp2, 862, 57);
+	setCharString(tmp2, 863, 55);
+	setCharString(tmp2, 864, 57);
+	setCharString(tmp2, 865, 49);
+	setCharString(tmp2, 866, 57);
+	setCharString(tmp2, 867, 49);
+	setCharString(tmp2, 868, 51);
+	setCharString(tmp2, 869, 51);
+	setCharString(tmp2, 870, 56);
+	setCharString(tmp2, 871, 55);
+	setCharString(tmp2, 872, 53);
+	setCharString(tmp2, 873, 52);
+	setCharString(tmp2, 874, 57);
+	setCharString(tmp2, 875, 57);
+	setCharString(tmp2, 876, 50);
+	setCharString(tmp2, 877, 48);
+	setCharString(tmp2, 878, 48);
+	setCharString(tmp2, 879, 53);
+	setCharString(tmp2, 880, 50);
+	setCharString(tmp2, 881, 52);
+	setCharString(tmp2, 882, 48);
+	setCharString(tmp2, 883, 54);
+	setCharString(tmp2, 884, 51);
+	setCharString(tmp2, 885, 54);
+	setCharString(tmp2, 886, 56);
+	setCharString(tmp2, 887, 57);
+	setCharString(tmp2, 888, 57);
+	setCharString(tmp2, 889, 49);
+	setCharString(tmp2, 890, 50);
+	setCharString(tmp2, 891, 53);
+	setCharString(tmp2, 892, 54);
+	setCharString(tmp2, 893, 48);
+	setCharString(tmp2, 894, 55);
+	setCharString(tmp2, 895, 49);
+	setCharString(tmp2, 896, 55);
+	setCharString(tmp2, 897, 54);
+	setCharString(tmp2, 898, 48);
+	setCharString(tmp2, 899, 54);
+	setCharString(tmp2, 900, 48);
+	setCharString(tmp2, 901, 53);
+	setCharString(tmp2, 902, 56);
+	setCharString(tmp2, 903, 56);
+	setCharString(tmp2, 904, 54);
+	setCharString(tmp2, 905, 49);
+	setCharString(tmp2, 906, 49);
+	setCharString(tmp2, 907, 54);
+	setCharString(tmp2, 908, 52);
+	setCharString(tmp2, 909, 54);
+	setCharString(tmp2, 910, 55);
+	setCharString(tmp2, 911, 49);
+	setCharString(tmp2, 912, 48);
+	setCharString(tmp2, 913, 57);
+	setCharString(tmp2, 914, 52);
+	setCharString(tmp2, 915, 48);
+	setCharString(tmp2, 916, 53);
+	setCharString(tmp2, 917, 48);
+	setCharString(tmp2, 918, 55);
+	setCharString(tmp2, 919, 55);
+	setCharString(tmp2, 920, 53);
+	setCharString(tmp2, 921, 52);
+	setCharString(tmp2, 922, 49);
+	setCharString(tmp2, 923, 48);
+	setCharString(tmp2, 924, 48);
+	setCharString(tmp2, 925, 50);
+	setCharString(tmp2, 926, 50);
+	setCharString(tmp2, 927, 53);
+	setCharString(tmp2, 928, 54);
+	setCharString(tmp2, 929, 57);
+	setCharString(tmp2, 930, 56);
+	setCharString(tmp2, 931, 51);
+	setCharString(tmp2, 932, 49);
+	setCharString(tmp2, 933, 53);
+	setCharString(tmp2, 934, 53);
+	setCharString(tmp2, 935, 50);
+	setCharString(tmp2, 936, 48);
+	setCharString(tmp2, 937, 48);
+	setCharString(tmp2, 938, 48);
+	setCharString(tmp2, 939, 53);
+	setCharString(tmp2, 940, 53);
+	setCharString(tmp2, 941, 57);
+	setCharString(tmp2, 942, 51);
+	setCharString(tmp2, 943, 53);
+	setCharString(tmp2, 944, 55);
+	setCharString(tmp2, 945, 50);
+	setCharString(tmp2, 946, 57);
+	setCharString(tmp2, 947, 55);
+	setCharString(tmp2, 948, 50);
+	setCharString(tmp2, 949, 53);
+	setCharString(tmp2, 950, 55);
+	setCharString(tmp2, 951, 49);
+	setCharString(tmp2, 952, 54);
+	setCharString(tmp2, 953, 51);
+	setCharString(tmp2, 954, 54);
+	setCharString(tmp2, 955, 50);
+	setCharString(tmp2, 956, 54);
+	setCharString(tmp2, 957, 57);
+	setCharString(tmp2, 958, 53);
+	setCharString(tmp2, 959, 54);
+	setCharString(tmp2, 960, 49);
+	setCharString(tmp2, 961, 56);
+	setCharString(tmp2, 962, 56);
+	setCharString(tmp2, 963, 50);
+	setCharString(tmp2, 964, 54);
+	setCharString(tmp2, 965, 55);
+	setCharString(tmp2, 966, 48);
+	setCharString(tmp2, 967, 52);
+	setCharString(tmp2, 968, 50);
+	setCharString(tmp2, 969, 56);
+	setCharString(tmp2, 970, 50);
+	setCharString(tmp2, 971, 53);
+	setCharString(tmp2, 972, 50);
+	setCharString(tmp2, 973, 52);
+	setCharString(tmp2, 974, 56);
+	setCharString(tmp2, 975, 51);
+	setCharString(tmp2, 976, 54);
+	setCharString(tmp2, 977, 48);
+	setCharString(tmp2, 978, 48);
+	setCharString(tmp2, 979, 56);
+	setCharString(tmp2, 980, 50);
+	setCharString(tmp2, 981, 51);
+	setCharString(tmp2, 982, 50);
+	setCharString(tmp2, 983, 53);
+	setCharString(tmp2, 984, 55);
+	setCharString(tmp2, 985, 53);
+	setCharString(tmp2, 986, 51);
+	setCharString(tmp2, 987, 48);
+	setCharString(tmp2, 988, 52);
+	setCharString(tmp2, 989, 50);
+	setCharString(tmp2, 990, 48);
+	setCharString(tmp2, 991, 55);
+	setCharString(tmp2, 992, 53);
+	setCharString(tmp2, 993, 50);
+	setCharString(tmp2, 994, 57);
+	setCharString(tmp2, 995, 54);
+	setCharString(tmp2, 996, 51);
+	setCharString(tmp2, 997, 52);
+	setCharString(tmp2, 998, 53);
+	setCharString(tmp2, 999, 48);
+	tmp2;
+	;
+	}};
+	printlnf64(euler8(digits, 13, 0))
+}
+
+ euler_euler8__lambda__3226__2[A](a2 : A, i : i32, __closure__ : i32) -> A {
+	
+	tmp0 : i32 = {getStructValue[(i32, i32, i32, i32)](__closure__).2};
+	tmp1 : A = {getStructValue[(i32, i32, (A, i32, i32) -> A, i32)](tmp0).2(a2, getCharAt(getStructValue[(i32, i32, i32, i32)](__closure__).3, i, __closure__), getStructValue[(i32, i32, (A, i32, i32) -> A, i32)](tmp0).3)};
+	tmp1
+}
+
+ euler_euler8__lambda__4697__0(greatest : f64, i : i32, __closure__ : i32) -> f64 {
+	
+	numbers : i32 = {substring(getStructValue[(i32, i32, i32, i32)](__closure__).2, i, getStructValue[(i32, i32, i32, i32)](__closure__).3)};
+	product : f64 = {stringFoldChar[f64](numbers, 1.0, createStruct[((f64, i32, i32) -> f64, i32)](7, (euler_euler8__lambda__4807__1, createStruct[()](8, ()),)), __closure__)};
+	max[f64](product, greatest, __closure__)
+}
+
+ euler_euler8__lambda__4807__1(acc : f64, d : i32, __closure__ : i32) -> f64 {
+	
+	(acc * s2d(d, __closure__))
+}
