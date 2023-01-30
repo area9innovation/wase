@@ -1,5 +1,5 @@
 memory 1;
-main() -> () {
+export _start() -> () {
 	size = memory.size<>();
 	previous = memory.grow<>(1);
 	// Fill 128 bytes from 0 with 42

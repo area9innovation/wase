@@ -83,17 +83,37 @@ printlnb(v : bool) -> () {
 	printByte(10);
 }
 
+// Print unsigned i64 as decimal
+printu64(i : i64) -> () {
+	if (i <u 10w) {
+		printByte(48 + wrap<>(i))
+	} else {
+		printu64(div_u<>(i, 10w));
+		printu64(rem_u<>(i, 10w));
+	}
+}
+
+// Print signed i64 as decimal
+printi64(i : i64) -> () {
+	if (i < 0w) {
+		printByte(45);
+		printu64(0w - i);
+	} else {
+		printu64(i)
+	}
+}
+
 // for tests. the current version is a loss of accuracy! (trunc/-/*)
 printf64(f : f64) -> () {
-	b : i32 = wrap<>(trunc_s<>(f));
-	printi32(b); // sign and int
+	b : i64 = trunc_s<>(f);
+	printi64(b); // sign and int
 	printByte(46); // .
 	f0 : f64 = abs<>(f);
 	f1 : f64 = (f0 - trunc<>(f0)) * 100000000.1;
-	printi32(wrap<>(trunc_u<>(f1))); // 8 symbols
+	printi64(trunc_u<>(f1)); // 8 symbols
 	f2 : f64 = (f1 - trunc<>(f1));
 	f3 : f64 = f2 * 100000000.1; // 8 symbols
-	printi32(wrap<>(trunc_u<>(f3)));
+	printi64(trunc_u<>(f3));
 	{}
 }
 

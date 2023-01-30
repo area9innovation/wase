@@ -1,0 +1,90 @@
+// import runtime;
+native println : io (flow) -> void = Native.println;
+// import string;
+native i2s : (int) -> string = Native.i2s;
+native getCharCodeAt : (s : string, i : int) -> int = Native.getCharCodeAt;
+// i2s(i) { cast(i : int -> string); }
+
+native strlen : (string) -> int = Native.strlen;
+native substring : (s : string, start : int, length : int) -> string = Native.substring;
+
+strsubsmart(s : string, start : int, len : int) -> string {
+	if (start >= 0 && len > 0) {
+		substring(s, start, len)
+	} else {
+		slen = strlen(s);
+		trueStart = if (start >= 0) start else { ss = slen + start; if (ss >= 0) ss else 0; };
+		trueLength = if (len > 0) len else slen + len - trueStart;
+
+		substring(s, trueStart, trueLength)
+	}
+}
+foldRange(start : int, end : int, acc : ?, fn : (?, int) -> ?) -> ? {
+	if (start <= end) {
+		foldRange(start + 1, end, fn(acc, start), fn)
+	} else {
+		acc;
+	}
+}
+
+/*
+A palindromic number reads the same both ways. The largest palindrome made 
+from the product of two 2-digit numbers is 9009 = 91 × 99.
+
+Find the largest palindrome made from the product of two 3-digit numbers.
+*/
+
+isPalindromic(s : string) -> bool {
+	l = strlen(s);
+    l <= 1 || {
+		first = getCharCodeAt(s, 0);
+		last = getCharCodeAt(s, l-1);
+		first == last && isPalindromic(strsubsmart(s, 1, -1));
+    }
+}
+
+isPalindromicSmart(s : string, i1 : int, i2 : int) -> bool {
+	if (i1 < 0 || i2 < 0 || i2 == i1) {
+		true
+	} else {
+		first = getCharCodeAt(s, i1);
+		last = getCharCodeAt(s, i2);
+		if (first == last) {
+			isPalindromicSmart(s, i1 + 1, i2 - 1);
+		} else {
+			false;
+		}
+    }
+}
+
+/* euler4() -> int {
+	i = ref 0;
+    res=foldRange(100, 999, 0, \acc, a -> {
+       foldRange(100, 999, acc, \acc2, b -> {
+		i := ^i+1;
+		println(^i);
+        	p = a * b;
+			
+	        if (p < acc2) acc2 else {
+				ps = i2s(p);
+				//if (!isPalindromicSmart(ps, 0, strlen(ps)-1)) acc2 else p;
+				if (!isPalindromic(ps)) acc2 else p;
+			} 
+        })
+    });
+	println("I:");println(^i);res;
+} */
+
+euler4() -> int {
+    foldRange(100, 999, 0, \acc, a -> {
+        foldRange(100, 999, acc, \acc2, b -> {
+        	p = a * b;
+	        if (p < acc2 || !isPalindromic(i2s(p))) acc2 else p;
+        })
+    });
+}
+
+main() {
+	println(euler4()); // 906609
+	// quit(0);
+}
