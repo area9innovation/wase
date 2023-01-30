@@ -1,10 +1,23 @@
 include lib/wise/runtime;
+include tools/flowc/backends/wise/lib/math;
+include tools/flowc/backends/wise/lib/reference;
 include tools/flowc/backends/wise/lib/tuple;
 include tools/flowc/backends/wise/lib/array;
 include tools/flowc/backends/wise/lib/string;
 
+// CONST_V3 : i32 = createRef[i32](674); 
+
+export CONST_V2 : i32 = 62872; 
+
+ CONST_V1 : i32 = 1433543; 
+
  export _start() -> () {
 	initMemory();
 	i : i32 = {56};
-	printlni32(i)
+	{
+	printlni32(i);
+	printlni32(CONST_V1);
+	printlni32(CONST_V2);
+	// printlni32(getRef[i32](CONST_V3));
+	}
 }

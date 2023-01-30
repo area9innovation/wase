@@ -1,7 +1,22 @@
 // import runtime;
+
+
+export {
+
+	CONST_V2 : int = 62872;
+}
+
 native println : io (flow) -> void = Native.println;
+
+CONST_V1 = 1433543;
+
+// TODO:  Validation error: constant expression required: invalid init_expr operator
+CONST_V3 = ref 674;
 
 main() {
 	i = 56;
     println(i);
+	println(CONST_V1);
+	println(CONST_V2);
+	println(^CONST_V3);
 }

@@ -18,4 +18,9 @@ main() {
 	 } else {
 		if (true) -3 else -4;
 	});
+
+
+	// if (true) { 1; } // error
+
+	{}
 }
