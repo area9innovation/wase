@@ -1,0 +1,61 @@
+include tools/flowc/backends/wise/lib/tuple;
+
+ foldRange(start : i32, end : i32, acc : i32, fn : i32, __closure__ : i32) -> i32 {
+	
+	var _RES__TMP_TAILCALL_foldRange : i32 = {defoftype(i32)};
+	var _TMP_TAILCALL_foldRange : bool = {true};
+	var _ARG_FN__TMP_TAILCALL_foldRange : i32 = {fn};
+	var _ARG_ACC__TMP_TAILCALL_foldRange : i32 = {acc};
+	var _ARG_END__TMP_TAILCALL_foldRange : i32 = {end};
+	var _ARG_START__TMP_TAILCALL_foldRange : i32 = {start};
+	{
+	while (_TMP_TAILCALL_foldRange)
+	{
+	_TMP_TAILCALL_foldRange := false;
+	if ((_ARG_START__TMP_TAILCALL_foldRange <= _ARG_END__TMP_TAILCALL_foldRange)) {
+	{
+	_TMP_TAILCALL_foldRange := true;
+	_ARG_FN__TMP_TAILCALL_foldRange := _ARG_FN__TMP_TAILCALL_foldRange;
+	_ARG_ACC__TMP_TAILCALL_foldRange := getStructValue[(i32, i32, (i32, i32, i32) -> i32, i32)](_ARG_FN__TMP_TAILCALL_foldRange).2(_ARG_ACC__TMP_TAILCALL_foldRange, _ARG_START__TMP_TAILCALL_foldRange, getStructValue[(i32, i32, (i32, i32, i32) -> i32, i32)](_ARG_FN__TMP_TAILCALL_foldRange).3);
+	_ARG_END__TMP_TAILCALL_foldRange := _ARG_END__TMP_TAILCALL_foldRange;
+	_ARG_START__TMP_TAILCALL_foldRange := (_ARG_START__TMP_TAILCALL_foldRange + 1);
+	}
+} else {
+	_RES__TMP_TAILCALL_foldRange := _ARG_ACC__TMP_TAILCALL_foldRange
+};
+	}
+;
+	_RES__TMP_TAILCALL_foldRange;
+	}
+}
+
+export euler1(limit : i32, __closure__ : i32) -> i32 {
+	
+	foldRange(1, (limit - 1), 0, createStruct[((i32, i32, i32) -> i32, i32)](4, (euler_euler_debug_euler1__lambda__468__0, createStruct[()](5, ()),)), __closure__)
+}
+
+ export _start() -> i32 {
+	initMemory();
+	euler1(10, 0)
+}
+
+ euler_euler_debug_euler1__lambda__468__0(acc : i32, i : i32, __closure__ : i32) -> i32 {
+	
+	if (({
+	0;
+	({
+	0;
+	(i % 3);
+	} == 0);
+	} || {
+	0;
+	({
+	0;
+	(i % 5);
+	} == 0);
+	})) {
+	(acc + i)
+} else {
+	acc
+}
+}
