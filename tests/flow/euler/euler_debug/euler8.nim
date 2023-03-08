@@ -30,14 +30,9 @@ proc stringFoldChar[T](s : string, a : T, f : (T, string) -> T) : T =
         foldRange(0, len(s1) - 1, a1, proc (a2 : T, i : int, scope : (string, (T, string) -> T)) : T = scope[1](a2, getCharAt(scope[0], i)), (s1, f1))
 
 proc euler8*(digits : var string, lenA : int): float =
-# proc euler8*(digits : string, lenA : int): float =
-    let digits2 = digits
-    let len2 = lenA
-    # capture len2, digits2:
-    capture len2, digits2:
-        foldRange(0, len(digits2) - len2 - 1, 0.0, proc (greatest : float, i : int, sc : (string, int)) : float =
-            if (len(sc[0]) < 1000 or sc[1] != 13): echo "Wrong STR or LEN"
-            let numbers = substring(sc[0], i, sc[1])
-            let product = stringFoldChar(numbers, 1.0, proc (acc : float, d : string) : float = acc * parseFloat(d))
-            max(product, greatest)
-        , (digits2, len2))
+    foldRange(0, len(digits) - lenA - 1, 0.0, proc (greatest : float, i : int, sc : (string, int)) : float =
+        if (sc[0].len < 1000 or sc[1] != 13): echo "Wrong STR or LEN"
+        let numbers = substring(sc[0], i, sc[1])
+        let product = stringFoldChar(numbers, 1.0, proc (acc : float, d : string) : float = acc * parseFloat(d))
+        max(product, greatest)
+    , (digits, lenA))
